@@ -157,7 +157,10 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
 .cmpt th{position:sticky;top:0;background:var(--panel);white-space:normal;line-height:1.25;vertical-align:bottom;padding:6px 4px}
 .cmpt td{padding:6px 4px}
 .cmpt td small{display:block;font-size:.62rem}
-.cmpt th.grp{text-align:center;border-bottom:none;padding-bottom:0;color:var(--faint)}
+.cmpt th.g1{border-top:3px solid var(--accent)} .cmpt th.g2{border-top:3px solid var(--you)} .cmpt th.g3{border-top:3px solid var(--minv)}
+.gtag{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;color:var(--muted);margin-left:10px}
+.gtag::before{content:"";width:14px;height:3px;border-radius:2px;background:var(--accent)}
+.gtag.g2::before{background:var(--you)} .gtag.g3::before{background:var(--minv)}
 .cmpt td.b{background:color-mix(in srgb,var(--good) 22%,transparent)}
 .cmpt td.w{background:color-mix(in srgb,var(--bad) 20%,transparent)}
 .cmpt td small{color:var(--faint)}
@@ -712,9 +715,10 @@ function drawCompare(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)
     ['cagr','Annual return',x=>pct(x),1],['worst','Worst year',x=>x?sp(x.v)+`<small>${x.y}</small>`:'—',1,x=>x?x.v:0],['mdd','Max drawdown',x=>pct(-x),-1],['alpha','Alpha / yr',x=>sp(x),1]];
   const ext={};C.forEach(([k,,,dir,val])=>{if(!dir)return;const v=rows.map(r=>val?val(r[k]):r[k]);ext[k]={hi:Math.max(...v),lo:Math.min(...v),dir,val};});
   const cls=(k,x)=>{const e=ext[k];if(!e)return '';const v=e.val?e.val(x):x;const best=e.dir>0?e.hi:e.lo,worst=e.dir>0?e.lo:e.hi;return Math.abs(v-best)<1e-9?'b':Math.abs(v-worst)<1e-9?'w':'';};
-  $('cmpTable').innerHTML=`<thead><tr><th></th><th class="grp" colspan="5">Expected (model)</th><th class="grp" colspan="4">Future (Monte Carlo, ${eur(st)} + ${eur(mo)}/mo)</th><th class="grp" colspan="4">Past (${H.months[0].slice(0,4)}–2026, real data)</th></tr><tr><th>Portfolio</th>${C.map(c=>`<th>${c[1]}</th>`).join('')}</tr></thead><tbody>`+
+  const grp=k=>k<5?'g1':k<9?'g2':'g3';
+  $('cmpTable').innerHTML=`<thead><tr><th>Portfolio</th>${C.map((c,k)=>`<th class="${grp(k)}">${c[1]}</th>`).join('')}</tr></thead><tbody>`+
     rows.map(r=>`<tr class="${r.n==='Yours'?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.n}</td>${C.map(([k,,f])=>`<td class="${cls(k,r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('')+'</tbody>';
-  $('cmpKick').textContent=`Invested ${eur(st+mo*yrs*12)} over ${yrs} years · ${$('mcMethod').value==='boot'?'bootstrap':'log-normal'}`;}
+  $('cmpKick').innerHTML=`<span class="gtag g1">Expected · model</span> <span class="gtag g2">Future · Monte Carlo, ${eur(st)} + ${eur(mo)}/mo for ${yrs}y</span> <span class="gtag g3">Past · ${H.months[0].slice(0,4)}–2026 real data</span>`;}
 /* ---------- Alpha ---------- */
 function sigTxt(t){const a=Math.abs(t);return a>=2.58?'significant at 99%':a>=1.96?'significant at 95%':a>=1.65?'weak (90%)':'not significant';}
 function drawAlpha(){const P=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]].map(([n,c,w])=>({n,c,p:port(w)}));
