@@ -153,6 +153,12 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
 .btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .busy{opacity:.55;pointer-events:none}
 .kicker{font-size:.72rem;color:var(--muted)}
+.cmpt th{position:sticky;top:0;background:var(--panel)}
+.cmpt th.grp{text-align:center;border-bottom:none;padding-bottom:0;color:var(--faint)}
+.cmpt td.b{background:color-mix(in srgb,var(--good) 22%,transparent)}
+.cmpt td.w{background:color-mix(in srgb,var(--bad) 20%,transparent)}
+.cmpt td small{color:var(--faint);margin-left:4px}
+.cmpt tr.you td{font-weight:600}
 .presets{position:relative}
 .ptip{position:absolute;z-index:20;left:0;right:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:.78rem;line-height:1.45;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .ptip b.t{font-family:var(--display);font-size:.98rem}
@@ -176,7 +182,7 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
 <aside class="panel" aria-label="Allocation">
   <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2>Your allocation</h2><h3>max-Sharpe in grey</h3></div>
   <div class="presets">
-    <button id="pTan">Max Sharpe</button><button id="pMin">Min variance</button><button id="pSor">Max Sortino</button><button id="pMdd">Min downside</button><button id="pRP">Risk parity</button><button id="pRes">Resampled</button><button id="pEq">Equal</button><button id="pClr" class="ghost">Clear</button>
+    <button id="pTan">Max Sharpe</button><button id="pMin">Min variance</button><button id="pSor">Max Sortino</button><button id="pMdd">Min downside</button><button id="pRP">Risk parity</button><button id="pRes">Resampled</button><button id="pEq">Equal</button><button id="pCap">Cap-weighted</button><button id="pClr" class="ghost">Clear</button>
   </div>
   <div class="ptip" id="ptip" role="tooltip" hidden></div>
   <div class="prog" id="resProg" hidden><div></div></div>
@@ -187,6 +193,7 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
 
 <section class="panel">
   <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="cmp">Compare</button>
     <button role="tab" data-tab="mc" aria-selected="true">Monte Carlo</button>
     <button role="tab" data-tab="frontier">Frontier &amp; CML</button>
     <button role="tab" data-tab="down">Downside risk</button>
@@ -197,6 +204,14 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
     <button role="tab" data-tab="corr">Correlation</button>
     <button role="tab" data-tab="model">Model &amp; views</button>
   </nav>
+
+  <!-- COMPARE -->
+  <div data-pane="cmp" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Portfolio comparison</h2><span class="kicker" id="cmpKick"></span></div>
+    <div class="scroll"><table id="cmpTable" class="cmpt"></table></div>
+    <div class="legend"><span><i style="background:var(--good);height:9px"></i>Best in column</span><span><i style="background:var(--bad);height:9px"></i>Worst in column</span></div>
+    <p class="note"><b>Expected</b> columns come from the model (expected returns in use, covariance). <b>Future</b> columns come from a Monte Carlo with the settings on the Monte Carlo tab (2,000 paths each): final value and IRR are for the median path, where IRR is the annual money-weighted return on your starting capital plus monthly contributions. <b>Past</b> columns use real returns over the estimation window with today's weights, so they carry hindsight. Cap-weighted holds the 27 stocks and Bitcoin in proportion to market value on 9 Oct 2026; gold, oil, copper miners and Treasuries have no comparable market cap and get zero.</p>
+  </div>
 
   <!-- MONTE CARLO -->
   <div data-pane="mc" style="display:flex;flex-direction:column;gap:14px">
@@ -678,6 +693,25 @@ function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;
     WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:'Yours (static)',c:'--you',b:growth(yours),turn:'—'},mk('Max Sharpe (rolling)','--accent','tan'),mk('Min variance (rolling)','--minv','mv'),mk('Risk parity (rolling)','--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
     if(btMode==='out')drawBT();};setTimeout(work,20);}
 
+/* ---------- Compare ---------- */
+function irrAnnual(start,monthly,T,F){const fv=i=>i===0?start+monthly*T:start*Math.pow(1+i,T)+monthly*(Math.pow(1+i,T)-1)/i;let lo=-.2,hi=.2;for(let k=0;k<100;k++){const m=(lo+hi)/2;if(fv(m)>F)hi=m;else lo=m;}return Math.pow(1+(lo+hi)/2,12)-1;}
+function yearStats(series){const by={};series.forEach((r,t)=>{const y=H.months[t].slice(0,4);(by[y]=by[y]||[]).push(r);});let worst=null,best=null;
+  for(const y in by){if(by[y].length<6)continue;const g=by[y].reduce((v,r)=>v*(1+r),1)-1;const lab=by[y].length<12?y+' YTD':y;if(!worst||g<worst.v)worst={v:g,y:lab};if(!best||g>best.v)best={v:g,y:lab};}return {worst,best};}
+function drawCompare(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
+  const L=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Min variance','--minv',O.minvar.w],['Max Sortino','--c-crypto',D.tangency.w],['Min downside','--muted',D.minvar.w],['Risk parity','--c-bond',RP]];
+  if(RES)L.push(['Resampled','--c-tech',RES]);L.push(['Equal weight','--c-def',A.map(()=>1/N)],['Cap-weighted','--c-fin',capW()]);
+  const rows=L.map(([n,c,w])=>{const p=port(w);const mc=monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42});const hs=portListed(H.R,p.w);const g=growth(hs);const ys=yearStats(hs);
+    return {n,c,ret:p.ret,vol:p.vol,sh:p.sharpe,so:p.sortino,beta:p.beta,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrAnnual(st,mo,mc.T,mc.bands[2][mc.T]),ploss:mc.pLoss,cagr:g.cagr,worst:ys.worst,mdd:g.maxDD,alpha:p.ra.alpha};});
+  {const mu=S.rf+S.erp,vol=M.mkt.sd,mm=H.mkt.reduce((a,b)=>a+b,0)/H.T;const ser=Float64Array.from(H.mkt,x=>x-mm+mu/12);const mc=monteCarlo({method:meth,series:ser,mu,vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42});const g=growth(H.mkt);const rs=riskStats(H.mkt,M.marM);
+    rows.push({n:'S&P 500',c:'--spx',ret:mu,vol,sh:(mu-S.rf)/vol,so:(mu-S.mar)/rs.dd,beta:1,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrAnnual(st,mo,mc.T,mc.bands[2][mc.T]),ploss:mc.pLoss,cagr:g.cagr,worst:yearStats(H.mkt).worst,mdd:g.maxDD,alpha:0});}
+  const C=[['ret','Expected return',x=>pct(x),1],['vol','Risk (volatility)',x=>pct(x),-1],['sh','Sharpe',x=>x.toFixed(2),1],['so','Sortino',x=>x.toFixed(2),1],['beta','Beta',x=>x.toFixed(2),0],
+    ['fin',`Value in ${yrs}y (median)`,x=>eur(x),1],['irr','IRR',x=>pct(x),1],['bad','Bad case (5%)',x=>eur(x),1],['ploss','Chance below invested',x=>pct(x),-1],
+    ['cagr','Annual return',x=>pct(x),1],['worst','Worst year',x=>x?sp(x.v)+`<small>${x.y}</small>`:'—',1,x=>x?x.v:0],['mdd','Max drawdown',x=>pct(-x),-1],['alpha','Alpha / yr',x=>sp(x),1]];
+  const ext={};C.forEach(([k,,,dir,val])=>{if(!dir)return;const v=rows.map(r=>val?val(r[k]):r[k]);ext[k]={hi:Math.max(...v),lo:Math.min(...v),dir,val};});
+  const cls=(k,x)=>{const e=ext[k];if(!e)return '';const v=e.val?e.val(x):x;const best=e.dir>0?e.hi:e.lo,worst=e.dir>0?e.lo:e.hi;return Math.abs(v-best)<1e-9?'b':Math.abs(v-worst)<1e-9?'w':'';};
+  $('cmpTable').innerHTML=`<thead><tr><th></th><th class="grp" colspan="5">Expected (model)</th><th class="grp" colspan="4">Future (Monte Carlo, ${eur(st)} + ${eur(mo)}/mo)</th><th class="grp" colspan="4">Past (${H.months[0].slice(0,4)}–2026, real data)</th></tr><tr><th>Portfolio</th>${C.map(c=>`<th>${c[1]}</th>`).join('')}</tr></thead><tbody>`+
+    rows.map(r=>`<tr class="${r.n==='Yours'?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.n}</td>${C.map(([k,,f])=>`<td class="${cls(k,r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('')+'</tbody>';
+  $('cmpKick').textContent=`Invested ${eur(st+mo*yrs*12)} over ${yrs} years · ${$('mcMethod').value==='boot'?'bootstrap':'log-normal'}`;}
 /* ---------- Alpha ---------- */
 function sigTxt(t){const a=Math.abs(t);return a>=2.58?'significant at 99%':a>=1.96?'significant at 95%':a>=1.65?'weak (90%)':'not significant';}
 function drawAlpha(){const P=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]].map(([n,c,w])=>({n,c,p:port(w)}));
@@ -726,15 +760,19 @@ function modelUI(){$('trustT').textContent=S.mode==='bl'?'Confidence in history 
 
 /* ---------- wiring ---------- */
 const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
-const DRAW={frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
+const DRAW={cmp:drawCompare,frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
 function drawVisible(){if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
-let mcT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,visible('mc')?120:30);}
+let mcT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,(visible('mc')||visible('cmp'))?150:30);}
 let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();allocList();modelUI();drawVisible();$('hero').classList.remove('busy');},20);}
 $('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(0,Math.min(100,+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(40,v);onWeights();});
 const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();};
 $('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
-$('pEq').onclick=()=>setW(A.map(()=>1/N));$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>setW(norm(S.w));
+$('pEq').onclick=()=>setW(A.map(()=>1/N));$('pCap').onclick=()=>setW(capW());$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>setW(norm(S.w));
+// market caps, USD bn, Yahoo Finance 9 Oct 2026 (HKD/KRW/EUR converted at that day's FX)
+const CAPS={NVDA:5536.4,AMZN:2830.7,GOOGL:4300.8,MSFT:3973.2,META:1830.8,AAPL:4913.0,VRT:93.5,VST:54.2,ETN:166.8,ANET:273.4,MU:1162.1,TSM:2351.1,XIAOMI:85.2,AMAT:402.4,SAMSUNG:1283.9,CAT:368.0,AVGO:1725.9,CRWD:281.6,JPM:885.1,GS:260.7,LMT:117.6,NUE:56.8,TM:219.4,PFE:161.2,ITX:188.0,ASML:683.8,SKHYNIX:892.0,BTC:1658.9};
+function capW(){const w=Float64Array.from(A.map((a,i)=>S.active[i]?(CAPS[a.id]||0):0));return norm(w);}
 const PINFO={
+ pCap:['Cap-weighted','Each stock (and Bitcoin) weighted by its market value, like the S&P 500 or MSCI World. Gold, oil, copper miners and Treasuries get zero.','The market portfolio of CAPM. Zero estimation, low turnover, what index funds hold.','Concentrated in the largest companies (Nvidia, Apple, Alphabet, Microsoft). Buys more of whatever has already risen.'],
  pTan:['Max Sharpe','The tangency portfolio: the highest expected return per unit of total volatility.','The textbook optimum and industry benchmark. Best risk-adjusted return if your inputs are right.','Very sensitive to expected-return estimates and tends to concentrate. In the walk-forward test it lost to equal weight.'],
  pMin:['Min variance','The lowest-volatility portfolio possible. It ignores expected returns completely.','Needs no return forecasts, so it is stable. Smallest swings and drawdowns.','Low expected return. Piles into bonds, gold and defensive stocks.'],
  pSor:['Max Sortino','The highest return per unit of downside risk: only months below your minimum acceptable return count as risk.','Matches how investors feel about risk. Rewards assets whose big moves were mostly upward.','Downside risk is estimated from fewer months, so it is noisier. Can chase past upside streaks (Bitcoin, momentum stocks).'],
@@ -750,7 +788,7 @@ const PINFO={
 $('pRes').onclick=()=>{if(RES){setW(RES);return;}const K=40,acc=new Float64Array(N),r=rng(7),o=opts();let k=0;const btn=$('pRes'),pb=$('resProg');btn.classList.add('busy');pb.hidden=false;
   const step=()=>{const w=resampleStep(M,o,M._capA,k,r);for(let i=0;i<N;i++)acc[i]+=w[i]/K;k++;pb.firstElementChild.style.width=(k/K*100)+'%';btn.textContent=`Resampling ${k}/${K}`;if(k<K)setTimeout(step,0);else{RES=acc;btn.textContent='Resampled';btn.classList.remove('busy');pb.hidden=true;setW(RES);}};setTimeout(step,20);};
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);try{localStorage.setItem('fl3-tab',b.dataset.tab)}catch(_){}drawVisible();});
-['mcStart','mcMonthly','mcYears','mcMethod','mcPaths'].forEach(id=>$(id).addEventListener('change',runMC));
+['mcStart','mcMonthly','mcYears','mcMethod','mcPaths'].forEach(id=>$(id).addEventListener('change',()=>{runMC();window._cmpDirty=1;}));
 $('btIn').onclick=()=>{btMode='in';drawBT();};$('btOut').onclick=()=>{btMode='out';drawBT();};
 $('rf').value=(S.rf*100).toFixed(2);$('mar').value=(S.mar*100).toFixed(2);
 const num=(id,f)=>$(id).addEventListener('change',e=>{f(+e.target.value);full();});
