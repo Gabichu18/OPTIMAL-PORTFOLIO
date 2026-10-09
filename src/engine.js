@@ -119,14 +119,19 @@ function resampleStep(M,o,cap,k,r){const n=M.n,T=M.T,F=M.F;const pick=Array.from
 function monteCarlo(o){const r=rng(o.seed),T=Math.round(o.years*12),P=o.paths;const vals=new Float64Array(P*(T+1));
   const m=Math.log(1+o.mu)-0.5*Math.log(1+o.vol*o.vol/((1+o.mu)**2)),s=Math.sqrt(Math.log(1+o.vol*o.vol/((1+o.mu)**2)));const L=o.series.length;
   for(let p=0;p<P;p++){let v=o.start,idx=Math.floor(r()*L);vals[p*(T+1)]=v;for(let t=1;t<=T;t++){let ret;if(o.method==='boot'){if(r()<1/6)idx=Math.floor(r()*L);else idx=(idx+1)%L;ret=o.series[idx];}else ret=Math.exp(m/12+s/Math.sqrt(12)*gauss(r))-1;v=Math.max(0,v*(1+ret)+o.monthly);vals[p*(T+1)+t]=v;}}
+  // returns are measured on nominal paths, then converted to real; values are deflated to today's money when o.real
+  const pi=o.infl||0,defl=t=>Math.pow(1+pi,t/12);const ann=new Float64Array(P),y1=new Float64Array(P);
+  for(let p=0;p<P;p++){const b=p*(T+1);let g=1;for(let t=1;t<=T;t++){const prev=vals[b+t-1];if(prev>0)g*=(vals[b+t]-o.monthly)/prev;if(t===12)y1[p]=g-1;}ann[p]=Math.pow(Math.max(g,1e-9),12/T)-1;if(T<12)y1[p]=Math.pow(Math.max(g,1e-9),12/T)-1;
+    if(o.real){ann[p]=(1+ann[p])/(1+pi)-1;y1[p]=(1+y1[p])/(1+pi)-1;}}
+  let invested=o.start+o.monthly*T;
+  if(o.real){const d=new Float64Array(T+1);for(let t=0;t<=T;t++)d[t]=1/defl(t);for(let p=0;p<P;p++){const b=p*(T+1);for(let t=1;t<=T;t++)vals[b+t]*=d[t];}invested=o.start;for(let t=1;t<=T;t++)invested+=o.monthly*d[t];}
   const pct=[5,25,50,75,95],bands=pct.map(()=>new Float64Array(T+1)),col=new Float64Array(P);
   for(let t=0;t<=T;t++){for(let p=0;p<P;p++)col[p]=vals[p*(T+1)+t];col.sort();pct.forEach((q,k)=>bands[k][t]=col[Math.min(P-1,Math.floor(q/100*P))]);}
-  const invested=o.start+o.monthly*T;const fin=new Float64Array(P),ann=new Float64Array(P),dd=new Float64Array(P),y1=new Float64Array(P);
-  for(let p=0;p<P;p++){const b=p*(T+1);fin[p]=vals[b+T];let g=1,pk=0,md=0;for(let t=1;t<=T;t++){const prev=vals[b+t-1];if(prev>0)g*=(vals[b+t]-o.monthly)/prev;if(t===12)y1[p]=g-1;}ann[p]=Math.pow(Math.max(g,1e-9),12/T)-1;if(T<12)y1[p]=g-1;
-    for(let t=0;t<=T;t++){const x=vals[b+t];if(x>pk)pk=x;if(pk>0)md=Math.max(md,1-x/pk);}dd[p]=md;}
+  const fin=new Float64Array(P),dd=new Float64Array(P);
+  for(let p=0;p<P;p++){const b=p*(T+1);fin[p]=vals[b+T];let pk=0,md=0;for(let t=0;t<=T;t++){const x=vals[b+t];if(x>pk)pk=x;if(pk>0)md=Math.max(md,1-x/pk);}dd[p]=md;}
   const so=a=>Float64Array.from(a).sort();const fs=so(fin),as=so(ann),ds=so(dd),ys=so(y1);const q=(a,x)=>a[Math.min(a.length-1,Math.floor(x*a.length))];const k5=Math.max(1,Math.floor(P*.05));let tl=0;for(let i=0;i<k5;i++)tl+=ys[i];
   const samples=[];for(let p=0;p<Math.min(24,P);p++)samples.push(vals.subarray(p*(T+1),(p+1)*(T+1)));
-  return {T,bands,invested,ann:as,pLoss:fs.filter(x=>x<invested).length/P,pDouble:fs.filter(x=>x>=2*invested).length/P,annMed:q(as,.5),ann5:q(as,.05),ann95:q(as,.95),ddMed:q(ds,.5),dd95:q(ds,.95),var1y:-ys[k5-1],cvar1y:-tl/k5,pDown1y:ys.filter(x=>x<0).length/P,samples};}
+  return {T,bands,invested,real:!!o.real,infl:pi,deflT:defl(T),ann:as,pLoss:fs.filter(x=>x<invested).length/P,pDouble:fs.filter(x=>x>=2*invested).length/P,annMed:q(as,.5),ann5:q(as,.05),ann95:q(as,.95),ddMed:q(ds,.5),dd95:q(ds,.95),var1y:-ys[k5-1],cvar1y:-tl/k5,pDown1y:ys.filter(x=>x<0).length/P,samples};}
 function growth(series){const v=[1];for(const r of series)v.push(v[v.length-1]*(1+r));let pk=1;const ddS=v.map(x=>{pk=Math.max(pk,x);return x/pk-1;});const T=series.length,m=mean(series);let s=0;for(const r of series)s+=(r-m)**2;
   return {v,ddS,cagr:Math.pow(v[T],12/T)-1,vol:Math.sqrt(s/(T-1)*12),maxDD:-Math.min(...ddS),best:Math.max(...series),worst:Math.min(...series)};}
 // walk-forward: re-estimate on trailing window every `step` months, hold out-of-sample

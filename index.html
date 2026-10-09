@@ -225,6 +225,8 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
       <div class="field"><label for="mcStart">Starting capital €</label><input id="mcStart" type="number" value="10000" step="500" min="0"></div>
       <div class="field"><label for="mcMonthly">Monthly contribution €</label><input id="mcMonthly" type="number" value="200" step="50" min="0"></div>
       <div class="field"><label for="mcYears">Horizon (years)</label><input id="mcYears" type="number" value="10" min="1" max="40"></div>
+      <div class="field"><label for="mcInfl">Inflation % / yr</label><input id="mcInfl" type="number" value="2.0" step="0.1" min="0" max="20"></div>
+      <div class="field"><label for="mcReal">Show values in</label><select id="mcReal"><option value="real" selected>Today's euros (real)</option><option value="nom">Future euros (nominal)</option></select></div>
       <div class="field"><label for="mcMethod">Method</label><select id="mcMethod"><option value="boot">Bootstrap of real months</option><option value="norm">Log-normal</option></select></div>
       <div class="field"><label for="mcPaths">Paths</label><select id="mcPaths"><option>1000</option><option selected>3000</option><option>10000</option></select></div>
     </div>
@@ -233,7 +235,7 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
     <div class="stats" id="mcStats"></div>
     <h3>Distribution of annualized returns over the horizon</h3>
     <div class="chart"><canvas id="cHistA" height="220"></canvas></div>
-    <p class="note">Re-runs on every weight change. <b>Bootstrap</b> replays real months from the estimation window in random 6-month blocks, keeping crashes, fat tails and co-movement; each asset's average is shifted to its forward expected return. Before an asset listed, its months are back-filled from its beta to the S&amp;P 500. <b>Log-normal</b> uses only expected return and volatility. Teal figures are the max-Sharpe portfolio.</p>
+    <p class="note">Re-runs on every weight change. <b>Bootstrap</b> replays real months from the estimation window in random 6-month blocks, keeping crashes, fat tails and co-movement; each asset's average is shifted to its forward expected return. Before an asset listed, its months are back-filled from its beta to the S&amp;P 500. <b>Log-normal</b> uses only expected return and volatility. Teal figures are the max-Sharpe portfolio. In <b>today's euros</b>, every future value is divided by (1 + inflation)<sup>years</sup>, so the chart shows purchasing power; contributions stay fixed in nominal euros, so their real value shrinks over time. Returns are modelled in USD, and the euros label assumes EUR/USD stays flat.</p>
   </div>
 
   <!-- FRONTIER -->
@@ -484,14 +486,19 @@ function resampleStep(M,o,cap,k,r){const n=M.n,T=M.T,F=M.F;const pick=Array.from
 function monteCarlo(o){const r=rng(o.seed),T=Math.round(o.years*12),P=o.paths;const vals=new Float64Array(P*(T+1));
   const m=Math.log(1+o.mu)-0.5*Math.log(1+o.vol*o.vol/((1+o.mu)**2)),s=Math.sqrt(Math.log(1+o.vol*o.vol/((1+o.mu)**2)));const L=o.series.length;
   for(let p=0;p<P;p++){let v=o.start,idx=Math.floor(r()*L);vals[p*(T+1)]=v;for(let t=1;t<=T;t++){let ret;if(o.method==='boot'){if(r()<1/6)idx=Math.floor(r()*L);else idx=(idx+1)%L;ret=o.series[idx];}else ret=Math.exp(m/12+s/Math.sqrt(12)*gauss(r))-1;v=Math.max(0,v*(1+ret)+o.monthly);vals[p*(T+1)+t]=v;}}
+  // returns are measured on nominal paths, then converted to real; values are deflated to today's money when o.real
+  const pi=o.infl||0,defl=t=>Math.pow(1+pi,t/12);const ann=new Float64Array(P),y1=new Float64Array(P);
+  for(let p=0;p<P;p++){const b=p*(T+1);let g=1;for(let t=1;t<=T;t++){const prev=vals[b+t-1];if(prev>0)g*=(vals[b+t]-o.monthly)/prev;if(t===12)y1[p]=g-1;}ann[p]=Math.pow(Math.max(g,1e-9),12/T)-1;if(T<12)y1[p]=Math.pow(Math.max(g,1e-9),12/T)-1;
+    if(o.real){ann[p]=(1+ann[p])/(1+pi)-1;y1[p]=(1+y1[p])/(1+pi)-1;}}
+  let invested=o.start+o.monthly*T;
+  if(o.real){const d=new Float64Array(T+1);for(let t=0;t<=T;t++)d[t]=1/defl(t);for(let p=0;p<P;p++){const b=p*(T+1);for(let t=1;t<=T;t++)vals[b+t]*=d[t];}invested=o.start;for(let t=1;t<=T;t++)invested+=o.monthly*d[t];}
   const pct=[5,25,50,75,95],bands=pct.map(()=>new Float64Array(T+1)),col=new Float64Array(P);
   for(let t=0;t<=T;t++){for(let p=0;p<P;p++)col[p]=vals[p*(T+1)+t];col.sort();pct.forEach((q,k)=>bands[k][t]=col[Math.min(P-1,Math.floor(q/100*P))]);}
-  const invested=o.start+o.monthly*T;const fin=new Float64Array(P),ann=new Float64Array(P),dd=new Float64Array(P),y1=new Float64Array(P);
-  for(let p=0;p<P;p++){const b=p*(T+1);fin[p]=vals[b+T];let g=1,pk=0,md=0;for(let t=1;t<=T;t++){const prev=vals[b+t-1];if(prev>0)g*=(vals[b+t]-o.monthly)/prev;if(t===12)y1[p]=g-1;}ann[p]=Math.pow(Math.max(g,1e-9),12/T)-1;if(T<12)y1[p]=g-1;
-    for(let t=0;t<=T;t++){const x=vals[b+t];if(x>pk)pk=x;if(pk>0)md=Math.max(md,1-x/pk);}dd[p]=md;}
+  const fin=new Float64Array(P),dd=new Float64Array(P);
+  for(let p=0;p<P;p++){const b=p*(T+1);fin[p]=vals[b+T];let pk=0,md=0;for(let t=0;t<=T;t++){const x=vals[b+t];if(x>pk)pk=x;if(pk>0)md=Math.max(md,1-x/pk);}dd[p]=md;}
   const so=a=>Float64Array.from(a).sort();const fs=so(fin),as=so(ann),ds=so(dd),ys=so(y1);const q=(a,x)=>a[Math.min(a.length-1,Math.floor(x*a.length))];const k5=Math.max(1,Math.floor(P*.05));let tl=0;for(let i=0;i<k5;i++)tl+=ys[i];
   const samples=[];for(let p=0;p<Math.min(24,P);p++)samples.push(vals.subarray(p*(T+1),(p+1)*(T+1)));
-  return {T,bands,invested,ann:as,pLoss:fs.filter(x=>x<invested).length/P,pDouble:fs.filter(x=>x>=2*invested).length/P,annMed:q(as,.5),ann5:q(as,.05),ann95:q(as,.95),ddMed:q(ds,.5),dd95:q(ds,.95),var1y:-ys[k5-1],cvar1y:-tl/k5,pDown1y:ys.filter(x=>x<0).length/P,samples};}
+  return {T,bands,invested,real:!!o.real,infl:pi,deflT:defl(T),ann:as,pLoss:fs.filter(x=>x<invested).length/P,pDouble:fs.filter(x=>x>=2*invested).length/P,annMed:q(as,.5),ann5:q(as,.05),ann95:q(as,.95),ddMed:q(ds,.5),dd95:q(ds,.95),var1y:-ys[k5-1],cvar1y:-tl/k5,pDown1y:ys.filter(x=>x<0).length/P,samples};}
 function growth(series){const v=[1];for(const r of series)v.push(v[v.length-1]*(1+r));let pk=1;const ddS=v.map(x=>{pk=Math.max(pk,x);return x/pk-1;});const T=series.length,m=mean(series);let s=0;for(const r of series)s+=(r-m)**2;
   return {v,ddS,cagr:Math.pow(v[T],12/T)-1,vol:Math.sqrt(s/(T-1)*12),maxDD:-Math.min(...ddS),best:Math.max(...series),worst:Math.min(...series)};}
 // walk-forward: re-estimate on trailing window every `step` months, hold out-of-sample
@@ -568,7 +575,7 @@ function hero(){const y=port(S.w),t=port(O.tangency.w),mc=window._mc;
   $('hero').innerHTML=k('Expected return / yr',pct(y.ret),d(y.ret,t.ret,0,x=>sp(x)))+k('Volatility',pct(y.vol),d(y.vol,t.vol,1,x=>sp(x)))+k('Sharpe ratio',y.sharpe.toFixed(2),d(y.sharpe,t.sharpe,0,x=>(x>=0?'+':'')+x.toFixed(2)))+
     k('Sortino ratio',y.sortino.toFixed(2),d(y.sortino,t.sortino,0,x=>(x>=0?'+':'')+x.toFixed(2)))+k('Beta · Jensen α',y.beta.toFixed(2)+' · '+sp(y.alpha),`CAPM requires ${pct(S.rf+y.beta*S.erp)}`)+
     k('Alpha generated / yr',`<span class="${y.ra.alpha>=0?'up':'down'}" style="color:inherit">${sp(y.ra.alpha)}</span>`,`t = ${y.ra.t.toFixed(1)} · ${sigTxt(y.ra.t)} · vs S&P since ${H.months[0].slice(0,4)}`)+
-    k(`Median in ${$('mcYears').value}y (MC)`,mc?eur(mc.y.bands[2][mc.y.T]):'—',mc?`<span class="${mc.y.bands[2][mc.y.T]>=mc.t.bands[2][mc.t.T]?'up':'down'}">${eur(mc.y.bands[2][mc.y.T]-mc.t.bands[2][mc.t.T])}</span> vs max-Sharpe`:'');}
+    k(`Median in ${$('mcYears').value}y${mc&&mc.y.real?' · today\'s €':''}`,mc?eur(mc.y.bands[2][mc.y.T]):'—',mc?`<span class="${mc.y.bands[2][mc.y.T]>=mc.t.bands[2][mc.t.T]?'up':'down'}">${eur(mc.y.bands[2][mc.y.T]-mc.t.bands[2][mc.t.T])}</span> vs max-Sharpe`:'');}
 function allocList(){let h='',cur='';const t=O.tangency.w;
   ORDER.forEach(i=>{const a=A[i];if(a.cls!==cur){cur=a.cls;h+=`<div class="grp"><span><span class="dot" style="background:var(${CLS[cur][1]})"></span>${CLS[cur][0]}</span><span id="g_${cur}"></span></div>`;}
     h+=`<div class="ar${S.active[i]?'':' off'}"><div class="nm" title="${a.name}">${a.name}<small>${a.ticker}</small></div>
@@ -584,11 +591,12 @@ function updAlloc(){let s=0;for(const x of S.w)s+=x;$('sumTxt').textContent=`Σ 
   const y=port(S.w);ctx.fillStyle=css('--fg');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 15px "Bricolage Grotesque",sans-serif';ctx.fillText(y.effN.toFixed(1),60,56);ctx.font='9px "IBM Plex Sans",sans-serif';ctx.fillStyle=css('--muted');ctx.fillText('effective #',60,72);}
 
 /* ---------- Monte Carlo ---------- */
+function mcOpts(){return {infl:Math.max(0,(+$('mcInfl').value||0)/100),real:$('mcReal').value==='real'};}
 function runMC(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),paths=+$('mcPaths').value,st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
-  const y=port(S.w),t=port(O.tangency.w);const run=p=>monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths,start:st,monthly:mo,seed:42});
+  const y=port(S.w),t=port(O.tangency.w);const io=mcOpts();const run=p=>monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths,start:st,monthly:mo,seed:42,...io});
   const ry=run(y),rt=run(t);window._mc={y:ry,t:rt};
   const cv=$('cMC');const {ctx,W,H:Hh}=setup(cv,260,.42);const pad={l:68,r:16,t:14,b:40};const top=Math.max(ry.bands[4][ry.T],rt.bands[3][rt.T]);
-  const {X,Y}=axes(ctx,W,Hh,pad,[0,yrs],[0,top*1.04],v=>v+'y',v=>v>=1e6?'€'+(v/1e6).toFixed(1)+'M':'€'+Math.round(v/1000)+'k','Years from today');
+  const {X,Y}=axes(ctx,W,Hh,pad,[0,yrs],[0,top*1.04],v=>v+'y',v=>v>=1e6?'€'+(v/1e6).toFixed(1)+'M':'€'+Math.round(v/1000)+'k','Years from today',io.real?`Value in today's euros (inflation ${pct(io.infl)})`:'Value in future euros');
   ctx.save();ctx.beginPath();ctx.rect(pad.l,pad.t,W-pad.l-pad.r,Hh-pad.t-pad.b);ctx.clip();
   ctx.globalAlpha=.12;ry.samples.forEach(s=>line(ctx,Array.from(s,(v,i)=>[X(i/12),Y(v)]),css('--you'),.8));ctx.globalAlpha=1;
   const band=(lo,hi,a)=>{ctx.beginPath();for(let i=0;i<=ry.T;i++)ctx.lineTo(X(i/12),Y(hi[i]));for(let i=ry.T;i>=0;i--)ctx.lineTo(X(i/12),Y(lo[i]));ctx.closePath();ctx.globalAlpha=a;ctx.fillStyle=css('--you');ctx.fill();ctx.globalAlpha=1;};
@@ -596,9 +604,9 @@ function runMC(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),path
   line(ctx,Array.from(rt.bands[2],(v,i)=>[X(i/12),Y(v)]),css('--accent'),2,[7,4]);line(ctx,Array.from(ry.bands[2],(v,i)=>[X(i/12),Y(v)]),css('--you'),3);ctx.restore();
   HITS.mc=[];for(let k=1;k<=yrs;k++){const i=k*12;HITS.mc.push({x:X(k),y:Y(ry.bands[2][i]),label:`Year ${k} · yours: median ${eur(ry.bands[2][i])} (5%: ${eur(ry.bands[0][i])}, 95%: ${eur(ry.bands[4][i])}) · max-Sharpe ${eur(rt.bands[2][i])}`});}tip(cv,'mc');
   const s=(k,v,c)=>`<div class="st"><span class="k">${k}</span><span class="v">${v}</span><span class="c">${c}</span></div>`;
-  $('mcStats').innerHTML=s('Money invested',eur(ry.invested),'same for both')+s('Median final value',eur(ry.bands[2][ry.T]),'max-Sh '+eur(rt.bands[2][rt.T]))+s('Bad case (5th pct)',eur(ry.bands[0][ry.T]),'max-Sh '+eur(rt.bands[0][rt.T]))+s('Good case (95th pct)',eur(ry.bands[4][ry.T]),'max-Sh '+eur(rt.bands[4][rt.T]))+
-    s('Expected annual return (median)',pct(ry.annMed),'max-Sh '+pct(rt.annMed))+s('Annual return range 5–95%',pct(ry.ann5,0)+' to '+pct(ry.ann95,0),'max-Sh '+pct(rt.ann5,0)+' to '+pct(rt.ann95,0))+
-    s('Chance of ending below invested',pct(ry.pLoss),'max-Sh '+pct(rt.pLoss))+s('Chance of doubling your money',pct(ry.pDouble),'max-Sh '+pct(rt.pDouble))+
+  const rl=io.real?' (real)':'';$('mcStats').innerHTML=s('Money invested'+(io.real?', today\'s €':''),eur(ry.invested),io.real&&io.infl?`${eur(st+mo*ry.T)} in nominal euros`:'same for both')+s('Median final value'+(io.real?', today\'s €':''),eur(ry.bands[2][ry.T]),io.real&&io.infl?`= ${eur(ry.bands[2][ry.T]*ry.deflT)} nominal · max-Sh ${eur(rt.bands[2][rt.T])}`:'max-Sh '+eur(rt.bands[2][rt.T]))+s('Bad case (5th pct)',eur(ry.bands[0][ry.T]),'max-Sh '+eur(rt.bands[0][rt.T]))+s('Good case (95th pct)',eur(ry.bands[4][ry.T]),'max-Sh '+eur(rt.bands[4][rt.T]))+
+    s('Annual return, median'+rl,pct(ry.annMed),'max-Sh '+pct(rt.annMed))+s('Annual return range 5–95%',pct(ry.ann5,0)+' to '+pct(ry.ann95,0),'max-Sh '+pct(rt.ann5,0)+' to '+pct(rt.ann95,0))+
+    s('Chance of ending below invested'+rl,pct(ry.pLoss),'max-Sh '+pct(rt.pLoss))+s('Chance of doubling your money'+rl,pct(ry.pDouble),'max-Sh '+pct(rt.pDouble))+(io.real&&io.infl?s('Lost to inflation (median)',eur(ry.bands[2][ry.T]*ry.deflT-ry.bands[2][ry.T]),`prices ${sp(ry.deflT-1,0)} higher in ${yrs}y`):'')+
     s('1-year VaR 95%',pct(ry.var1y),'max-Sh '+pct(rt.var1y))+s('1-year CVaR 95%',pct(ry.cvar1y),'max-Sh '+pct(rt.cvar1y))+s('Chance of a losing first year',pct(ry.pDown1y),'max-Sh '+pct(rt.pDown1y))+
     s('Max drawdown, median path',pct(ry.ddMed,0),'max-Sh '+pct(rt.ddMed,0))+s('Max drawdown, worst 5%',pct(ry.dd95,0),'max-Sh '+pct(rt.dd95,0));
   const hv=$('cHistA');const g=setup(hv,150,.22);const pd={l:44,r:16,t:10,b:30};const P=ry.ann.length;
@@ -703,13 +711,13 @@ function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;
 function irrAnnual(start,monthly,T,F){const fv=i=>i===0?start+monthly*T:start*Math.pow(1+i,T)+monthly*(Math.pow(1+i,T)-1)/i;let lo=-.2,hi=.2;for(let k=0;k<100;k++){const m=(lo+hi)/2;if(fv(m)>F)hi=m;else lo=m;}return Math.pow(1+(lo+hi)/2,12)-1;}
 function yearStats(series){const by={};series.forEach((r,t)=>{const y=H.months[t].slice(0,4);(by[y]=by[y]||[]).push(r);});let worst=null,best=null;
   for(const y in by){if(by[y].length<6)continue;const g=by[y].reduce((v,r)=>v*(1+r),1)-1;const lab=by[y].length<12?y+' YTD':y;if(!worst||g<worst.v)worst={v:g,y:lab};if(!best||g>best.v)best={v:g,y:lab};}return {worst,best};}
-function drawCompare(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
+function drawCompare(){const io=mcOpts();const irrR=mc=>{const i=irrAnnual(+$('mcStart').value||0,+$('mcMonthly').value||0,mc.T,mc.bands[2][mc.T]*(mc.real?mc.deflT:1));return mc.real?(1+i)/(1+mc.infl)-1:i;};const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
   const L=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Min variance','--minv',O.minvar.w],['Max Sortino','--c-crypto',D.tangency.w],['Min downside','--muted',D.minvar.w],['Risk parity','--c-bond',RP]];
   if(RES)L.push(['Resampled','--c-tech',RES]);L.push(['Equal weight','--c-def',A.map(()=>1/N)],['Cap-weighted','--c-fin',capW()]);
-  const rows=L.map(([n,c,w])=>{const p=port(w);const mc=monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42});const hs=portListed(H.R,p.w);const g=growth(hs);const ys=yearStats(hs);
-    return {n,c,ret:p.ret,vol:p.vol,sh:p.sharpe,so:p.sortino,beta:p.beta,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrAnnual(st,mo,mc.T,mc.bands[2][mc.T]),ploss:mc.pLoss,cagr:g.cagr,worst:ys.worst,mdd:g.maxDD,alpha:p.ra.alpha};});
-  {const mu=S.rf+S.erp,vol=M.mkt.sd,mm=H.mkt.reduce((a,b)=>a+b,0)/H.T;const ser=Float64Array.from(H.mkt,x=>x-mm+mu/12);const mc=monteCarlo({method:meth,series:ser,mu,vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42});const g=growth(H.mkt);const rs=riskStats(H.mkt,M.marM);
-    rows.push({n:'S&P 500',c:'--spx',ret:mu,vol,sh:(mu-S.rf)/vol,so:(mu-S.mar)/rs.dd,beta:1,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrAnnual(st,mo,mc.T,mc.bands[2][mc.T]),ploss:mc.pLoss,cagr:g.cagr,worst:yearStats(H.mkt).worst,mdd:g.maxDD,alpha:0});}
+  const rows=L.map(([n,c,w])=>{const p=port(w);const mc=monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const hs=portListed(H.R,p.w);const g=growth(hs);const ys=yearStats(hs);
+    return {n,c,ret:p.ret,vol:p.vol,sh:p.sharpe,so:p.sortino,beta:p.beta,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrR(mc),ploss:mc.pLoss,cagr:g.cagr,worst:ys.worst,mdd:g.maxDD,alpha:p.ra.alpha};});
+  {const mu=S.rf+S.erp,vol=M.mkt.sd,mm=H.mkt.reduce((a,b)=>a+b,0)/H.T;const ser=Float64Array.from(H.mkt,x=>x-mm+mu/12);const mc=monteCarlo({method:meth,series:ser,mu,vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const g=growth(H.mkt);const rs=riskStats(H.mkt,M.marM);
+    rows.push({n:'S&P 500',c:'--spx',ret:mu,vol,sh:(mu-S.rf)/vol,so:(mu-S.mar)/rs.dd,beta:1,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrR(mc),ploss:mc.pLoss,cagr:g.cagr,worst:yearStats(H.mkt).worst,mdd:g.maxDD,alpha:0});}
   const C=[['ret','Expected return',x=>pct(x),1],['vol','Risk (volatility)',x=>pct(x),-1],['sh','Sharpe',x=>x.toFixed(2),1],['so','Sortino',x=>x.toFixed(2),1],['beta','Beta',x=>x.toFixed(2),0],
     ['fin',`Value in ${yrs}y (median)`,x=>eur(x),1],['irr','IRR',x=>pct(x),1],['bad','Bad case (5%)',x=>eur(x),1],['ploss','Chance below invested',x=>pct(x),-1],
     ['cagr','Annual return',x=>pct(x),1],['worst','Worst year',x=>x?sp(x.v)+`<small>${x.y}</small>`:'—',1,x=>x?x.v:0],['mdd','Max drawdown',x=>pct(-x),-1],['alpha','Alpha / yr',x=>sp(x),1]];
@@ -718,7 +726,7 @@ function drawCompare(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)
   const grp=k=>k<5?'cg1':k<9?'cg2':'cg3';
   $('cmpTable').innerHTML=`<thead><tr><th>Portfolio</th>${C.map((c,k)=>`<th class="${grp(k)}">${c[1]}</th>`).join('')}</tr></thead><tbody>`+
     rows.map(r=>`<tr class="${r.n==='Yours'?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.n}</td>${C.map(([k,,f])=>`<td class="${cls(k,r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('')+'</tbody>';
-  $('cmpKick').innerHTML=`<span class="gtag cg1">Expected · model</span> <span class="gtag cg2">Future · Monte Carlo, ${eur(st)} + ${eur(mo)}/mo for ${yrs}y</span> <span class="gtag cg3">Past · ${H.months[0].slice(0,4)}–2026 real data</span>`;}
+  $('cmpKick').innerHTML=`<span class="gtag cg1">Expected · model</span> <span class="gtag cg2">Future · Monte Carlo, ${eur(st)} + ${eur(mo)}/mo for ${yrs}y${io.real?`, today's € (inflation ${pct(io.infl)})`:', nominal €'}</span> <span class="gtag cg3">Past · ${H.months[0].slice(0,4)}–2026 real data</span>`;}
 /* ---------- Alpha ---------- */
 function sigTxt(t){const a=Math.abs(t);return a>=2.58?'significant at 99%':a>=1.96?'significant at 95%':a>=1.65?'weak (90%)':'not significant';}
 function drawAlpha(){const P=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]].map(([n,c,w])=>({n,c,p:port(w)}));
@@ -795,7 +803,7 @@ const PINFO={
 $('pRes').onclick=()=>{if(RES){setW(RES);return;}const K=40,acc=new Float64Array(N),r=rng(7),o=opts();let k=0;const btn=$('pRes'),pb=$('resProg');btn.classList.add('busy');pb.hidden=false;
   const step=()=>{const w=resampleStep(M,o,M._capA,k,r);for(let i=0;i<N;i++)acc[i]+=w[i]/K;k++;pb.firstElementChild.style.width=(k/K*100)+'%';btn.textContent=`Resampling ${k}/${K}`;if(k<K)setTimeout(step,0);else{RES=acc;btn.textContent='Resampled';btn.classList.remove('busy');pb.hidden=true;setW(RES);}};setTimeout(step,20);};
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);try{localStorage.setItem('fl3-tab',b.dataset.tab)}catch(_){}drawVisible();});
-['mcStart','mcMonthly','mcYears','mcMethod','mcPaths'].forEach(id=>$(id).addEventListener('change',()=>{runMC();window._cmpDirty=1;}));
+['mcStart','mcMonthly','mcYears','mcMethod','mcPaths','mcInfl','mcReal'].forEach(id=>$(id).addEventListener('change',()=>{runMC();window._cmpDirty=1;}));
 $('btIn').onclick=()=>{btMode='in';drawBT();};$('btOut').onclick=()=>{btMode='out';drawBT();};
 $('rf').value=(S.rf*100).toFixed(2);$('mar').value=(S.mar*100).toFixed(2);
 const num=(id,f)=>$(id).addEventListener('change',e=>{f(+e.target.value);full();});
