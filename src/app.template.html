@@ -1,0 +1,431 @@
+<title>Frontier Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/*__STYLE__*/
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:none;border-radius:0;background:none;color:var(--muted);padding:6px 12px}
+.seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
+.prog{height:4px;background:var(--panel2);border-radius:2px;overflow:hidden}
+.prog>div{height:100%;background:var(--accent);width:0}
+.rb{display:grid;grid-template-columns:minmax(110px,170px) 1fr 54px 54px;gap:4px 10px;align-items:center;font-size:.78rem}
+.rb .bars{display:flex;flex-direction:column;gap:2px}
+.rb .bars i{display:block;height:6px;border-radius:3px}
+.rb .h{font-size:.64rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.rb .num{font-family:var(--mono);text-align:right;font-size:.74rem}
+.heat td{font-weight:500}
+.views{display:flex;flex-direction:column;gap:8px}
+.vrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.vrow select,.vrow input[type=number]{font-family:var(--mono);font-size:.78rem;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 6px}
+.vrow input[type=number]{width:70px}
+.vrow input[type=range]{accent-color:var(--accent);width:110px}
+.vrow .eff{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-left:auto}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.busy{opacity:.55;pointer-events:none}
+.kicker{font-size:.72rem;color:var(--muted)}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1>Frontier <em>Lab</em></h1>
+    <div class="sub">Portfolio construction on 15 years of real monthly prices: Black-Litterman, Ledoit-Wolf, downside risk, stress tests and out-of-sample backtests.</div>
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 32 assets on 15 years of data…</div></div></section>
+
+<div class="main">
+<aside class="panel" aria-label="Allocation">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2>Your allocation</h2><h3>max-Sharpe in grey</h3></div>
+  <div class="presets">
+    <button id="pTan">Max Sharpe</button><button id="pMin">Min variance</button><button id="pSor">Max Sortino</button><button id="pMdd">Min downside</button><button id="pRP">Risk parity</button><button id="pRes">Resampled</button><button id="pEq">Equal</button><button id="pClr" class="ghost">Clear</button>
+  </div>
+  <div class="prog" id="resProg" hidden><div></div></div>
+  <div class="mixrow"><canvas id="cDonut" height="120" style="width:120px"></canvas><div class="mixleg" id="mixLeg"></div></div>
+  <div class="sumbar"><span id="sumTxt">Σ 100%</span><button id="normBtn">Scale to 100%</button></div>
+  <div class="alloc" id="alloc"></div>
+</aside>
+
+<section class="panel">
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="mc" aria-selected="true">Monte Carlo</button>
+    <button role="tab" data-tab="frontier">Frontier &amp; CML</button>
+    <button role="tab" data-tab="down">Downside risk</button>
+    <button role="tab" data-tab="rb">Risk budget</button>
+    <button role="tab" data-tab="stress">Stress tests</button>
+    <button role="tab" data-tab="bt">Backtests</button>
+    <button role="tab" data-tab="capm">CAPM &amp; SML</button>
+    <button role="tab" data-tab="corr">Correlation</button>
+    <button role="tab" data-tab="model">Model &amp; views</button>
+  </nav>
+
+  <!-- MONTE CARLO -->
+  <div data-pane="mc" style="display:flex;flex-direction:column;gap:14px">
+    <div class="controls">
+      <div class="field"><label for="mcStart">Starting capital €</label><input id="mcStart" type="number" value="10000" step="500" min="0"></div>
+      <div class="field"><label for="mcMonthly">Monthly contribution €</label><input id="mcMonthly" type="number" value="200" step="50" min="0"></div>
+      <div class="field"><label for="mcYears">Horizon (years)</label><input id="mcYears" type="number" value="10" min="1" max="40"></div>
+      <div class="field"><label for="mcMethod">Method</label><select id="mcMethod"><option value="boot">Bootstrap of real months</option><option value="norm">Log-normal</option></select></div>
+      <div class="field"><label for="mcPaths">Paths</label><select id="mcPaths"><option>1000</option><option selected>3000</option><option>10000</option></select></div>
+    </div>
+    <div class="chart"><canvas id="cMC" height="380"></canvas></div>
+    <div class="legend"><span><i style="background:var(--you);opacity:.3;height:9px"></i>Yours 5–95%</span><span><i style="background:var(--you);opacity:.55;height:9px"></i>Yours 25–75%</span><span><i style="background:var(--you)"></i>Yours median</span><span><i style="background:var(--accent)"></i>Max-Sharpe median</span><span><i style="background:var(--faint)"></i>Money invested</span></div>
+    <div class="stats" id="mcStats"></div>
+    <h3>Distribution of annualized returns over the horizon</h3>
+    <div class="chart"><canvas id="cHistA" height="220"></canvas></div>
+    <p class="note">Re-runs on every weight change. <b>Bootstrap</b> replays real months from the estimation window in random 6-month blocks, keeping crashes, fat tails and co-movement; each asset's average is shifted to its forward expected return. Before an asset listed, its months are back-filled from its beta to the S&amp;P 500. <b>Log-normal</b> uses only expected return and volatility. Teal figures are the max-Sharpe portfolio.</p>
+  </div>
+
+  <!-- FRONTIER -->
+  <div data-pane="frontier" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="chart"><canvas id="cFront" height="440"></canvas></div>
+    <div class="legend" id="legFront"></div>
+    <div class="g2">
+      <p class="note">Grey dots are 4,000 random portfolios. The curve is the efficient frontier under your weight cap; the dashed <b>CML</b> runs from the T-bill rate through the max-Sharpe portfolio. Hover or tap points for detail.</p>
+      <div class="cmpgrid" id="cmpFront"></div>
+    </div>
+  </div>
+
+  <!-- DOWNSIDE -->
+  <div data-pane="down" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="cmpgrid" id="cmpDown"></div>
+    <div class="chart"><canvas id="cDown" height="420"></canvas></div>
+    <div class="legend" id="legDown"></div>
+    <p class="note">Downside deviation counts only months below your <b>minimum acceptable return (MAR)</b>, currently <b id="marL"></b> a year. The curve is the mean–downside frontier; the max-Sortino and min-downside portfolios are optimized on the portfolio's own semicovariance. VaR and CVaR are historical, monthly, 95%. Omega = gains above MAR ÷ shortfalls below it.</p>
+    <div class="scroll"><table id="dTable"></table></div>
+  </div>
+
+  <!-- RISK BUDGET -->
+  <div data-pane="rb" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="cmpgrid" id="rbCards"></div>
+    <div class="legend"><span><i style="background:var(--faint);height:6px"></i>Share of capital</span><span><i style="background:var(--you);height:6px"></i>Share of portfolio risk</span></div>
+    <div class="rb" id="rbList"></div>
+    <p class="note">Risk contribution = weight × the asset's covariance with the whole portfolio ÷ portfolio variance; contributions add up to 100%. An asset whose amber bar is much longer than its grey bar adds more risk than its capital share suggests. <b>Risk parity</b> sets every contribution equal, which is how many institutional multi-asset funds are built.</p>
+  </div>
+
+  <!-- STRESS -->
+  <div data-pane="stress" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="scroll"><table id="stTable" class="heat"></table></div>
+    <div class="chart"><canvas id="cStress" height="300"></canvas></div>
+    <div class="legend"><span><i style="background:var(--you)"></i>Yours</span><span><i style="background:var(--accent)"></i>Max Sharpe</span><span><i style="background:var(--spx)"></i>S&amp;P 500</span></div>
+    <p class="note">What each portfolio would have done, with today's weights, through real market episodes. Assets not yet listed at the time are left out and the remaining weights rescaled; cells marked * covered less than 80% of the portfolio. Worst 12 months is the worst rolling 12-month return over the full 15 years.</p>
+  </div>
+
+  <!-- BACKTESTS -->
+  <div data-pane="bt" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="btnrow"><div class="seg" role="group" aria-label="Backtest type"><button id="btIn" aria-pressed="true">In-sample</button><button id="btOut" aria-pressed="false">Walk-forward (out-of-sample)</button></div><span class="kicker" id="btKick"></span></div>
+    <div class="prog" id="wfProg" hidden><div></div></div>
+    <div class="chart"><canvas id="cBT" height="380"></canvas></div>
+    <div class="legend" id="legBT"></div>
+    <div class="chart"><canvas id="cDD" height="160"></canvas></div>
+    <div class="scroll"><table id="btTable"></table></div>
+    <p class="note" id="btNote"></p>
+  </div>
+
+  <!-- CAPM -->
+  <div data-pane="capm" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="chart"><canvas id="cSML" height="420"></canvas></div>
+    <p class="note">Betas against SPY (S&amp;P 500 with dividends), monthly, over each asset's history in the window. SML: r<sub>f</sub> + β·ERP. Dots above the line carry positive Jensen's alpha on the expected returns in use.</p>
+    <div class="scroll"><table id="alphaTable"></table></div>
+  </div>
+
+  <!-- CORR -->
+  <div data-pane="corr" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="scroll"><div class="chart" style="min-width:620px"><canvas id="cCorr" height="640"></canvas></div></div>
+    <div class="legend"><span><i class="dot" style="background:var(--bad)"></i>−1</span><span><i class="dot" style="background:var(--panel2)"></i>0</span><span><i class="dot" style="background:var(--accent)"></i>+1</span><span id="rbar"></span></div>
+    <div class="pairs"><div><h3>Most correlated</h3><ol id="hiPairs"></ol></div><div><h3>Best diversifiers</h3><ol id="loPairs"></ol></div></div>
+  </div>
+
+  <!-- MODEL -->
+  <div data-pane="model" hidden style="display:flex;flex-direction:column;gap:16px">
+    <div class="controls">
+      <div class="field"><label for="win">Estimation window</label><select id="win"><option value="181">15 years (Oct 2011–)</option><option value="120">10 years</option><option value="60">5 years</option></select></div>
+      <div class="field"><label for="mode">Expected returns</label><select id="mode"><option value="bl">Black-Litterman</option><option value="blend">History–CAPM blend</option><option value="hist">Pure history</option></select></div>
+      <div class="field"><label for="trust"><span id="trustT">Confidence in history as a view</span>: <b id="trustL">25%</b></label><input id="trust" type="range" min="0" max="100" value="25"></div>
+    </div>
+    <div class="controls">
+      <div class="field"><label for="rf">Risk-free %</label><input id="rf" type="number" step="0.05"></div>
+      <div class="field"><label for="erp">Equity risk premium %</label><input id="erp" type="number" step="0.25" value="5"></div>
+      <div class="field"><label for="mar">Min acceptable return %</label><input id="mar" type="number" step="0.25"></div>
+      <div class="field"><label for="cap">Max weight per asset %</label><input id="cap" type="number" step="1" min="4" max="100" value="15"></div>
+      <div class="field"><label for="tau">BL τ</label><input id="tau" type="number" step="0.01" min="0.01" max="1" value="0.05"></div>
+      <div class="field"><label for="shrink">Correlation shrinkage: <b id="shrinkL"></b></label><input id="shrink" type="range" min="0" max="100"></div>
+      <button id="lwBtn">Use Ledoit-Wolf optimum</button>
+    </div>
+    <p class="note"><b>Black-Litterman</b> starts from equilibrium returns (CAPM: r<sub>f</sub> + β × ERP), which carry no opinion, then tilts them toward views in proportion to your confidence. The slider adds each asset's own history as a view; your views below come on top. <b>Ledoit-Wolf</b> picks the shrinkage that minimises expected estimation error, computed on the months where all 32 assets traded.</p>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Your views</h2><button id="addView">Add view</button></div>
+    <div class="views" id="views"></div>
+    <div class="scroll"><table id="aTable"></table></div>
+  </div>
+</section>
+</div>
+</div>
+
+<script>const RAW=`/*__DATA__*/`;</script>
+<script>
+/*__ENGINE__*/
+</script>
+<script>
+const CLS={tech:['Tech platforms','--c-tech'],semi:['Semis & AI hardware','--c-semi'],power:['AI power & industrials','--c-power'],fin:['Financials','--c-fin'],def:['Defensive & consumer','--c-def'],cmdty:['Commodities','--c-cmdty'],crypto:['Crypto','--c-crypto'],bond:['Bonds','--c-bond']};
+const $=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const pct=(x,d=1)=>(x*100).toFixed(d)+'%';
+const sp=(x,d=1)=>(x>=0?'+':'')+(x*100).toFixed(d)+'%';
+const eur=x=>(x<0?'−':'')+'€'+Math.abs(Math.round(x)).toLocaleString('en-GB');
+const HF=parseData(RAW),N=HF.ids.length,A=HF.ids.map(id=>({id,name:META[id][0],ticker:META[id][1],cls:META[id][2]}));
+const ORDER=A.map((a,i)=>i).sort((p,q)=>Object.keys(CLS).indexOf(A[p].cls)-Object.keys(CLS).indexOf(A[q].cls));
+const RF0=0.04057;
+const S={win:181,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
+let H,M,O,D,RP,RES=null,WF=null,cloud,LW;
+
+function opts(){return {rf:S.rf,erp:S.erp,mar:S.mar,shrink:S.shrink,mode:S.mode,trust:S.trust,tau:S.tau,views:effViews(),override:S.override,cap:S.cap,active:S.active};}
+function effViews(){const v=S.views.filter(x=>x.a&&(x.type==='abs'||x.b&&x.b!==x.a)).map(x=>({...x}));
+  if(S.mode==='bl'&&S.trust>0&&M0)A.forEach((a,i)=>{if(S.active[i])v.push({a:a.id,type:'abs',q:M0.hm[i],conf:S.trust,hist:true});});return v;}
+let M0=null;
+function rebuild(){
+  H=sliceH(HF,S.win);LW=ledoitWolf(H);if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);
+  M0=buildModel(H,{...opts(),views:[],mode:'hist'});M=buildModel(H,opts());
+  const k=S.active.filter(Boolean).length,capE=Math.max(S.cap,1/k+1e-6),capA=Float64Array.from(A.map((a,i)=>S.active[i]?capE:0));
+  O=optimize(M.mu,M.S,capA,S.rf);D=optimizeDownside(M.F,M.mu,capA,S.mar,M.marM,[O.tangency.w,O.minvar.w]);RP=riskParity(M.S,S.active);
+  cloud=randomPortfolios(M.mu,M.S,S.rf,4000,11,S.active);RES=null;WF=null;M._capA=capA;
+  if(!S.w)S.w=Float64Array.from(O.tangency.w);
+}
+function norm(w){let s=0;for(const x of w)s+=x;return s>0?Float64Array.from(w,x=>x/s):Float64Array.from(w);}
+const PC=new Map();
+function port(w){const wn=norm(w);const key=Array.from(wn,x=>x.toFixed(5)).join();if(PC.has(key))return PC.get(key);
+  const st=stats(wn,M.mu,M.S);const b=dot(wn,M.beta);const ser=portSeries(M.F,wn);const rs=riskStats(ser,M.marM);const sdd=Math.sqrt(Math.max(0,dot(wn,matVec(M.SC,wn))));
+  const sw=Array.from(wn).reduce((s,x,i)=>s+x*M.sd[i],0);
+  const p={w:wn,ret:st.ret,vol:st.vol,beta:b,sharpe:st.vol?(st.ret-S.rf)/st.vol:0,alpha:st.ret-(S.rf+b*S.erp),var95:Math.max(0,-(st.ret-1.645*st.vol)),effN:1/wn.reduce((t,x)=>t+x*x,0),rs,sdd,dbeta:dot(wn,M.dbeta),sortino:rs.dd?(st.ret-S.mar)/rs.dd:0,divRatio:st.vol?sw/st.vol:1};
+  if(PC.size>200)PC.clear();PC.set(key,p);return p;}
+
+/* ---------- chart kit ---------- */
+function setup(cv,minH){const dpr=window.devicePixelRatio||1;const w=cv.clientWidth||cv.parentElement.clientWidth;const base=+cv.getAttribute('height');const h=Math.max(minH||200,Math.round(base*Math.min(1,Math.max(.65,w/760))));cv.style.height=h+'px';cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,W:w,H:h};}
+function ticks(lo,hi,n){const span=hi-lo||1,raw=span/n,mag=Math.pow(10,Math.floor(Math.log10(raw)));const st=[1,2,2.5,5,10].map(m=>m*mag).find(s=>span/s<=n)||10*mag;const t=[];for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st)t.push(+v.toFixed(10));return t;}
+function axes(ctx,W,Hh,pad,xd,yd,xf,yf,xl,yl,xt){
+  const X=v=>pad.l+(v-xd[0])/(xd[1]-xd[0])*(W-pad.l-pad.r),Y=v=>Hh-pad.b-(v-yd[0])/(yd[1]-yd[0])*(Hh-pad.t-pad.b);
+  ctx.font='11px "JetBrains Mono",monospace';ctx.lineWidth=1;
+  for(const t of ticks(yd[0],yd[1],5)){const y=Y(t);ctx.strokeStyle=css('--line');ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle=css('--muted');ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(yf(t),pad.l-8,y);}
+  for(const t of (xt||ticks(xd[0],xd[1],W<520?4:7))){const x=X(t);if(x<pad.l-1||x>W-pad.r+1)continue;ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(xf(t),x,Hh-pad.b+7);}
+  ctx.font='11px "IBM Plex Sans",sans-serif';ctx.fillStyle=css('--faint');
+  if(xl){ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(xl,(pad.l+W-pad.r)/2,Hh-2);}
+  if(yl){ctx.save();ctx.translate(11,(pad.t+Hh-pad.b)/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(yl,0,0);ctx.restore();}
+  return {X,Y};}
+const HITS={};
+function tip(cv,key){const wrap=cv.parentElement;let t=wrap.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';t.hidden=true;wrap.appendChild(t);}
+  if(cv._t)return;cv._t=1;const mv=e=>{const r=cv.getBoundingClientRect(),p=e.touches?e.touches[0]:e,x=p.clientX-r.left,y=p.clientY-r.top;let b=null,bd=24*24;
+    for(const h of HITS[key]||[]){const d=(h.x-x)**2+(h.y-y)**2;if(d<bd){bd=d;b=h;}}if(!b){t.hidden=true;return;}t.textContent=b.label;t.hidden=false;const tw=t.offsetWidth;t.style.left=Math.min(Math.max(0,b.x-tw/2),r.width-tw)+'px';t.style.top=Math.max(0,b.y-36)+'px';};
+  cv.addEventListener('mousemove',mv);cv.addEventListener('click',mv);cv.addEventListener('touchstart',mv,{passive:true});cv.addEventListener('mouseleave',()=>t.hidden=true);}
+function dotC(ctx,x,y,r,f,s){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=f;ctx.fill();if(s){ctx.lineWidth=2;ctx.strokeStyle=s;ctx.stroke();}}
+function dia(ctx,x,y,r,f){ctx.beginPath();ctx.moveTo(x,y-r);ctx.lineTo(x+r,y);ctx.lineTo(x,y+r);ctx.lineTo(x-r,y);ctx.closePath();ctx.fillStyle=f;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=css('--panel');ctx.stroke();}
+function line(ctx,pts,col,w,dash){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.setLineDash(dash||[]);ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();ctx.setLineDash([]);}
+function hexMix(a,b,t){const p=c=>{c=c.replace('#','');return[0,2,4].map(k=>parseInt(c.substr(k,2),16));};const x=p(a),y=p(b);return `rgb(${x.map((v,k)=>Math.round(v+(y[k]-v)*t)).join(',')})`;}
+function label(ctx,txt,x,y){ctx.fillStyle=css('--muted');ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText(txt,x+6,y-5);}
+
+/* ---------- hero & allocation ---------- */
+function hero(){const y=port(S.w),t=port(O.tangency.w),mc=window._mc;
+  const d=(a,b,inv,f)=>{const df=a-b;const g=inv?df<=0:df>=0;return `<span class="${Math.abs(df)<1e-4?'':g?'up':'down'}">${f(df)}</span> vs max-Sharpe`;};
+  const k=(l,v,c)=>`<div class="hk"><div class="lbl">${l}</div><div class="val">${v}</div><div class="cmp">${c}</div></div>`;
+  $('hero').innerHTML=k('Expected return / yr',pct(y.ret),d(y.ret,t.ret,0,x=>sp(x)))+k('Volatility',pct(y.vol),d(y.vol,t.vol,1,x=>sp(x)))+k('Sharpe ratio',y.sharpe.toFixed(2),d(y.sharpe,t.sharpe,0,x=>(x>=0?'+':'')+x.toFixed(2)))+
+    k('Sortino ratio',y.sortino.toFixed(2),d(y.sortino,t.sortino,0,x=>(x>=0?'+':'')+x.toFixed(2)))+k('Beta · Jensen α',y.beta.toFixed(2)+' · '+sp(y.alpha),`CAPM requires ${pct(S.rf+y.beta*S.erp)}`)+
+    k(`Median in ${$('mcYears').value}y (MC)`,mc?eur(mc.y.bands[2][mc.y.T]):'—',mc?`<span class="${mc.y.bands[2][mc.y.T]>=mc.t.bands[2][mc.t.T]?'up':'down'}">${eur(mc.y.bands[2][mc.y.T]-mc.t.bands[2][mc.t.T])}</span> vs max-Sharpe`:'');}
+function allocList(){let h='',cur='';const t=O.tangency.w;
+  ORDER.forEach(i=>{const a=A[i];if(a.cls!==cur){cur=a.cls;h+=`<div class="grp"><span><span class="dot" style="background:var(${CLS[cur][1]})"></span>${CLS[cur][0]}</span><span id="g_${cur}"></span></div>`;}
+    h+=`<div class="ar${S.active[i]?'':' off'}"><div class="nm" title="${a.name}">${a.name}<small>${a.ticker}</small></div>
+      <input type="number" id="n${i}" data-i="${i}" min="0" max="100" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight %">
+      <input type="range" id="r${i}" data-i="${i}" min="0" max="40" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight slider">
+      <div class="optw"><span>max-Sh ${pct(t[i])}</span><span>E[R] ${pct(M.mu[i],0)} · σ ${pct(M.sd[i],0)}</span></div></div>`;});
+  $('alloc').innerHTML=h;updAlloc();}
+function updAlloc(){let s=0;for(const x of S.w)s+=x;$('sumTxt').textContent=`Σ ${(s*100).toFixed(1)}%`+(Math.abs(s-1)>.0005?' · scaled to 100% in all figures':'');
+  const wn=norm(S.w),g={};A.forEach((a,i)=>g[a.cls]=(g[a.cls]||0)+wn[i]);Object.keys(CLS).forEach(c=>{const el=$('g_'+c);if(el)el.textContent=pct(g[c]||0);});
+  $('mixLeg').innerHTML=Object.entries(g).filter(e=>e[1]>.0005).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<span><span><i style="background:var(${CLS[c][1]})"></i>${CLS[c][0]}</span><em>${pct(v,0)}</em></span>`).join('');
+  const cv=$('cDonut');const dpr=window.devicePixelRatio||1;cv.width=120*dpr;cv.height=120*dpr;cv.style.height='120px';const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  let a0=-Math.PI/2;Object.entries(g).forEach(([c,v])=>{if(v<=0)return;ctx.beginPath();ctx.arc(60,60,54,a0,a0+v*2*Math.PI);ctx.arc(60,60,36,a0+v*2*Math.PI,a0,true);ctx.closePath();ctx.fillStyle=css(CLS[c][1]);ctx.fill();a0+=v*2*Math.PI;});
+  const y=port(S.w);ctx.fillStyle=css('--fg');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 15px "Bricolage Grotesque",sans-serif';ctx.fillText(y.effN.toFixed(1),60,56);ctx.font='9px "IBM Plex Sans",sans-serif';ctx.fillStyle=css('--muted');ctx.fillText('effective #',60,72);}
+
+/* ---------- Monte Carlo ---------- */
+function runMC(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),paths=+$('mcPaths').value,st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
+  const y=port(S.w),t=port(O.tangency.w);const run=p=>monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths,start:st,monthly:mo,seed:42});
+  const ry=run(y),rt=run(t);window._mc={y:ry,t:rt};
+  const cv=$('cMC');const {ctx,W,H:Hh}=setup(cv,260);const pad={l:68,r:16,t:14,b:40};const top=Math.max(ry.bands[4][ry.T],rt.bands[3][rt.T]);
+  const {X,Y}=axes(ctx,W,Hh,pad,[0,yrs],[0,top*1.04],v=>v+'y',v=>v>=1e6?'€'+(v/1e6).toFixed(1)+'M':'€'+Math.round(v/1000)+'k','Years from today');
+  ctx.save();ctx.beginPath();ctx.rect(pad.l,pad.t,W-pad.l-pad.r,Hh-pad.t-pad.b);ctx.clip();
+  ctx.globalAlpha=.12;ry.samples.forEach(s=>line(ctx,Array.from(s,(v,i)=>[X(i/12),Y(v)]),css('--you'),.8));ctx.globalAlpha=1;
+  const band=(lo,hi,a)=>{ctx.beginPath();for(let i=0;i<=ry.T;i++)ctx.lineTo(X(i/12),Y(hi[i]));for(let i=ry.T;i>=0;i--)ctx.lineTo(X(i/12),Y(lo[i]));ctx.closePath();ctx.globalAlpha=a;ctx.fillStyle=css('--you');ctx.fill();ctx.globalAlpha=1;};
+  band(ry.bands[0],ry.bands[4],.13);band(ry.bands[1],ry.bands[3],.22);line(ctx,[[X(0),Y(st)],[X(yrs),Y(ry.invested)]],css('--faint'),1.5,[4,4]);
+  line(ctx,Array.from(rt.bands[2],(v,i)=>[X(i/12),Y(v)]),css('--accent'),2,[7,4]);line(ctx,Array.from(ry.bands[2],(v,i)=>[X(i/12),Y(v)]),css('--you'),3);ctx.restore();
+  HITS.mc=[];for(let k=1;k<=yrs;k++){const i=k*12;HITS.mc.push({x:X(k),y:Y(ry.bands[2][i]),label:`Year ${k} · yours: median ${eur(ry.bands[2][i])} (5%: ${eur(ry.bands[0][i])}, 95%: ${eur(ry.bands[4][i])}) · max-Sharpe ${eur(rt.bands[2][i])}`});}tip(cv,'mc');
+  const s=(k,v,c)=>`<div class="st"><span class="k">${k}</span><span class="v">${v}</span><span class="c">${c}</span></div>`;
+  $('mcStats').innerHTML=s('Money invested',eur(ry.invested),'same for both')+s('Median final value',eur(ry.bands[2][ry.T]),'max-Sh '+eur(rt.bands[2][rt.T]))+s('Bad case (5th pct)',eur(ry.bands[0][ry.T]),'max-Sh '+eur(rt.bands[0][rt.T]))+s('Good case (95th pct)',eur(ry.bands[4][ry.T]),'max-Sh '+eur(rt.bands[4][rt.T]))+
+    s('Expected annual return (median)',pct(ry.annMed),'max-Sh '+pct(rt.annMed))+s('Annual return range 5–95%',pct(ry.ann5,0)+' to '+pct(ry.ann95,0),'max-Sh '+pct(rt.ann5,0)+' to '+pct(rt.ann95,0))+
+    s('Chance of ending below invested',pct(ry.pLoss),'max-Sh '+pct(rt.pLoss))+s('Chance of doubling your money',pct(ry.pDouble),'max-Sh '+pct(rt.pDouble))+
+    s('1-year VaR 95%',pct(ry.var1y),'max-Sh '+pct(rt.var1y))+s('1-year CVaR 95%',pct(ry.cvar1y),'max-Sh '+pct(rt.cvar1y))+s('Chance of a losing first year',pct(ry.pDown1y),'max-Sh '+pct(rt.pDown1y))+
+    s('Max drawdown, median path',pct(ry.ddMed,0),'max-Sh '+pct(rt.ddMed,0))+s('Max drawdown, worst 5%',pct(ry.dd95,0),'max-Sh '+pct(rt.dd95,0));
+  const hv=$('cHistA');const g=setup(hv,170);const pd={l:44,r:16,t:10,b:30};const P=ry.ann.length;
+  const lo=Math.min(ry.ann[Math.floor(P*.01)],rt.ann[Math.floor(P*.01)]),hi=Math.max(ry.ann[Math.floor(P*.99)],rt.ann[Math.floor(P*.99)]);const B=40,bw=(hi-lo)/B;
+  const hist=a=>{const c=new Array(B).fill(0);for(const x of a){const k=Math.floor((x-lo)/bw);if(k>=0&&k<B)c[k]++;}return c.map(v=>v/a.length);};const hy=hist(ry.ann),ht=hist(rt.ann),mx=Math.max(...hy,...ht);
+  const ax=axes(g.ctx,g.W,g.H,pd,[lo,hi],[0,mx*1.1],v=>pct(v,0),v=>pct(v,0),'',' ');
+  hy.forEach((v,k)=>{g.ctx.fillStyle=css('--you');g.ctx.globalAlpha=.75;const x0=ax.X(lo+k*bw),x1=ax.X(lo+(k+1)*bw);g.ctx.fillRect(x0+.5,ax.Y(v),Math.max(1,x1-x0-1),ax.Y(0)-ax.Y(v));});g.ctx.globalAlpha=1;
+  line(g.ctx,ht.flatMap((v,k)=>[[ax.X(lo+k*bw),ax.Y(v)],[ax.X(lo+(k+1)*bw),ax.Y(v)]]),css('--accent'),2);if(lo<0&&hi>0)line(g.ctx,[[ax.X(0),ax.Y(0)],[ax.X(0),ax.Y(mx*1.1)]],css('--faint'),1,[3,3]);
+  HITS.hist=hy.map((v,k)=>({x:ax.X(lo+(k+.5)*bw),y:ax.Y(v),label:`${pct(lo+k*bw)} to ${pct(lo+(k+1)*bw)} a year: yours ${pct(v)} of paths, max-Sh ${pct(ht[k])}`}));tip(hv,'hist');
+  hero();}
+
+/* ---------- Frontier ---------- */
+function drawFrontier(){const cv=$('cFront');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const y=port(S.w),t=O.tangency,mv=O.minvar,rp=port(RP);
+  const xs=[...M.sd,...O.frontier.map(p=>p.vol),y.vol],ys=[...M.mu,...O.frontier.map(p=>p.ret),S.rf,y.ret];const xd=[0,Math.max(...xs)*1.04],yd=[Math.min(0,...ys)-.01,Math.max(...ys)*1.06];
+  const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>pct(v,0),v=>pct(v,0),'Volatility (σ, annual)','Expected return');const hl=HITS.front=[];
+  ctx.fillStyle=css('--faint');ctx.globalAlpha=.45;for(const p of cloud)ctx.fillRect(X(p.vol)-1,Y(p.ret)-1,2,2);ctx.globalAlpha=1;
+  line(ctx,[[X(0),Y(S.rf)],[X(xd[1]),Y(S.rf+t.sharpe*xd[1])]],css('--accent'),1.6,[7,5]);line(ctx,O.frontier.map(p=>[X(p.vol),Y(p.ret)]),css('--fg'),2.4);
+  A.forEach((a,i)=>{const x=X(M.sd[i]),yy=Y(M.mu[i]);ctx.globalAlpha=S.active[i]?1:.3;dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);ctx.globalAlpha=1;hl.push({x,y:yy,label:`${a.name} · E[R] ${pct(M.mu[i])} · σ ${pct(M.sd[i])} · Sharpe ${((M.mu[i]-S.rf)/M.sd[i]).toFixed(2)}`});});
+  dotC(ctx,X(0),Y(S.rf),5,css('--accent'));hl.push({x:X(0),y:Y(S.rf),label:`T-bill ${pct(S.rf,2)}`});
+  dia(ctx,X(mv.vol),Y(mv.ret),8,css('--minv'));hl.push({x:X(mv.vol),y:Y(mv.ret),label:`Min variance · ${pct(mv.ret)} / σ ${pct(mv.vol)}`});
+  dia(ctx,X(rp.vol),Y(rp.ret),8,css('--c-bond'));hl.push({x:X(rp.vol),y:Y(rp.ret),label:`Risk parity · Sharpe ${rp.sharpe.toFixed(2)} · ${pct(rp.ret)} / σ ${pct(rp.vol)}`});
+  dia(ctx,X(t.vol),Y(t.ret),9,css('--accent'));hl.push({x:X(t.vol),y:Y(t.ret),label:`Max Sharpe ${t.sharpe.toFixed(2)} · ${pct(t.ret)} / σ ${pct(t.vol)}`});
+  dotC(ctx,X(y.vol),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.vol),y:Y(y.ret),label:`Yours · Sharpe ${y.sharpe.toFixed(2)} · ${pct(y.ret)} / σ ${pct(y.vol)}`});tip(cv,'front');
+  $('legFront').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min variance</span><span><i class="dot" style="background:var(--c-bond)"></i>Risk parity</span><span><i style="background:var(--fg)"></i>Efficient frontier</span><span><i style="background:var(--accent)"></i>CML</span>`+Object.values(CLS).map(c=>`<span><i class="dot" style="background:var(${c[1]})"></i>${c[0]}</span>`).join('');
+  const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>E[R]</dt><dd>${pct(p.ret)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd><dt>Sharpe</dt><dd>${p.sharpe.toFixed(2)}</dd><dt>β</dt><dd>${p.beta.toFixed(2)}</dd><dt>VaR 95% 1y</dt><dd>${pct(p.var95)}</dd></dl></div>`;
+  $('cmpFront').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',port(t.w))+card('Min variance','--minv',port(mv.w))+card('Risk parity','--c-bond',rp);}
+
+/* ---------- Downside ---------- */
+function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(O.tangency.w),so=port(D.tangency.w),md=port(D.minvar.w);
+  const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><div class="big">${p.sortino.toFixed(2)}<small>Sortino</small></div><dl>
+    <dt>Downside dev.</dt><dd>${pct(p.rs.dd)}</dd><dt>Downside β</dt><dd>${p.dbeta.toFixed(2)}</dd><dt>VaR 95% (1m)</dt><dd class="down">${pct(-p.rs.var95)}</dd><dt>CVaR 95% (1m)</dt><dd class="down">${pct(-p.rs.cvar95)}</dd>
+    <dt>Max drawdown</dt><dd class="down">${pct(-p.rs.mdd)}</dd><dt>Longest underwater</dt><dd>${p.rs.maxUw} mo</dd><dt>Calmar</dt><dd>${isFinite(p.rs.calmar)?p.rs.calmar.toFixed(2):'—'}</dd><dt>Omega</dt><dd>${isFinite(p.rs.omega)?p.rs.omega.toFixed(2):'∞'}</dd><dt>Losing months</dt><dd>${pct(p.rs.pctNeg,0)}</dd></dl></div>`;
+  $('cmpDown').innerHTML=card('Yours','--you',y)+card('Max Sortino','--c-crypto',so)+card('Max Sharpe','--accent',t)+card('Min downside','--minv',md);
+  const cv=$('cDown');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const ddA=M.risk.map(r=>r.dd);
+  const xs=[...ddA,y.sdd,so.sdd],ys=[...M.mu,S.mar,y.ret];const xd=[0,Math.max(...xs)*1.05],yd=[Math.min(0,...ys)-.01,Math.max(...ys)*1.06];
+  const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>pct(v,0),v=>pct(v,0),'Downside deviation below MAR (annual)','Expected return');const hl=HITS.down=[];
+  line(ctx,[[X(0),Y(S.mar)],[X(xd[1]),Y(S.mar+so.sortino*xd[1])]],css('--c-crypto'),1.6,[7,5]);
+  A.forEach((a,i)=>{const x=X(ddA[i]),yy=Y(M.mu[i]);ctx.globalAlpha=S.active[i]?1:.3;dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);ctx.globalAlpha=1;hl.push({x,y:yy,label:`${a.name} · E[R] ${pct(M.mu[i])} · downside ${pct(ddA[i])} (σ ${pct(M.sd[i])})`});});
+  dotC(ctx,X(0),Y(S.mar),5,css('--c-crypto'));
+  const pt=(p,col,n,kind)=>{const x=X(p.rs.dd),yy=Y(p.ret);kind?dotC(ctx,x,yy,7.5,css(col),css('--panel')):dia(ctx,x,yy,8.5,css(col));hl.push({x,y:yy,label:`${n} · Sortino ${p.sortino.toFixed(2)} · ${pct(p.ret)} / downside ${pct(p.rs.dd)}`});};
+  pt(md,'--minv','Min downside');pt(t,'--accent','Max Sharpe');pt(so,'--c-crypto','Max Sortino');pt(y,'--you','Yours',1);tip(cv,'down');
+  $('legDown').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--c-crypto)"></i>Max Sortino</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min downside</span><span><i style="background:var(--c-crypto)"></i>From MAR through max Sortino</span>`;
+  const rows=A.map((a,i)=>({a,i,so:(M.mu[i]-S.mar)/M.risk[i].dd})).sort((p,q)=>q.so-p.so);
+  $('dTable').innerHTML=`<thead><tr><th>Asset</th><th>Sortino</th><th>Downside dev.</th><th>σ</th><th>Downside β</th><th>β</th><th>VaR 95% 1m</th><th>CVaR 95% 1m</th><th>Worst month</th><th>Max DD</th><th>Losing months</th><th>Omega</th></tr></thead><tbody>`+
+    rows.map(r=>{const k=M.risk[r.i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</td><td>${r.so.toFixed(2)}</td><td>${pct(k.dd)}</td><td>${pct(M.sd[r.i])}</td><td>${M.dbeta[r.i].toFixed(2)}</td><td>${M.beta[r.i].toFixed(2)}</td><td class="down">${pct(-k.var95)}</td><td class="down">${pct(-k.cvar95)}</td><td class="down">${pct(k.worst)}</td><td class="down">${pct(-k.mdd,0)}</td><td>${pct(k.pctNeg,0)}</td><td>${isFinite(k.omega)?k.omega.toFixed(2):'∞'}</td></tr>`;}).join('')+'</tbody>';}
+
+/* ---------- Risk budget ---------- */
+function drawRB(){const y=port(S.w);const rc=riskContrib(y.w,M.S);const rp=port(RP),t=port(O.tangency.w);
+  const top=(p,rcx)=>{const i=rcx.indexOf(Math.max(...rcx));return `${A[i].name} ${pct(rcx[i],0)}`;};
+  const card=(n,col,p)=>{const r=riskContrib(p.w,M.S);const s3=[...r].sort((a,b)=>b-a).slice(0,3).reduce((a,b)=>a+b,0);return `<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>Diversification ratio</dt><dd>${p.divRatio.toFixed(2)}</dd><dt>Top-3 risk share</dt><dd>${pct(s3,0)}</dd><dt>Largest risk</dt><dd>${top(p,r)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd></dl></div>`;};
+  $('rbCards').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',t)+card('Risk parity','--c-bond',rp);
+  const rows=A.map((a,i)=>({a,i,w:y.w[i],r:rc[i]})).filter(r=>r.w>.0005||Math.abs(r.r)>.0005).sort((p,q)=>q.r-p.r);const mx=Math.max(...rows.map(r=>Math.max(r.w,r.r)),.01);
+  $('rbList').innerHTML=`<span class="h">Asset</span><span class="h"></span><span class="h num">Weight</span><span class="h num">Risk</span>`+rows.map(r=>`<span class="nm" style="font-weight:500"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</span><span class="bars"><i style="width:${r.w/mx*100}%;background:var(--faint)"></i><i style="width:${Math.max(0,r.r)/mx*100}%;background:var(--you)"></i></span><span class="num">${pct(r.w)}</span><span class="num ${r.r>r.w*1.25?'down':r.r<r.w*.75?'up':''}">${pct(r.r)}</span>`).join('')||'<span class="note">Add some weights on the left.</span>';}
+
+/* ---------- Stress tests ---------- */
+const SCEN=[['2015–16 China & oil rout','2015-06','2016-02'],['Q4 2018 sell-off','2018-10','2018-12'],['COVID crash','2020-02','2020-03'],['2022 bear market','2022-01','2022-09'],['Mar 2023 bank stress','2023-03','2023-03'],['2025 tariff shock','2025-02','2025-04']];
+function drawStress(){const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Min variance','--minv',O.minvar.w],['Risk parity','--c-bond',RP]];
+  const ser=P.map(p=>portListed(HF.R,p[2]));const spy=HF.mkt;const mi=m=>HF.months.indexOf(m);
+  const cum=(s,a,b)=>{let g=1;for(let t=a;t<=b;t++)g*=1+s[t];return g-1;};const cov=(s,a,b)=>{let c=1;for(let t=a;t<=b;t++)c=Math.min(c,s.coverage[t]);return c;};
+  const cell=(v,c)=>{const t=Math.min(1,Math.abs(v)/.35);const bg=v<0?`color-mix(in srgb, var(--bad) ${Math.round(t*45)}%, transparent)`:`color-mix(in srgb, var(--good) ${Math.round(t*45)}%, transparent)`;return `<td style="background:${bg}">${sp(v)}${c<.8?'*':''}</td>`;};
+  let h=`<thead><tr><th>Scenario</th><th>Months</th>${P.map(p=>`<th><span class="dot" style="background:var(${p[1]})"></span>${p[0]}</th>`).join('')}<th>S&amp;P 500</th></tr></thead><tbody>`;
+  const res=[];SCEN.forEach(([n,a,b])=>{const ia=mi(a),ib=mi(b);const vals=ser.map(s=>cum(s,ia,ib));res.push({n,y:vals[0],t:vals[1],m:cum(spy,ia,ib)});
+    h+=`<tr><td class="n">${n}</td><td>${a}${a!==b?' → '+b:''}</td>${vals.map((v,k)=>cell(v,cov(ser[k],ia,ib))).join('')}${cell(cum(spy,ia,ib),1)}</tr>`;});
+  const worst12=s=>{let w=1e9;for(let t=11;t<s.length;t++){let g=1;for(let k=t-11;k<=t;k++)g*=1+s[k];w=Math.min(w,g-1);}return w;};
+  h+=`<tr><td class="n">Worst 12 months (2011–2026)</td><td>rolling</td>${ser.map(s=>cell(worst12(s),1)).join('')}${cell(worst12(spy),1)}</tr></tbody>`;$('stTable').innerHTML=h;
+  const cv=$('cStress');const {ctx,W,H:Hh}=setup(cv,220);const pad={l:52,r:14,t:12,b:44};const all=res.flatMap(r=>[r.y,r.t,r.m]);const yd=[Math.min(0,...all)*1.1,Math.max(.02,...all)*1.1];
+  const {Y}=axes(ctx,W,Hh,pad,[0,1],yd,()=>'',v=>pct(v,0),'','',[]);const gw=(W-pad.l-pad.r)/res.length,bw=Math.min(22,gw/4);HITS.stress=[];
+  res.forEach((r,k)=>{const cx=pad.l+gw*(k+.5);[[r.y,'--you','Yours'],[r.t,'--accent','Max Sharpe'],[r.m,'--spx','S&P 500']].forEach(([v,c,n],j)=>{const x=cx+(j-1.5)*bw;ctx.fillStyle=css(c);const y0=Y(0),y1=Y(v);ctx.fillRect(x,Math.min(y0,y1),bw-2,Math.abs(y1-y0));HITS.stress.push({x:x+bw/2,y:y1,label:`${r.n} · ${n}: ${sp(v)}`});});
+    ctx.fillStyle=css('--muted');ctx.font='10px "IBM Plex Sans",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';const words=r.n.split(' ');ctx.fillText(words.slice(0,2).join(' '),cx,Hh-pad.b+6);ctx.fillText(words.slice(2).join(' '),cx,Hh-pad.b+19);});
+  line(ctx,[[pad.l,Y(0)],[W-pad.r,Y(0)]],css('--faint'),1);tip(cv,'stress');}
+
+/* ---------- Backtests ---------- */
+let btMode='in';
+function drawSeries(sets,dates,note){const T=dates.length-1;const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(T>100?2:1)===0)xt.push(i);});const yr=i=>dates[i].slice(0,4);
+  const cv=$('cBT');const {ctx,W,H:Hh}=setup(cv,260);const pad={l:52,r:18,t:14,b:34};const all=sets.flatMap(s=>s.b.v);const lg=v=>Math.log(v);
+  const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lg(Math.min(...all)*.95),lg(Math.max(...all)*1.05)],i=>yr(i),v=>{const x=Math.exp(v);return (x>=10?x.toFixed(0):x.toFixed(1))+'×';},'','Growth of $1 (log scale)',xt);
+  HITS.bt=[];sets.slice().reverse().forEach(s=>{line(ctx,s.b.v.map((v,i)=>[X(i),Y(lg(v))]),css(s.c),s.n.startsWith('Yours')?3:1.7);s.b.v.forEach((v,i)=>{if(i%4===0||i===T)HITS.bt.push({x:X(i),y:Y(lg(v)),label:`${s.n} · ${dates[i]} · ${v.toFixed(2)}×`});});});tip(cv,'bt');
+  $('legBT').innerHTML=sets.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}</span>`).join('');
+  const dv=$('cDD');const g=setup(dv,130);const pd={l:52,r:18,t:8,b:24};const mn=Math.min(...sets.flatMap(s=>s.b.ddS));const ax=axes(g.ctx,g.W,g.H,pd,[0,T],[mn*1.05,0],i=>yr(i),v=>pct(v,0),'','Drawdown',xt);
+  sets.slice().reverse().forEach(s=>line(g.ctx,s.b.ddS.map((v,i)=>[ax.X(i),ax.Y(v)]),css(s.c),s.n.startsWith('Yours')?2.2:1.1));
+  $('btTable').innerHTML=`<thead><tr><th>Portfolio</th><th>Total</th><th>CAGR</th><th>Volatility</th><th>Sharpe</th><th>Max drawdown</th><th>Best month</th><th>Worst month</th>${sets[0].turn!=null?'<th>Turnover / yr</th>':''}</tr></thead><tbody>`+
+    sets.map(s=>`<tr><td class="n"><span class="dot" style="background:var(${s.c})"></span>${s.n}</td><td>${sp(s.b.v[T]-1,0)}</td><td>${pct(s.b.cagr)}</td><td>${pct(s.b.vol)}</td><td>${((s.b.cagr-S.rf)/s.b.vol).toFixed(2)}</td><td class="down">${pct(-s.b.maxDD)}</td><td>${sp(s.b.best)}</td><td>${sp(s.b.worst)}</td>${s.turn!=null?`<td>${s.turn==='—'?'—':pct(s.turn,0)}</td>`:''}</tr>`).join('')+'</tbody>';
+  $('btNote').innerHTML=note;}
+function drawBT(){$('btIn').setAttribute('aria-pressed',btMode==='in');$('btOut').setAttribute('aria-pressed',btMode==='out');
+  if(btMode==='in'){$('wfProg').hidden=true;const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--accent',O.tangency.w],['Min variance','--minv',O.minvar.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]];
+    const sets=P.map(p=>({n:p[0],c:p[1],b:growth(portListed(H.R,p[2]))}));sets.push({n:'S&P 500',c:'--spx',b:growth(H.mkt)});
+    $('btKick').textContent=`${H.months[0]} → ${H.months[H.T-1]}, today's weights, rebalanced monthly`;
+    drawSeries(sets,[prevMonth(H.months[0]),...H.months],'In-sample: the optimized weights were chosen using this same history, so their lines flatter them. Use <b>Walk-forward</b> for an honest test. Assets enter when they list. All backtests here also carry selection bias: these 32 assets were chosen in 2026, partly because they did well.');}
+  else{if(!WF){runWF();return;}drawSeries(WF.sets,WF.dates,`Out-of-sample: every quarter from ${WF.dates[0]}, each strategy is re-estimated on the previous 5 years only (assets need 3 years of history to qualify), then held for 3 months on returns it had not seen. Expected returns for the rolling max-Sharpe use the history–CAPM blend at your confidence (${pct(S.trust,0)}), since your views are about today. <b>Yours</b> is your current weights held throughout, so it still looks ahead. Selection bias remains: the 32 assets were picked in 2026, so every strategy here benefits from knowing which companies became winners.`);$('btKick').textContent=`Rebalanced quarterly · ${WF.n} re-estimations`;}}
+function prevMonth(m){let [y,mm]=m.split('-').map(Number);mm--;if(!mm){mm=12;y--;}return y+'-'+String(mm).padStart(2,'0');}
+function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;t+=step)t0s.push(t);const W={tan:[],mv:[],rp:[],ew:[]};const ret={tan:[],mv:[],rp:[],ew:[]};const turn={tan:0,mv:0,rp:0,ew:0};let prev=null;
+  $('wfProg').hidden=false;const bar=$('wfProg').firstElementChild;let k=0;$('btKick').textContent='Running walk-forward…';
+  const work=()=>{const t0=t0s[k];const r=walkForwardStep(HF,o,t0,win);
+    ['tan','mv','rp','ew'].forEach(s=>{if(prev)turn[s]+=r[s].reduce((a,x,i)=>a+Math.abs(x-prev[s][i]),0)/2;for(let t=t0;t<Math.min(t0+step,HF.T);t++){let s2=0,ws=0;r[s].forEach((w,i)=>{const x=HF.R[i][t];if(w>0&&x!=null){s2+=w*x;ws+=w;}});ret[s].push(ws?s2/ws:0);}});
+    prev=r;k++;bar.style.width=(k/t0s.length*100)+'%';if(k<t0s.length)setTimeout(work,0);else done();};
+  const done=()=>{$('wfProg').hidden=true;const a=t0s[0];const yrs=(HF.T-a)/12;const mk=(n,c,s)=>({n,c,b:growth(ret[s]),turn:turn[s]/yrs});
+    const yours=portListed(HF.R,norm(S.w)).slice(a);const spy=HF.mkt.slice(a);
+    WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:'Yours (static)',c:'--you',b:growth(yours),turn:'—'},mk('Max Sharpe (rolling)','--accent','tan'),mk('Min variance (rolling)','--minv','mv'),mk('Risk parity (rolling)','--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
+    if(btMode==='out')drawBT();};setTimeout(work,20);}
+
+/* ---------- CAPM ---------- */
+function drawSML(){const cv=$('cSML');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const b=M.beta,mu=M.mu;const xd=[Math.min(-.2,...b)-.05,Math.max(...b)*1.06],yd=[Math.min(0,...mu)-.01,Math.max(...mu,S.rf+xd[1]*S.erp)*1.06];
+  const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>v.toFixed(1),v=>pct(v,0),'Beta vs S&P 500','Expected return');line(ctx,[[X(xd[0]),Y(S.rf+xd[0]*S.erp)],[X(xd[1]),Y(S.rf+xd[1]*S.erp)]],css('--fg'),2);const hl=HITS.sml=[];
+  A.forEach((a,i)=>{const x=X(b[i]),yy=Y(mu[i]),req=S.rf+b[i]*S.erp;line(ctx,[[x,yy],[x,Y(req)]],mu[i]>=req?css('--good'):css('--bad'),1,[2,2]);dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);hl.push({x,y:yy,label:`${a.name} · β ${b[i].toFixed(2)} · α ${sp(mu[i]-req)}`});});
+  dotC(ctx,X(1),Y(S.rf+S.erp),5,css('--spx'));[[O.minvar.w,'--minv','Min variance'],[O.tangency.w,'--accent','Max Sharpe']].forEach(([w,c,n])=>{const p=port(w);dia(ctx,X(p.beta),Y(p.ret),8,css(c));hl.push({x:X(p.beta),y:Y(p.ret),label:`${n} · β ${p.beta.toFixed(2)} · α ${sp(p.alpha)}`});});
+  const y=port(S.w);dotC(ctx,X(y.beta),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.beta),y:Y(y.ret),label:`Yours · β ${y.beta.toFixed(2)} · α ${sp(y.alpha)}`});tip(cv,'sml');
+  const rows=A.map((a,i)=>({a,i,req:S.rf+b[i]*S.erp})).sort((p,q)=>(mu[q.i]-q.req)-(mu[p.i]-p.req));
+  $('alphaTable').innerHTML=`<thead><tr><th>Asset</th><th>β</th><th>CAPM required</th><th>E[R] in use</th><th>Jensen α</th><th>Treynor</th><th>Hist. CAGR</th></tr></thead><tbody>`+rows.map(r=>`<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</td><td>${b[r.i].toFixed(2)}</td><td>${pct(r.req)}</td><td>${pct(mu[r.i])}</td><td class="${mu[r.i]>=r.req?'up':'down'}">${sp(mu[r.i]-r.req)}</td><td>${Math.abs(b[r.i])>.05?pct((mu[r.i]-S.rf)/b[r.i]):'—'}</td><td>${pct(M.cagr[r.i])}</td></tr>`).join('')+'</tbody>';}
+
+/* ---------- Correlation ---------- */
+function drawCorr(){const cv=$('cCorr');const {ctx,W,H:Hh}=setup(cv,560);const lab=78,n=N;const cs=Math.min((W-lab-4)/n,(Hh-lab-4)/n);const nu=css('--panel2'),po=css('--accent'),ne=css('--bad');const hl=HITS.corr=[];ctx.font=`${Math.max(8,Math.min(10,cs*.55))}px "JetBrains Mono",monospace`;
+  ORDER.forEach((i,r)=>{ctx.fillStyle=css('--muted');ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(A[i].id,lab-5,lab+r*cs+cs/2);ctx.save();ctx.translate(lab+r*cs+cs/2,lab-5);ctx.rotate(-Math.PI/2);ctx.textAlign='left';ctx.fillText(A[i].id,0,0);ctx.restore();
+    ORDER.forEach((j,c)=>{const v=M.Cs[i][j];ctx.fillStyle=i===j?css('--faint'):(v>=0?hexMix(nu,po,Math.min(1,v)):hexMix(nu,ne,Math.min(1,-v)));ctx.fillRect(lab+c*cs,lab+r*cs,cs-1,cs-1);hl.push({x:lab+c*cs+cs/2,y:lab+r*cs+cs/2,label:`${A[i].name} × ${A[j].name}: ${v.toFixed(2)} (model ${M.C[i][j].toFixed(2)})`});});});tip(cv,'corr');
+  const pr=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)pr.push([A[i].name,A[j].name,M.Cs[i][j]]);pr.sort((a,b)=>b[2]-a[2]);
+  $('hiPairs').innerHTML=pr.slice(0,10).map(p=>`<li>${p[0]} – ${p[1]} <b>${p[2].toFixed(2)}</b></li>`).join('');$('loPairs').innerHTML=pr.slice(-10).reverse().map(p=>`<li>${p[0]} – ${p[1]} <b>${p[2].toFixed(2)}</b></li>`).join('');
+  $('rbar').textContent=`Sample correlations over overlapping months; average ${M.rbar.toFixed(2)}. Tooltips also show the shrunk value the model uses.`;}
+
+/* ---------- Model & views ---------- */
+function viewsUI(){const opt=sel=>A.map(a=>`<option value="${a.id}"${a.id===sel?' selected':''}>${a.name}</option>`).join('');
+  $('views').innerHTML=S.views.length?S.views.map((v,k)=>`<div class="vrow" data-k="${k}"><select data-f="a" aria-label="Asset">${opt(v.a)}</select>
+    <select data-f="type" aria-label="View type"><option value="abs"${v.type==='abs'?' selected':''}>will return</option><option value="rel"${v.type==='rel'?' selected':''}>will beat</option></select>
+    ${v.type==='rel'?`<select data-f="b" aria-label="Second asset">${opt(v.b)}</select><span class="kicker">by</span>`:''}<input type="number" data-f="q" step="0.5" value="${(v.q*100).toFixed(1)}" aria-label="Return %"><span class="kicker">% a year · confidence</span>
+    <input type="range" data-f="conf" min="5" max="95" value="${Math.round(v.conf*100)}" aria-label="Confidence"><b class="kicker">${Math.round(v.conf*100)}%</b><span class="eff">${viewEffect(v)}</span><button data-del="${k}" class="ghost" aria-label="Delete view">Remove</button></div>`).join(''):
+    `<p class="note">No views yet. A view is an opinion such as "Nvidia will beat Microsoft by 3% a year" or "Gold will return 6%", with a confidence. Without views, Black-Litterman uses equilibrium returns plus the history slider above.</p>`;}
+function viewEffect(v){const i=A.findIndex(a=>a.id===v.a);if(i<0)return '';if(v.type==='rel'){const j=A.findIndex(a=>a.id===v.b);return `now: ${A[i].id} − ${A[j].id} = ${sp(M.mu[i]-M.mu[j])} (prior ${sp(M.capm[i]-M.capm[j])})`;}return `${A[i].id}: prior ${pct(M.capm[i])} → ${pct(M.mu[i])}`;}
+function aTable(){$('aTable').innerHTML=`<thead><tr><th>Asset</th><th>In</th><th>Since</th><th>Hist. mean</th><th>CAGR</th><th>σ</th><th>β</th><th>Equilibrium</th><th>E[R] used %</th><th>Max-Sh.</th><th>Min-var</th><th>Risk parity</th></tr></thead><tbody>`+
+  ORDER.map(i=>{const a=A[i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[a.cls][1]})"></span>${a.name}<small>${a.ticker}</small></td><td><input type="checkbox" data-act="${i}" ${S.active[i]?'checked':''} aria-label="Include ${a.name}" style="width:auto"></td>
+  <td>${H.months[M.first[i]]}</td><td>${pct(M.hm[i])}</td><td>${pct(M.cagr[i])}</td><td>${pct(M.sd[i])}</td><td>${M.beta[i].toFixed(2)}</td><td>${pct(M.capm[i])}</td>
+  <td><input type="number" step="0.5" data-mu="${i}" value="${(M.mu[i]*100).toFixed(1)}" aria-label="Expected return ${a.name}" style="${S.override[i]!=null?'border-color:var(--you);color:var(--you)':''}"></td><td>${pct(O.tangency.w[i])}</td><td>${pct(O.minvar.w[i])}</td><td>${pct(RP[i])}</td></tr>`;}).join('')+'</tbody>';}
+function modelUI(){$('trustT').textContent=S.mode==='bl'?'Confidence in history as a view':S.mode==='blend'?'Weight on history (rest CAPM)':'History weight (fixed at 100%)';$('trust').disabled=S.mode==='hist';$('trustL').textContent=Math.round(S.trust*100)+'%';
+  $('shrink').value=Math.round(S.shrink*100);$('shrinkL').textContent=Math.round(S.shrink*100)+'%';$('lwBtn').textContent=`Use Ledoit-Wolf optimum (${Math.round(LW.delta*100)}%)`;viewsUI();aTable();
+  $('chips').innerHTML=`<span class="chip">Yahoo Finance · monthly · <b>${H.months[0]} – 2026-10-09</b></span><span class="chip">Returns: <b>${{bl:'Black-Litterman',blend:'History–CAPM blend',hist:'Pure history'}[S.mode]}</b></span><span class="chip">Shrinkage <b>${Math.round(S.shrink*100)}%</b></span><span class="chip">Risk-free <b>${pct(S.rf,2)}</b></span><span class="chip">All in <b>USD</b></span>`;}
+
+/* ---------- wiring ---------- */
+const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
+const DRAW={frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
+function drawVisible(){if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
+let mcT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,visible('mc')?120:30);}
+let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();allocList();modelUI();drawVisible();$('hero').classList.remove('busy');},20);}
+$('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(0,Math.min(100,+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(40,v);onWeights();});
+const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();};
+$('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
+$('pEq').onclick=()=>setW(A.map(()=>1/N));$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>setW(norm(S.w));
+$('pRes').onclick=()=>{if(RES){setW(RES);return;}const K=40,acc=new Float64Array(N),r=rng(7),o=opts();let k=0;const btn=$('pRes'),pb=$('resProg');btn.classList.add('busy');pb.hidden=false;
+  const step=()=>{const w=resampleStep(M,o,M._capA,k,r);for(let i=0;i<N;i++)acc[i]+=w[i]/K;k++;pb.firstElementChild.style.width=(k/K*100)+'%';btn.textContent=`Resampling ${k}/${K}`;if(k<K)setTimeout(step,0);else{RES=acc;btn.textContent='Resampled';btn.classList.remove('busy');pb.hidden=true;setW(RES);}};setTimeout(step,20);};
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);try{localStorage.setItem('fl3-tab',b.dataset.tab)}catch(_){}drawVisible();});
+['mcStart','mcMonthly','mcYears','mcMethod','mcPaths'].forEach(id=>$(id).addEventListener('change',runMC));
+$('btIn').onclick=()=>{btMode='in';drawBT();};$('btOut').onclick=()=>{btMode='out';drawBT();};
+$('rf').value=(S.rf*100).toFixed(2);$('mar').value=(S.mar*100).toFixed(2);
+const num=(id,f)=>$(id).addEventListener('change',e=>{f(+e.target.value);full();});
+num('rf',v=>S.rf=(v||0)/100);num('erp',v=>S.erp=(v||0)/100);num('mar',v=>S.mar=(v||0)/100);num('cap',v=>S.cap=Math.min(1,Math.max(.04,(v||15)/100)));num('tau',v=>S.tau=Math.min(1,Math.max(.01,v||.05)));
+$('win').addEventListener('change',e=>{S.win=+e.target.value;S.shrink=null;full();});
+$('mode').addEventListener('change',e=>{S.mode=e.target.value;S.override=A.map(()=>null);full();});
+$('trust').addEventListener('input',e=>$('trustL').textContent=e.target.value+'%');$('trust').addEventListener('change',e=>{S.trust=e.target.value/100;S.override=A.map(()=>null);full();});
+$('shrink').addEventListener('input',e=>$('shrinkL').textContent=e.target.value+'%');$('shrink').addEventListener('change',e=>{S.shrink=e.target.value/100;full();});
+$('lwBtn').onclick=()=>{S.shrink=+LW.delta.toFixed(2);full();};
+$('addView').onclick=()=>{S.views.push({a:'NVDA',type:'rel',b:'MSFT',q:.03,conf:.5});if(S.mode!=='bl'){S.mode='bl';$('mode').value='bl';}full();};
+$('views').addEventListener('input',e=>{const r=e.target.closest('.vrow');if(!r||e.target.dataset.f!=='conf')return;e.target.nextElementSibling.textContent=e.target.value+'%';});
+$('views').addEventListener('change',e=>{const r=e.target.closest('.vrow');if(!r)return;const v=S.views[+r.dataset.k],f=e.target.dataset.f;if(!f)return;
+  if(f==='q')v.q=(+e.target.value||0)/100;else if(f==='conf')v.conf=e.target.value/100;else v[f]=e.target.value;if(f==='type'&&v.type==='rel'&&!v.b)v.b=v.a==='MSFT'?'NVDA':'MSFT';full();});
+$('views').addEventListener('click',e=>{const d=e.target.dataset.del;if(d==null)return;S.views.splice(+d,1);full();});
+$('aTable').addEventListener('change',e=>{const t=e.target;if(t.dataset.mu!=null){S.override[+t.dataset.mu]=(+t.value||0)/100;full();}
+  if(t.dataset.act!=null){const i=+t.dataset.act;S.active[i]=t.checked;if(S.active.filter(Boolean).length<2){S.active[i]=true;t.checked=true;}full();}});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{updAlloc();drawVisible();},160);});
+try{window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{updAlloc();drawVisible();});}catch(_){}
+new MutationObserver(()=>{if(M){updAlloc();drawVisible();}}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+try{const t=localStorage.getItem('fl3-tab');const b=t&&document.querySelector(`#tabs [data-tab="${t}"]`);if(b){document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==t);}}catch(_){}
+full();
+</script>

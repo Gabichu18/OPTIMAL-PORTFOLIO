@@ -1,0 +1,717 @@
+<title>Frontier Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+
+/* Layout: allocation desk pinned left on desktop (the thing you move), analysis tabs right; one column on phones. Dark-first, mirrored light theme. */
+:root{
+  --bg:#0a0f14; --panel:#111922; --panel2:#17222d; --line:#223140; --fg:#e6edf2; --muted:#8597a6; --faint:#5d6f7e;
+  --accent:#35d0ba; --accent-soft:rgba(53,208,186,.14); --you:#ffb347; --you-soft:rgba(255,179,71,.14); --minv:#8fa2ff; --spx:#c9d3db;
+  --good:#4fd58a; --bad:#ff6b6b;
+  --c-tech:#6aa6ff; --c-semi:#35d0ba; --c-power:#ff9a4d; --c-fin:#b294ff; --c-def:#9fb0bd; --c-cmdty:#ecc94b; --c-crypto:#ff7f66; --c-bond:#6fd08c;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#eef2f5; --panel:#ffffff; --panel2:#f2f5f8; --line:#d5dde4; --fg:#0f1b25; --muted:#566775; --faint:#8494a1;
+  --accent:#0a8a7a; --accent-soft:rgba(10,138,122,.11); --you:#c26a00; --you-soft:rgba(194,106,0,.11); --minv:#4a5fd0; --spx:#3c4a55;
+  --good:#16884a; --bad:#cc2f2f;
+  --c-tech:#2e6fd6; --c-semi:#0a8a7a; --c-power:#d46a12; --c-fin:#7650d6; --c-def:#6b7c8a; --c-cmdty:#b38d10; --c-crypto:#d4523a; --c-bond:#2f8f4f;
+  color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#eef2f5; --panel:#ffffff; --panel2:#f2f5f8; --line:#d5dde4; --fg:#0f1b25; --muted:#566775; --faint:#8494a1;
+  --accent:#0a8a7a; --accent-soft:rgba(10,138,122,.11); --you:#c26a00; --you-soft:rgba(194,106,0,.11); --minv:#4a5fd0; --spx:#3c4a55;
+  --good:#16884a; --bad:#cc2f2f;
+  --c-tech:#2e6fd6; --c-semi:#0a8a7a; --c-power:#d46a12; --c-fin:#7650d6; --c-def:#6b7c8a; --c-cmdty:#b38d10; --c-crypto:#d4523a; --c-bond:#2f8f4f;
+  color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.45}
+.wrap{max-width:1360px;margin:0 auto;padding-inline:16px;padding-block:20px 56px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(1.8rem,3.4vw,2.6rem);letter-spacing:-.03em;margin:0;line-height:.95}
+h1 em{font-style:normal;color:var(--accent)}
+.sub{color:var(--muted);font-size:.85rem;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:.7rem;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--panel)}
+.chip b{color:var(--fg);font-weight:500}
+h2{font-family:var(--display);font-weight:700;font-size:1.15rem;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h3{margin:0;font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.note{font-size:.8rem;color:var(--muted);max-width:72ch;margin:0}
+.note b{color:var(--fg);font-weight:600}
+/* hero */
+.hero{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hk{background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.hk .lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.hk .val{font-family:var(--display);font-size:clamp(1.5rem,2.6vw,2.1rem);font-weight:700;line-height:1;color:var(--you);font-variant-numeric:tabular-nums}
+.hk .cmp{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.up{color:var(--good)} .down{color:var(--bad)}
+@media (max-width:1200px){.hero{grid-template-columns:repeat(3,minmax(0,1fr))}}@media (max-width:640px){.hero{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* layout */
+.main{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:1000px){.main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+aside.panel{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:hidden}
+@media (max-width:1000px){aside.panel{position:static;max-height:none}}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+button{font-family:var(--body);font-weight:600;font-size:.78rem;border-radius:7px;padding:7px 11px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+button.ghost{background:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mixrow{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center}
+.mixleg{display:flex;flex-direction:column;gap:3px;font-size:.74rem}
+.mixleg span{display:flex;justify-content:space-between;gap:8px}
+.mixleg i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:6px}
+.mixleg em{font-style:normal;font-family:var(--mono);color:var(--muted)}
+.sumbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--mono);font-size:.75rem;padding:7px 10px;border-radius:8px;background:var(--you-soft);color:var(--you)}
+.sumbar button{padding:3px 8px;font-size:.7rem}
+.alloc{overflow-y:auto;margin-inline:-16px;padding-inline:16px;display:flex;flex-direction:column;gap:2px;flex:1;min-height:0}
+@media (max-width:1000px){.alloc{max-height:none;overflow:visible}}
+.grp{font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600;padding:10px 0 4px;display:flex;justify-content:space-between}
+.ar{display:grid;grid-template-columns:minmax(0,1fr) 64px;grid-template-rows:auto auto;column-gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.ar .nm{font-size:.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ar .nm small{font-family:var(--mono);font-size:.66rem;color:var(--faint);margin-left:5px;font-weight:400}
+.ar .opt{font-family:var(--mono);font-size:.66rem;color:var(--muted);text-align:right;align-self:center}
+.ar input[type=range]{grid-column:1/2;width:100%;margin:2px 0 0;accent-color:var(--you)}
+.ar input[type=number]{grid-row:1/3;grid-column:2;align-self:center;width:64px;font-family:var(--mono);font-size:.8rem;text-align:right;background:var(--bg);color:var(--you);border:1px solid var(--line);border-radius:6px;padding:5px 6px}
+.ar.off .nm{color:var(--faint)}
+.ar .optw{grid-column:1;display:flex;justify-content:space-between;font-family:var(--mono);font-size:.64rem;color:var(--faint)}
+/* tabs */
+nav.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);margin:-4px -16px 0;padding:0 12px;scrollbar-width:none}
+nav.tabs button{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);padding:10px 12px;white-space:nowrap;font-size:.82rem}
+nav.tabs button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:.7rem;color:var(--muted)}
+.field input[type=number],.field select{font-family:var(--mono);font-size:.82rem;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:96px}
+.field select{width:auto}
+.field input[type=range]{accent-color:var(--accent);width:150px}
+canvas{width:100%;display:block}
+.chart{position:relative}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font-family:var(--mono);font-size:.7rem;padding:5px 8px;border-radius:6px;white-space:nowrap;z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.72rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.legend i.dot{width:9px;height:9px;border-radius:50%}
+.g2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px}
+@media (max-width:1200px){.g2{grid-template-columns:1fr}}
+.scroll{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.78rem}
+th{font-size:.64rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:right;font-weight:600;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.n{font-family:var(--body);font-weight:500}
+td.n small{font-family:var(--mono);color:var(--faint);font-size:.66rem;margin-left:4px;font-weight:400}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:5px;padding:3px 5px}
+.cmpgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.cc{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--panel2)}
+.cc .t{display:flex;align-items:center;gap:7px;font-size:.76rem;font-weight:600}
+.cc .big{font-family:var(--display);font-size:1.4rem;font-weight:700;line-height:1}
+.cc .big small{font-family:var(--body);font-size:.66rem;color:var(--muted);font-weight:400;margin-left:4px}
+.cc dl{margin:0;display:grid;grid-template-columns:auto auto;gap:2px 10px;font-family:var(--mono);font-size:.74rem}
+.cc dt{color:var(--muted)} .cc dd{margin:0;text-align:right}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.st{background:var(--panel2);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:3px}
+.st .k{font-size:.68rem;color:var(--muted)}
+.st .v{font-family:var(--display);font-size:1.25rem;font-weight:700;line-height:1.1;color:var(--you)}
+.st .c{font-family:var(--mono);font-size:.7rem;color:var(--accent)}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.pairs{grid-template-columns:1fr}}
+.pairs ol{margin:6px 0 0;padding-left:18px;font-family:var(--mono);font-size:.74rem;display:flex;flex-direction:column;gap:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:none;border-radius:0;background:none;color:var(--muted);padding:6px 12px}
+.seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
+.prog{height:4px;background:var(--panel2);border-radius:2px;overflow:hidden}
+.prog>div{height:100%;background:var(--accent);width:0}
+.rb{display:grid;grid-template-columns:minmax(110px,170px) 1fr 54px 54px;gap:4px 10px;align-items:center;font-size:.78rem}
+.rb .bars{display:flex;flex-direction:column;gap:2px}
+.rb .bars i{display:block;height:6px;border-radius:3px}
+.rb .h{font-size:.64rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.rb .num{font-family:var(--mono);text-align:right;font-size:.74rem}
+.heat td{font-weight:500}
+.views{display:flex;flex-direction:column;gap:8px}
+.vrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.vrow select,.vrow input[type=number]{font-family:var(--mono);font-size:.78rem;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 6px}
+.vrow input[type=number]{width:70px}
+.vrow input[type=range]{accent-color:var(--accent);width:110px}
+.vrow .eff{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-left:auto}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.busy{opacity:.55;pointer-events:none}
+.kicker{font-size:.72rem;color:var(--muted)}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1>Frontier <em>Lab</em></h1>
+    <div class="sub">Portfolio construction on 15 years of real monthly prices: Black-Litterman, Ledoit-Wolf, downside risk, stress tests and out-of-sample backtests.</div>
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 32 assets on 15 years of data…</div></div></section>
+
+<div class="main">
+<aside class="panel" aria-label="Allocation">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2>Your allocation</h2><h3>max-Sharpe in grey</h3></div>
+  <div class="presets">
+    <button id="pTan">Max Sharpe</button><button id="pMin">Min variance</button><button id="pSor">Max Sortino</button><button id="pMdd">Min downside</button><button id="pRP">Risk parity</button><button id="pRes">Resampled</button><button id="pEq">Equal</button><button id="pClr" class="ghost">Clear</button>
+  </div>
+  <div class="prog" id="resProg" hidden><div></div></div>
+  <div class="mixrow"><canvas id="cDonut" height="120" style="width:120px"></canvas><div class="mixleg" id="mixLeg"></div></div>
+  <div class="sumbar"><span id="sumTxt">Σ 100%</span><button id="normBtn">Scale to 100%</button></div>
+  <div class="alloc" id="alloc"></div>
+</aside>
+
+<section class="panel">
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="mc" aria-selected="true">Monte Carlo</button>
+    <button role="tab" data-tab="frontier">Frontier &amp; CML</button>
+    <button role="tab" data-tab="down">Downside risk</button>
+    <button role="tab" data-tab="rb">Risk budget</button>
+    <button role="tab" data-tab="stress">Stress tests</button>
+    <button role="tab" data-tab="bt">Backtests</button>
+    <button role="tab" data-tab="capm">CAPM &amp; SML</button>
+    <button role="tab" data-tab="corr">Correlation</button>
+    <button role="tab" data-tab="model">Model &amp; views</button>
+  </nav>
+
+  <!-- MONTE CARLO -->
+  <div data-pane="mc" style="display:flex;flex-direction:column;gap:14px">
+    <div class="controls">
+      <div class="field"><label for="mcStart">Starting capital €</label><input id="mcStart" type="number" value="10000" step="500" min="0"></div>
+      <div class="field"><label for="mcMonthly">Monthly contribution €</label><input id="mcMonthly" type="number" value="200" step="50" min="0"></div>
+      <div class="field"><label for="mcYears">Horizon (years)</label><input id="mcYears" type="number" value="10" min="1" max="40"></div>
+      <div class="field"><label for="mcMethod">Method</label><select id="mcMethod"><option value="boot">Bootstrap of real months</option><option value="norm">Log-normal</option></select></div>
+      <div class="field"><label for="mcPaths">Paths</label><select id="mcPaths"><option>1000</option><option selected>3000</option><option>10000</option></select></div>
+    </div>
+    <div class="chart"><canvas id="cMC" height="380"></canvas></div>
+    <div class="legend"><span><i style="background:var(--you);opacity:.3;height:9px"></i>Yours 5–95%</span><span><i style="background:var(--you);opacity:.55;height:9px"></i>Yours 25–75%</span><span><i style="background:var(--you)"></i>Yours median</span><span><i style="background:var(--accent)"></i>Max-Sharpe median</span><span><i style="background:var(--faint)"></i>Money invested</span></div>
+    <div class="stats" id="mcStats"></div>
+    <h3>Distribution of annualized returns over the horizon</h3>
+    <div class="chart"><canvas id="cHistA" height="220"></canvas></div>
+    <p class="note">Re-runs on every weight change. <b>Bootstrap</b> replays real months from the estimation window in random 6-month blocks, keeping crashes, fat tails and co-movement; each asset's average is shifted to its forward expected return. Before an asset listed, its months are back-filled from its beta to the S&amp;P 500. <b>Log-normal</b> uses only expected return and volatility. Teal figures are the max-Sharpe portfolio.</p>
+  </div>
+
+  <!-- FRONTIER -->
+  <div data-pane="frontier" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="chart"><canvas id="cFront" height="440"></canvas></div>
+    <div class="legend" id="legFront"></div>
+    <div class="g2">
+      <p class="note">Grey dots are 4,000 random portfolios. The curve is the efficient frontier under your weight cap; the dashed <b>CML</b> runs from the T-bill rate through the max-Sharpe portfolio. Hover or tap points for detail.</p>
+      <div class="cmpgrid" id="cmpFront"></div>
+    </div>
+  </div>
+
+  <!-- DOWNSIDE -->
+  <div data-pane="down" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="cmpgrid" id="cmpDown"></div>
+    <div class="chart"><canvas id="cDown" height="420"></canvas></div>
+    <div class="legend" id="legDown"></div>
+    <p class="note">Downside deviation counts only months below your <b>minimum acceptable return (MAR)</b>, currently <b id="marL"></b> a year. The curve is the mean–downside frontier; the max-Sortino and min-downside portfolios are optimized on the portfolio's own semicovariance. VaR and CVaR are historical, monthly, 95%. Omega = gains above MAR ÷ shortfalls below it.</p>
+    <div class="scroll"><table id="dTable"></table></div>
+  </div>
+
+  <!-- RISK BUDGET -->
+  <div data-pane="rb" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="cmpgrid" id="rbCards"></div>
+    <div class="legend"><span><i style="background:var(--faint);height:6px"></i>Share of capital</span><span><i style="background:var(--you);height:6px"></i>Share of portfolio risk</span></div>
+    <div class="rb" id="rbList"></div>
+    <p class="note">Risk contribution = weight × the asset's covariance with the whole portfolio ÷ portfolio variance; contributions add up to 100%. An asset whose amber bar is much longer than its grey bar adds more risk than its capital share suggests. <b>Risk parity</b> sets every contribution equal, which is how many institutional multi-asset funds are built.</p>
+  </div>
+
+  <!-- STRESS -->
+  <div data-pane="stress" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="scroll"><table id="stTable" class="heat"></table></div>
+    <div class="chart"><canvas id="cStress" height="300"></canvas></div>
+    <div class="legend"><span><i style="background:var(--you)"></i>Yours</span><span><i style="background:var(--accent)"></i>Max Sharpe</span><span><i style="background:var(--spx)"></i>S&amp;P 500</span></div>
+    <p class="note">What each portfolio would have done, with today's weights, through real market episodes. Assets not yet listed at the time are left out and the remaining weights rescaled; cells marked * covered less than 80% of the portfolio. Worst 12 months is the worst rolling 12-month return over the full 15 years.</p>
+  </div>
+
+  <!-- BACKTESTS -->
+  <div data-pane="bt" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="btnrow"><div class="seg" role="group" aria-label="Backtest type"><button id="btIn" aria-pressed="true">In-sample</button><button id="btOut" aria-pressed="false">Walk-forward (out-of-sample)</button></div><span class="kicker" id="btKick"></span></div>
+    <div class="prog" id="wfProg" hidden><div></div></div>
+    <div class="chart"><canvas id="cBT" height="380"></canvas></div>
+    <div class="legend" id="legBT"></div>
+    <div class="chart"><canvas id="cDD" height="160"></canvas></div>
+    <div class="scroll"><table id="btTable"></table></div>
+    <p class="note" id="btNote"></p>
+  </div>
+
+  <!-- CAPM -->
+  <div data-pane="capm" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="chart"><canvas id="cSML" height="420"></canvas></div>
+    <p class="note">Betas against SPY (S&amp;P 500 with dividends), monthly, over each asset's history in the window. SML: r<sub>f</sub> + β·ERP. Dots above the line carry positive Jensen's alpha on the expected returns in use.</p>
+    <div class="scroll"><table id="alphaTable"></table></div>
+  </div>
+
+  <!-- CORR -->
+  <div data-pane="corr" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="scroll"><div class="chart" style="min-width:620px"><canvas id="cCorr" height="640"></canvas></div></div>
+    <div class="legend"><span><i class="dot" style="background:var(--bad)"></i>−1</span><span><i class="dot" style="background:var(--panel2)"></i>0</span><span><i class="dot" style="background:var(--accent)"></i>+1</span><span id="rbar"></span></div>
+    <div class="pairs"><div><h3>Most correlated</h3><ol id="hiPairs"></ol></div><div><h3>Best diversifiers</h3><ol id="loPairs"></ol></div></div>
+  </div>
+
+  <!-- MODEL -->
+  <div data-pane="model" hidden style="display:flex;flex-direction:column;gap:16px">
+    <div class="controls">
+      <div class="field"><label for="win">Estimation window</label><select id="win"><option value="181">15 years (Oct 2011–)</option><option value="120">10 years</option><option value="60">5 years</option></select></div>
+      <div class="field"><label for="mode">Expected returns</label><select id="mode"><option value="bl">Black-Litterman</option><option value="blend">History–CAPM blend</option><option value="hist">Pure history</option></select></div>
+      <div class="field"><label for="trust"><span id="trustT">Confidence in history as a view</span>: <b id="trustL">25%</b></label><input id="trust" type="range" min="0" max="100" value="25"></div>
+    </div>
+    <div class="controls">
+      <div class="field"><label for="rf">Risk-free %</label><input id="rf" type="number" step="0.05"></div>
+      <div class="field"><label for="erp">Equity risk premium %</label><input id="erp" type="number" step="0.25" value="5"></div>
+      <div class="field"><label for="mar">Min acceptable return %</label><input id="mar" type="number" step="0.25"></div>
+      <div class="field"><label for="cap">Max weight per asset %</label><input id="cap" type="number" step="1" min="4" max="100" value="15"></div>
+      <div class="field"><label for="tau">BL τ</label><input id="tau" type="number" step="0.01" min="0.01" max="1" value="0.05"></div>
+      <div class="field"><label for="shrink">Correlation shrinkage: <b id="shrinkL"></b></label><input id="shrink" type="range" min="0" max="100"></div>
+      <button id="lwBtn">Use Ledoit-Wolf optimum</button>
+    </div>
+    <p class="note"><b>Black-Litterman</b> starts from equilibrium returns (CAPM: r<sub>f</sub> + β × ERP), which carry no opinion, then tilts them toward views in proportion to your confidence. The slider adds each asset's own history as a view; your views below come on top. <b>Ledoit-Wolf</b> picks the shrinkage that minimises expected estimation error, computed on the months where all 32 assets traded.</p>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Your views</h2><button id="addView">Add view</button></div>
+    <div class="views" id="views"></div>
+    <div class="scroll"><table id="aTable"></table></div>
+  </div>
+</section>
+</div>
+</div>
+
+<script>const RAW=`2011-10|181
+NVDA|0|1831,561,-1132,657,257,165,-1558,-438,1118,-203,362,-492,-1019,56,242,0,390,134,733,562,-297,285,266,549,-238,326,269,-200,1760,-256,313,334,-242,-561,1163,-514,591,777,-439,-424,1534,-512,607,15,-913,-80,1316,965,1509,1223,391,-1113,746,1362,-28,3184,62,2146,762,1171,385,2976,1577,229,-694,734,-425,3854,15,1242,436,551,1568,-288,-359,2703,-148,-430,-289,1220,-606,336,1469,12,-2498,-2241,-1831,768,742,1640,80,-2507,2124,273,-62,392,1548,790,856,48,1430,-240,1088,2147,706,1176,2600,120,-736,692,-256,-50,558,-264,1245,823,2316,-252,1482,-746,2342,2781,-998,-1675,-41,1192,-3203,67,-1880,1982,-1690,-1955,1119,2542,-1364,3369,1883,1967,-10,3634,1182,1047,562,-1186,-625,1469,589,2424,2858,1422,-438,2689,1269,-528,201,174,932,414,-286,-1059,404,-1323,50,2406,1693,1258,-207,713,853,-1259,537,248,-729,-157,1443,580,-512,33,998,356,39
+AMZN|0|-126,-994,-998,1233,-759,1270,1451,-819,725,217,642,244,-843,823,-47,583,-46,84,-476,606,315,847,-672,1127,1644,813,131,-1006,95,-711,-958,277,391,-363,832,-490,-527,1086,-835,1424,723,-212,1335,177,113,2351,-434,-19,2227,622,167,-1315,-587,744,1111,958,-99,604,136,886,-567,-497,-9,982,262,491,434,753,-268,204,-73,-196,1497,647,-62,2406,424,-430,821,405,431,457,1324,-48,-2022,577,-1113,1443,-459,859,819,-786,668,-142,-485,-227,235,136,261,871,-622,350,2689,-128,1296,1471,905,-876,-358,434,281,-156,-353,4,1207,-705,674,-327,430,-535,266,399,-493,-1028,267,614,-2375,-328,-1165,2706,-606,-1086,-935,-576,-1299,2277,-863,961,209,1435,811,255,324,-789,470,977,400,215,1389,205,-298,82,953,-324,-454,439,4,1153,553,834,-1069,-1037,-307,1116,701,671,-218,-412,1123,-450,-103,367,-1224,-82,2727,211,-1193,1395,-435,-409,533
+GOOGL|0|1507,114,776,-1019,657,372,-567,-397,-14,912,823,1013,-983,266,129,683,602,-87,383,566,105,84,-460,343,1766,281,577,538,294,-832,-411,687,228,-88,48,104,-349,-331,-335,130,467,-141,-107,-63,-97,2175,-147,-146,1551,345,199,-214,-580,637,-721,579,-605,1248,-19,180,73,-420,214,350,302,34,905,677,-582,170,103,193,609,30,166,1223,-662,-605,-179,799,265,868,37,-201,-965,175,-583,774,6,447,188,-771,-214,1250,-227,257,308,360,271,697,-653,-1324,1590,645,-108,493,952,-1006,1027,856,-10,426,1065,201,1411,14,360,1035,740,-762,1075,-415,208,-659,-18,297,-1795,-30,-422,675,-696,-1162,-119,686,-1263,1203,-888,1518,348,1447,-258,1088,260,-390,-518,681,540,29,-117,901,785,597,572,-582,-476,165,317,-126,1217,778,-1654,-908,269,815,274,889,1095,1428,1567,1387,-218,799,-776,-770,3382,-116,-598,-35,-471,146,220
+MSFT|0|699,-322,149,1375,819,164,-74,-824,480,-366,527,-344,-410,-596,34,277,211,291,1569,618,-103,-782,564,-36,640,850,-189,115,200,700,-144,205,186,350,592,205,127,247,-284,-1302,931,-727,1963,-303,-578,578,-619,170,1893,394,208,-70,-698,855,-970,702,-345,1077,201,24,403,125,312,404,-44,294,395,260,-130,547,340,-37,1167,170,163,1107,-84,-267,247,615,-23,758,630,182,-661,427,-840,282,774,528,1073,-495,831,172,150,85,312,595,417,795,-457,-265,1363,254,1106,74,1028,-674,-374,601,390,429,41,146,696,-76,850,517,616,-661,1763,-13,173,-753,-372,319,-999,-181,-553,931,-667,-1093,-33,1022,-600,333,90,1559,658,711,370,-136,-222,-366,708,1229,-76,573,423,171,-746,682,767,-640,-11,315,-557,442,-46,-153,-416,-544,529,1668,805,726,-487,222,-3,-480,-171,-1103,-852,-575,1016,1065,-1715,2458,937,111,432
+META|8|507,-3019,-1681,1993,-254,3264,-493,1638,-1204,-613,856,-1232,218,4791,1220,2165,-4,-637,1625,1449,941,-1201,-76,589,630,797,299,564,-512,361,41,-270,403,412,-420,53,831,961,-487,53,1343,223,40,721,-471,672,305,105,-381,845,176,170,212,-960,-285,1327,401,480,577,81,-32,1210,161,-64,538,-160,-41,591,-459,-1039,764,1150,132,-1119,183,-641,-770,-737,-677,2716,-314,325,1602,-824,875,64,-441,-409,762,521,179,-163,-468,-1334,2273,996,88,1171,1558,-1068,46,527,-138,-543,-27,1433,1037,112,577,247,648,-1054,-466,28,366,-686,-3263,537,-984,-341,-1673,-133,241,-1672,-3134,2677,190,2379,1743,2115,1339,1015,841,1102,-713,146,35,859,820,1022,2576,-93,-1141,852,812,-583,979,991,-85,119,203,1771,-304,-1367,-475,1794,1408,479,-449,-52,-1171,-6,196,855,-954,-1166,695,337,-1086,-117,281,2680,-90
+AAPL|0|615,-558,597,1271,1883,1053,-260,-107,109,458,939,28,-1076,-124,-907,-1441,-253,29,3,224,-1183,1412,838,-215,964,701,89,-1077,575,200,994,787,277,287,775,-171,720,1060,-719,614,1008,-314,58,453,-372,-329,-662,-218,834,-58,-1102,-752,-13,1272,-1399,718,-427,901,237,655,43,-216,480,477,1338,487,-1,678,-572,327,1070,-602,968,203,-152,-106,682,-581,-150,1351,-94,280,2004,-83,-305,-1812,-1167,552,448,970,564,-1242,1305,764,-165,730,1107,776,988,540,-1147,-698,1554,851,1474,1651,2166,-1025,-600,955,1146,-55,-797,73,762,-505,991,650,425,-680,587,1051,742,-157,-541,575,-971,-545,-814,1886,-312,-1210,1096,-330,-1223,1105,232,1186,290,461,943,128,-424,-887,-26,1138,136,-422,-185,-513,-67,1302,956,544,324,175,-304,517,552,-576,259,-815,-434,-536,215,117,1196,969,618,324,-251,-455,191,-393,692,1511,-727,676,266,510,109
+VRT|100|-492,-2663,2243,2021,652,693,1193,672,191,601,-16,777,403,-444,1350,934,999,271,46,-1448,660,-12,-261,-1646,-3758,753,-1050,-1229,-2520,3893,96,-1570,4722,-314,-137,410,1428,-1194,426,2936,2834,501,5144,-556,556,1118,1007,1728,2004,2082,1387,545,-1170,-909,550,1986,985,1675,-1094,300,-1867,-2410,1825,2641,1902,1339,-1240,1831,2784,-677,-986,1492,3691,-167,3109,-389,608,-2785,710,-671,61
+VST|61|-822,2958,458,-31,87,-828,-120,1368,-214,773,559,401,-278,-307,644,-282,992,970,735,-355,-448,416,569,-904,376,-251,970,370,44,469,-1354,-341,-521,1626,765,112,-185,-1289,-204,-1461,-1627,2243,461,-829,21,305,-122,-790,754,604,158,-1362,333,-458,-415,1566,323,-31,-967,1456,148,1537,-422,463,266,761,540,-1266,1313,-426,-1454,938,592,-387,-60,-464,1001,-58,46,1041,690,1197,626,-139,822,940,652,3293,2815,889,3064,-1300,-786,784,3909,542,2791,-1361,2188,-2045,-1198,1038,2387,2085,760,-932,371,-389,-501,-968,-185,981,-1343,500,151,-86,-658,-730,88,1672
+ETN|0|2625,96,-307,1263,726,-452,-331,-1074,-710,1062,290,570,71,1046,387,511,881,-49,26,834,-38,477,-760,872,311,298,476,-398,222,122,-330,213,474,-1138,278,-923,792,-10,19,-717,1255,-356,197,416,-573,-943,-581,-1009,899,504,-1052,-294,1227,1141,113,-171,-308,616,588,-125,-295,528,87,550,170,387,201,310,58,54,-755,701,421,-208,158,628,-389,-17,-611,300,-240,1128,-4,432,-1736,735,-1076,1105,462,188,281,-927,1180,-131,-93,301,561,619,240,-26,-397,-1362,748,177,304,646,1042,-7,172,1750,-80,-203,1061,679,336,216,202,666,701,-1132,1035,-121,664,-833,-261,-110,-444,-387,-910,1778,-742,-240,1253,948,-398,335,784,-157,-246,579,1433,210,1265,-742,-252,995,577,218,1744,853,178,490,-580,-279,104,799,4,1354,-1160,-164,-1015,-699,829,915,1149,777,-898,719,195,-910,-792,1033,697,-456,2106,-723,637,-256,-297,692,-1
+ANET|33|598,2681,534,-802,-662,-1992,388,965,191,-924,922,1692,334,-1146,-1818,543,1397,588,-2288,1418,-794,558,1001,-1216,1070,1180,678,-39,1187,207,-286,2659,1116,557,554,164,-33,1799,764,542,1662,106,1708,-220,-535,362,-491,236,-68,1691,-1108,-1336,353,-1165,194,3281,1024,-69,-2168,614,533,-1713,543,236,-2022,424,980,-1353,488,827,646,-1004,2368,-1398,-739,95,2958,734,585,-901,788,440,768,676,499,-285,-701,1922,2113,1587,-1352,-127,1324,-1684,-1150,-835,2442,279,-583,706,1526,-1289,385,1006,2102,-459,386,-257,-430,2588,-579,894,965,719,984,729,448,-1152,1602,1775,-112,197,861,68,502,894,425,-1925,-1673,618,531,1809,2044,1082,671,822,-1713,27,817,-581,-803,4067,-767,653,616,851,404,646
+MU|0|1091,716,501,2083,1250,-526,-1864,-1138,805,-158,0,-370,-920,994,620,1924,1085,1909,-561,2399,2269,-761,249,2874,120,1934,308,593,499,-219,1040,946,1525,-728,671,509,-342,864,-261,-1640,478,-1154,369,-71,-3255,-175,-1135,-871,1055,-380,-1111,-2210,-363,-151,267,1833,818,-15,2001,782,-349,1381,1224,999,-278,2329,-426,1120,-296,-583,1369,2302,1266,-433,-300,632,1164,682,-1181,2525,-894,67,-51,-1388,-1660,223,-1771,2045,696,110,177,-2247,1834,1633,85,-535,1097,-8,1320,-128,-100,-1998,1386,4,753,-283,-909,319,720,2731,1730,411,1694,-363,-243,-224,100,-871,-500,-356,-265,2156,1101,-1168,801,-1235,-1233,829,-2514,1212,-862,-1137,821,656,-1311,2065,-411,436,688,597,-746,1333,-203,-273,-154,1383,1226,48,567,3023,-418,1066,522,-1643,-1237,776,-381,-171,-1397,841,262,-708,-1144,2276,3048,-1136,904,4059,3382,568,2074,4536,-60,-1804,5308,8776,1888,-2869,1649,1110,-339
+TSM|0|1041,238,-8,906,313,523,196,-1187,168,368,523,762,51,862,-64,338,287,-581,1099,-220,-182,-473,-247,242,855,-369,-164,-298,680,1079,40,229,404,-439,470,-363,912,658,-464,147,801,-428,409,-65,-349,-264,-1009,438,583,364,-4,-176,537,1125,-996,479,1009,591,346,644,167,-453,-317,751,181,435,70,692,209,286,281,157,1273,-645,13,1427,-433,95,-1213,65,-207,1272,580,128,-1372,-134,-181,192,380,489,698,-1248,546,883,0,982,1108,283,1020,-716,-19,-1039,1117,-527,1364,3896,46,282,345,1568,1286,1145,364,-573,-130,53,278,-293,203,-580,184,303,312,193,-1274,-210,-1087,255,-1377,823,-580,-1728,-1022,3482,-972,2449,-610,739,-937,1695,279,-175,-563,-665,-68,1274,738,862,1391,616,95,998,1544,-461,356,152,971,-309,729,599,-1375,-769,42,1598,1759,668,-445,2135,757,-297,453,878,1332,-952,1719,565,1440,-1535,274,1014,-63
+XIAOMI|82|-456,-749,-2158,1758,-963,-2395,2145,-486,570,-2034,482,-959,-602,324,115,72,2105,715,861,-1641,-225,1784,682,1543,5856,-1297,756,2047,2469,-1166,-1339,152,-432,1893,-771,-619,-160,-1458,11,-996,-195,-1329,-1066,-515,-1270,-51,1239,-957,-632,-2250,-166,1771,598,1777,-832,196,-860,-632,361,1517,2,3,1377,1165,-20,-2110,716,1303,1595,103,-562,214,1601,1575,1870,380,2515,970,3617,-513,178,93,1754,-1134,10,236,-1986,-524,-439,-978,-186,-914,-864,-337,-2286,3295,-399,-869,284
+AMAT|0|1892,-1187,-65,1466,37,163,-369,-1311,1084,-489,816,-445,-510,213,662,1285,689,-168,764,546,-184,938,-743,1679,188,-256,220,-486,1332,770,-666,646,1169,-705,1076,-649,222,936,362,-835,1013,-994,-1228,222,-452,-968,-677,-870,1416,1256,-53,-546,749,1224,-335,1982,-184,968,1389,104,-355,1108,22,614,605,740,440,1323,-996,726,206,1545,833,-633,-313,491,758,-344,-1068,264,-904,528,-1113,-1016,-1493,1402,-1218,1936,-139,344,1112,-1176,1608,993,-230,392,874,708,542,-500,54,-2116,842,1353,760,642,-393,-349,-37,3967,463,1203,2248,1304,-67,427,309,-173,-325,-474,615,789,691,-1219,-271,-179,-1627,655,-2243,1649,-1101,-1291,776,2444,-1115,1449,442,575,-798,1824,843,488,99,-937,-441,1341,821,138,2292,229,-368,847,972,-1008,-686,243,-1013,-356,-691,1090,-1215,-819,385,430,1679,-164,-1046,2736,1385,843,188,2542,1565,-819,1542,1423,6065,-2978,-961,1156,-85
+SAMSUNG|0|2286,42,449,739,905,515,892,-1642,507,683,-556,1285,-211,814,1342,-901,678,-165,-165,-101,-1228,-387,956,87,895,209,-701,-887,644,-24,360,846,-776,57,-715,-764,491,15,398,233,-79,597,119,-1049,-388,-1074,-863,269,2303,-483,-204,-1118,-31,2123,-534,-103,1481,962,684,14,-147,460,147,1296,45,917,653,123,460,338,-384,1100,740,-412,257,-264,-629,729,690,-500,-1107,-51,487,-286,-1101,53,-661,2004,-281,-205,66,-961,1462,-557,-511,1278,613,-171,1408,-154,-494,-1289,574,-21,762,1048,-595,953,55,2053,2655,-157,8,-168,245,-178,-88,-443,-354,-472,-476,75,1039,-777,-108,-373,-722,220,-1920,763,-618,-1545,1253,1232,-596,1368,-780,801,-78,1046,137,53,-782,58,-191,1386,791,-970,45,1177,-795,-523,1100,271,-833,-1503,-858,-984,-572,25,342,527,-141,486,850,1692,-199,1984,2591,-920,2224,3277,3653,-2689,3443,4199,303,-1471,218,530,-166
+CAT|0|2863,362,-744,2098,466,-673,-311,-1474,-309,-19,133,83,-83,51,573,980,-612,-585,-202,133,-386,121,-45,104,65,149,734,409,326,247,669,-301,630,-670,826,-921,318,-80,-902,-1191,366,-346,946,-180,-59,-644,-279,-1450,1292,-47,-646,-727,877,1306,253,-670,455,1022,-98,832,-515,1450,-295,400,105,-403,1116,310,193,680,311,615,954,394,1164,378,-501,-469,-156,523,-1069,664,-344,982,-1993,1183,-634,547,314,-135,352,-1407,1376,-265,-962,614,995,503,204,-1043,-541,-660,121,322,530,583,710,481,594,1053,486,98,1807,741,-118,569,-973,-449,199,-896,686,-523,693,-203,-694,1879,-506,252,-1718,1168,-683,-1117,3281,922,133,582,-505,-447,-387,-596,1959,830,602,-289,-1677,1091,1793,204,1121,972,-836,118,-160,436,286,983,-347,795,-1067,277,-740,-411,-577,1253,1154,1324,-433,1387,2133,-26,-50,1502,1300,-463,2588,-160,2158,-2334,-213,167,-127
+AVGO|0|305,-1140,-314,1760,1081,398,-1152,-400,894,279,-89,-421,-528,627,-938,1302,-433,553,-1102,1805,-35,-187,499,1253,545,-154,1877,333,1292,484,-141,1129,240,-373,1832,637,-86,829,809,228,2405,-21,-795,2669,-997,-586,66,-45,-150,594,1161,-788,19,1571,-566,591,99,423,891,-192,-130,12,428,1286,573,428,84,846,-227,584,219,-339,881,532,-696,-345,-63,-299,-264,987,-245,-860,-124,1349,-942,623,823,549,265,1018,588,-2097,1549,74,-253,-143,608,798,95,-344,-1066,-1155,1456,723,947,36,960,590,-403,1486,996,289,430,-55,-161,354,175,180,243,-175,964,414,2095,-1195,27,792,-1196,464,-1556,1022,-679,-1029,588,1721,232,463,159,873,-234,2896,793,360,270,-951,130,1003,2113,571,1021,235,-190,217,2123,8,133,629,-158,-453,4342,-456,-987,-1579,1496,2577,1414,655,126,1113,1204,902,-1395,-428,-355,-294,3487,703,-1531,305,-487,-500,295
+CRWD|93|3043,-875,-2826,-1441,1621,-1402,2250,-237,-664,2152,2978,1421,1287,1107,922,-982,2377,3819,188,9,-1550,1425,654,1313,92,1080,-1253,1466,-2295,-571,-1178,807,1633,-1247,-1951,536,892,-54,-975,-219,-2702,-1051,58,1397,1373,-1254,3339,-828,1007,85,267,561,3407,773,1456,1082,-110,-875,722,2216,-3947,1954,115,585,1654,-110,1634,-211,-952,2164,991,805,-1075,-679,1574,1073,-623,-793,-584,-1573,495,1417,6399,440,4,2103,1461,389
+JPM|0|1642,-1090,736,1299,520,1718,-591,-2287,778,160,317,899,372,-144,704,774,397,-298,391,1139,-330,634,-933,230,44,1102,220,-472,264,685,-721,-73,369,79,309,133,107,-53,402,-1254,1269,-114,512,398,301,180,-646,-488,614,378,-97,-928,-538,519,751,328,-480,375,552,-135,477,1575,763,-138,708,-307,-39,-557,1126,99,-99,508,596,389,232,873,-15,-479,-58,-163,-263,1092,-32,-152,-271,199,-1220,688,83,-300,1552,-869,551,449,-529,713,699,548,580,-444,-1228,-2246,747,162,-334,374,367,-391,278,2024,780,199,1438,344,163,678,-530,-186,538,234,441,-651,-30,-559,-458,-386,-1179,1078,-1484,335,-141,-812,2154,977,-295,514,242,-910,692,-183,717,935,-736,-90,-340,1224,898,314,671,765,-372,568,-18,579,564,-620,589,1253,-401,1209,-99,-731,34,792,981,268,175,465,-89,63,292,-464,-183,-204,703,-444,936,796,120,-708,116
+GS|0|1586,-1216,-566,2327,360,802,-741,-1649,17,526,524,753,766,-335,829,1591,163,-174,-73,1131,-668,845,-695,400,167,537,492,-741,176,-156,-246,33,477,324,393,249,350,-51,288,-1105,1043,-96,450,530,126,-178,-771,-787,791,169,-515,-1036,-704,498,454,-242,-683,689,712,-483,1052,2341,919,-423,845,-739,-258,-529,504,155,-37,601,223,245,288,515,-158,-421,-537,-489,-235,764,49,-571,50,-1505,-1240,1853,-26,-239,726,-1098,1212,759,-679,163,297,432,388,340,-1504,-2300,1865,780,58,17,412,-190,-594,2197,1499,283,1782,276,656,712,202,-123,1084,-858,934,-783,94,-729,-378,-271,-746,765,-913,1224,54,-1191,1756,1282,-1108,653,-387,-631,499,-497,-42,1033,-715,-126,-617,1342,1295,-46,203,736,216,763,-92,1254,83,-297,458,1753,-544,1184,-235,-1221,23,1021,1787,224,354,686,-88,465,694,642,-811,-106,919,1102,-95,69,74,-1181,-56
+LMT|0|449,430,352,176,861,164,76,-744,517,251,322,246,31,84,-108,-587,265,968,266,796,249,1075,287,419,454,724,493,151,844,58,55,53,-178,388,500,505,426,133,53,-218,698,145,-806,165,-122,1140,-214,305,604,43,-92,-283,304,265,491,236,505,184,-321,-134,278,840,-577,56,680,38,69,501,-125,523,516,160,-69,421,60,1053,-12,-412,-506,-135,-608,1038,-113,797,-1506,299,-1284,1064,758,-299,1105,222,738,-38,667,155,-343,445,-42,995,-1306,-836,1478,45,-606,385,361,-179,-865,498,-275,-934,341,1188,299,111,-101,-177,-249,-409,-370,113,663,949,1225,175,-210,249,-231,-376,220,-805,2599,32,27,-478,302,-32,-175,-376,369,-304,111,-879,1117,-81,122,-526,46,622,221,116,-2,1602,483,347,-659,-305,-764,-473,-272,-8,695,97,-333,-910,823,1036,-147,-692,644,3113,376,-767,-1430,241,-333,1438,-369,-870,7
+NUE|0|1941,437,127,1243,-216,-50,-871,-880,705,343,-395,260,489,262,570,660,-209,327,-548,204,-185,799,-276,855,561,-137,527,-942,391,134,239,-216,-200,197,816,60,-41,-80,-784,-1101,774,187,280,-319,-609,16,-193,-1241,1265,-201,-187,-305,69,2120,524,-255,269,856,-956,272,-121,2731,-370,-240,771,-395,270,-527,27,-35,-444,238,319,-57,1123,532,-233,-600,87,417,-204,709,-662,213,-682,218,-1358,1820,-109,-299,-219,-1589,1563,-131,-993,475,577,466,57,-1562,-1293,-1182,1435,260,-103,130,837,-45,646,1244,-17,-839,2276,3488,248,2465,-605,843,1302,-1589,1336,-483,789,-1117,2980,1332,412,-1442,-2081,3006,-211,-1914,2280,1413,-1176,2823,-93,-743,-407,-1088,2457,495,1,-885,-547,1501,271,741,287,320,-1484,19,-605,307,-677,-68,-565,906,-2419,1004,704,-1206,-81,-839,1895,1044,396,-857,1080,629,262,896,-47,-407,3323,1097,-1068,1551,-297,-614,709
+TM|0|-227,-120,33,1111,1256,585,-581,-598,467,-493,406,-56,-132,1111,833,227,758,128,1331,107,265,103,-91,696,109,-338,-250,-587,47,-28,-397,433,579,-140,-311,391,325,147,191,269,506,481,-62,-81,-300,-22,-1130,45,455,147,-111,-245,-1327,406,-435,168,-331,1161,809,-233,-34,248,-112,-124,-225,-229,-44,-55,-234,745,12,706,405,189,66,845,-241,-146,47,-230,66,235,-589,165,-587,378,-445,611,-173,-250,473,-487,545,408,122,434,302,120,24,-121,-583,-663,303,196,-30,-501,1097,151,-87,241,1496,-909,527,719,-339,1009,534,286,-312,319,-66,72,419,710,-781,-29,-513,-271,-733,546,-813,-1164,654,640,-752,771,-761,614,-308,-87,1809,466,231,559,-254,833,-337,890,2046,582,-968,-431,-577,-557,-194,-456,-311,-138,1405,-292,-394,-81,832,-34,-961,390,872,-179,686,-114,604,598,684,-1497,-654,-139,-1133,1221,399,-684,120
+PFE|0|894,525,782,-111,-24,719,110,-355,517,452,17,415,8,151,24,972,33,544,73,-555,286,521,-349,184,682,419,-347,-75,651,3,-262,-443,17,-245,240,61,129,491,0,32,1079,137,-247,326,-351,755,-995,-251,767,-232,-150,-555,-171,-10,1036,703,147,477,-488,-267,-638,237,106,-231,863,26,-85,-281,288,-128,329,525,-179,437,-11,226,-106,-226,316,-90,97,1006,487,614,-229,819,-558,-190,212,-203,-438,315,434,-1034,-761,107,679,136,171,-398,-1026,-233,1752,55,-1438,1883,-179,-288,-332,1498,-392,-141,-671,818,668,119,111,1031,762,-664,170,2392,990,-1009,-1091,1029,-522,897,-115,-291,-1045,-325,638,861,221,-1303,-813,57,-468,-118,-352,-59,-189,-625,-787,105,-551,-452,-192,448,-768,1355,-237,1069,-501,-24,-221,-595,122,161,-34,-412,-367,-193,319,-226,631,291,-326,626,-326,796,458,156,-491,-33,-802,568,1379,21,-84
+ITX|0|634,-854,-238,690,659,260,-612,-687,2488,-47,763,1222,281,814,206,34,-359,-190,91,-546,-126,770,-36,1606,803,-304,371,-928,-475,475,-24,-170,562,-455,-108,-415,184,413,-101,233,660,290,-152,467,-102,423,-221,101,1145,-326,-387,-569,-433,719,-323,546,-166,382,253,451,-464,-175,-73,-416,-186,1003,983,587,-542,261,-380,-137,96,-575,-112,279,-1479,273,114,83,868,-412,-747,-13,-538,911,-1716,940,797,-256,420,-1126,1255,10,267,36,189,-11,1313,-493,-737,-1589,-310,1005,-475,86,498,-43,-853,3475,-393,-718,1091,-9,1033,754,-846,-405,52,824,-105,-1289,269,-770,-1152,-1633,-174,1379,-650,742,-1083,-318,1138,1239,387,1648,-60,916,491,-315,1475,-42,73,-335,-582,2015,501,-122,323,1341,-734,279,531,-238,1167,955,-293,-279,-644,611,-139,-819,1032,67,-435,-755,296,1173,234,94,1828,-148,285,-1586,653,516,130,330,335,-903,-130
+ASML|0|2140,-572,572,287,595,1008,289,-1016,1225,1182,-127,-544,242,361,291,1662,-547,-421,1043,928,-266,1370,-321,1344,-411,-139,34,-968,178,838,-1195,552,861,95,208,281,87,602,203,-361,360,-618,675,491,-728,-476,-822,-334,547,-8,-426,346,-89,1029,-378,473,-77,1049,-280,284,-361,-236,879,820,24,913,27,11,-127,1536,398,953,558,-289,-97,1676,-373,162,-425,435,67,810,-418,-831,-833,-59,-918,1247,448,283,1234,-995,1057,716,-9,1159,545,375,936,-516,-141,-545,1080,1424,1169,-389,578,-131,-218,2165,1142,952,616,886,498,452,228,1099,865,-1056,910,-238,58,-1494,-158,21,-1559,292,-1742,2071,-1451,-1522,1374,2911,-1015,2094,-632,1020,-644,1385,25,-115,-759,-1088,172,1448,1070,1492,960,197,-991,1007,650,-824,-350,-781,-1910,209,94,667,-389,-655,113,1028,877,-1309,690,3036,961,7,93,3301,207,-894,918,1208,2336,-1801,411,682,-173
+SKHYNIX|0|1410,-276,-561,2555,1259,-367,-419,-2100,934,-1082,-205,1093,986,-107,1001,-937,876,788,276,536,-263,-1213,647,809,738,1091,423,47,339,-691,1555,1100,1067,-733,95,-87,134,-197,-60,-73,-240,-245,478,692,-1805,-1623,-406,-758,-695,467,-282,-1360,694,214,-24,-276,1743,776,755,1197,-202,274,222,2394,-1033,978,518,666,1595,-15,401,2084,-85,-287,233,-447,383,781,319,977,-1197,105,-372,-1143,-904,394,-1079,2295,-580,406,437,-1940,946,829,-156,667,303,-283,2012,-321,-701,-698,147,-417,719,-197,-853,1297,-165,2481,2481,51,1490,-710,-115,-134,-117,-1331,-654,-507,111,916,1640,-937,294,-485,-866,-189,-1973,749,-617,-1729,12,1025,-689,2082,-564,112,-207,2295,609,1138,-507,-761,169,2047,548,-718,1537,1631,-684,853,2474,-1791,-761,278,134,-1548,375,1659,-444,-107,-443,1953,4471,-828,-111,2804,5807,-785,2524,3850,1836,-2814,6244,7921,1095,-2964,54,818,-461
+GOLD|0|641,124,-1030,450,450,-237,-325,-325,262,250,250,513,-303,-38,-211,-85,-499,108,-769,-541,-1212,724,638,-263,-263,-552,-42,-42,656,-288,95,-386,142,142,35,-586,-325,35,74,799,-257,-257,-257,59,-150,-654,335,-142,233,-362,-362,529,1052,2,446,113,113,232,-312,49,-318,-792,-178,437,437,-42,151,47,-246,209,392,-264,-32,-32,260,250,-176,55,-86,-86,-375,-206,-206,-73,175,65,476,324,-52,-151,-79,179,796,116,652,-25,-25,-303,392,392,-119,377,377,401,279,901,80,-420,-82,40,40,-252,-641,-87,315,763,-688,231,-155,-155,153,-58,310,-184,589,255,-192,-277,-277,-246,-208,-314,-187,642,459,29,29,720,153,-176,-176,213,-23,-508,451,451,165,-113,31,792,386,87,72,371,417,429,429,-336,288,288,128,963,629,-91,7,7,677,1016,318,647,203,931,-82,-82,-82,-79,-1207,170,912,-658,80
+COPX|0|2783,-439,-283,1651,140,-1009,-7,-2025,248,-153,392,1105,213,-8,417,69,-915,-395,-760,-312,-1553,46,437,540,199,-851,581,-544,734,-410,219,633,262,501,-515,-1165,-749,-386,-536,-1712,1836,-609,1785,-889,-563,-1834,-749,-1830,1887,-1653,-531,-1524,1908,1837,2183,-1559,620,1291,-891,587,453,2121,-537,2345,-506,-431,-464,-552,381,1983,533,-616,298,-449,1368,263,-310,-449,-19,-100,-604,25,-1187,366,-1254,217,-483,1191,649,18,-128,-1474,1426,-856,-1299,338,216,372,1239,-1393,-1081,-2417,2181,791,1391,1241,1200,-671,376,2530,1391,-217,2451,-384,1097,451,-953,188,-246,-737,912,-485,498,25,1402,995,-1133,-172,-2275,-98,-51,-371,39,2203,290,1398,-752,284,184,-1282,900,1238,-907,-387,-958,417,1141,-346,-199,1752,1013,234,-385,-570,-95,1143,-807,-258,-834,145,-187,211,-252,808,967,-417,1534,1954,394,460,1617,1761,1143,-2332,757,1214,-1268,209,1770,-820,107
+OIL|0|662,115,-310,688,688,18,-895,-895,-400,823,823,-190,-328,233,-11,400,-361,-122,-695,-193,176,542,586,-229,-229,78,-151,-151,251,-120,29,124,-156,-156,-267,-826,-931,-1830,-1828,-757,802,802,802,-183,-300,-1790,372,-1067,246,-1327,-1327,-681,354,1009,2154,160,160,-1453,1079,429,-155,449,1121,-48,-48,-496,-208,-275,-475,987,-51,985,511,511,477,368,-474,683,508,508,238,-128,-128,685,-876,-2221,-836,1504,669,357,645,-1141,319,-207,-727,-17,-17,365,-348,-348,-1314,-2928,-2928,3981,1647,522,457,-956,-852,1759,1759,788,1834,-392,584,354,790,160,142,142,746,-1637,1022,1727,1072,685,133,247,247,-418,-1229,-884,781,-991,56,-118,-118,-491,-29,-865,308,1423,152,973,-678,-678,-699,606,234,462,43,-710,587,-658,-238,-365,-365,-30,259,259,-466,213,-1555,124,654,654,-608,-161,-291,-287,-372,1617,1727,1727,1727,-1926,-2078,2359,41,1441,87
+BTC|36|-1257,1174,-1530,-3208,1692,-395,-331,-252,1428,820,-1918,261,3309,2010,1411,-1435,1869,-479,758,1853,2671,-723,-788,595,1496,638,2924,69,2160,-917,2576,6963,850,1590,6358,-775,4909,5821,3833,-2780,173,-3293,3251,-1890,-1455,2149,-955,-585,-465,-3641,-683,-761,1148,650,3033,6025,2615,-676,-451,-1388,1092,-1772,-497,2998,-803,-2513,3448,927,-341,2392,316,-767,2779,4241,4777,1418,3631,3053,-198,-3535,-614,1879,1331,-716,4003,-703,-1877,-1689,1224,543,-1718,-1570,-3777,1795,-1409,-308,548,-1623,-362,3984,3,2303,278,-700,1197,-409,-1129,400,2855,878,1207,75,4372,1656,-1500,1130,-713,310,-874,739,1087,3736,-313,961,-1761,-216,1412,1107,239,805,-650,538,-395,-1749,-319,-1016,-1479,185,1183,-357,-2041,727,2505,637,-138
+UST|0|-129,58,199,86,-110,-159,251,287,-41,140,-12,-35,-40,98,-94,-129,113,29,153,-311,-255,-35,-142,185,78,-88,-209,306,36,-56,76,183,-22,-22,188,-105,154,129,13,430,-247,86,-63,-42,-163,152,8,158,-64,-43,-45,333,149,-7,-16,-10,309,25,-101,24,-149,-423,-12,22,72,8,111,83,-51,37,146,-144,-19,-28,18,-215,-93,116,-128,99,20,-53,101,-121,-30,133,280,65,-53,266,-52,305,122,4,395,-119,19,-69,-93,347,296,372,28,33,4,85,-97,33,-138,34,-24,-109,-236,-239,100,42,102,199,-39,-160,-44,109,-52,-211,-30,-406,-423,62,-86,296,-385,-473,-145,361,-149,358,-327,372,81,-144,-126,-65,-73,-314,-193,455,377,7,-208,73,-313,180,122,290,135,138,-339,102,-226,62,280,34,106,-124,160,-59,165,65,71,99,-76,-23,247,-232,-15,-2,25,-139,12,-335,45
+SPY|0|1091,-41,104,464,434,322,-67,-601,406,118,251,254,-182,57,89,512,128,380,192,236,-133,517,-300,316,463,296,259,-352,455,83,70,232,206,-134,395,-138,236,275,-25,-296,562,-157,98,129,-203,226,-610,-255,851,37,-173,-498,-8,673,39,170,35,365,12,1,-173,368,203,179,393,13,99,141,64,206,29,201,236,306,121,564,-364,-274,52,243,58,370,319,59,-691,185,-880,801,324,181,409,-638,696,151,-167,195,221,362,291,-4,-792,-1249,1270,476,177,589,698,-374,-249,1088,370,-102,278,454,529,66,224,244,298,-466,702,-80,462,-527,-295,376,-878,23,-825,921,-408,-924,813,556,-576,629,-251,371,160,46,648,327,-163,-474,-217,913,457,159,522,327,-403,506,353,121,234,210,-89,596,-241,269,-127,-557,-87,628,514,230,205,356,238,19,8,147,-86,-494,1051,526,-103,3,268,-33,209`;</script>
+<script>
+// ===== Frontier Lab engine v3: 15y data, Black-Litterman, Ledoit-Wolf, risk parity, resampling, walk-forward =====
+const META={NVDA:['Nvidia','NVDA','semi'],AMZN:['Amazon','AMZN','tech'],GOOGL:['Alphabet','GOOGL','tech'],MSFT:['Microsoft','MSFT','tech'],META:['Meta Platforms','META','tech'],AAPL:['Apple','AAPL','tech'],VRT:['Vertiv','VRT','power'],VST:['Vistra','VST','power'],ETN:['Eaton','ETN','power'],ANET:['Arista Networks','ANET','semi'],MU:['Micron','MU','semi'],TSM:['TSMC','TSM','semi'],XIAOMI:['Xiaomi','1810.HK','tech'],AMAT:['Applied Materials','AMAT','semi'],SAMSUNG:['Samsung Electronics','005930.KS','semi'],CAT:['Caterpillar','CAT','power'],AVGO:['Broadcom','AVGO','semi'],CRWD:['CrowdStrike','CRWD','tech'],JPM:['JPMorgan Chase','JPM','fin'],GS:['Goldman Sachs','GS','fin'],LMT:['Lockheed Martin','LMT','def'],NUE:['Nucor','NUE','power'],TM:['Toyota','TM','def'],PFE:['Pfizer','PFE','def'],ITX:['Inditex','ITX.MC','def'],ASML:['ASML','ASML','semi'],SKHYNIX:['SK Hynix','000660.KS','semi'],GOLD:['Gold','GC=F','cmdty'],COPX:['Global X Copper Miners','4COP.DE / COPX','cmdty'],OIL:['Brent crude','BZ=F','cmdty'],BTC:['Bitcoin','BTC-USD','crypto'],UST:['US Treasuries 7–10y','IEF','bond']};
+const mean=a=>{let s=0;for(const x of a)s+=x;return s/a.length;};
+function parseData(txt){const L=txt.trim().split('\n');const [start,Ts]=L[0].split('|');const T=+Ts;const ids=[],R=[];let mkt=null;
+  for(const l of L.slice(1)){const [id,s,v]=l.split('|');const arr=new Array(T).fill(null);v.split(',').forEach((x,k)=>{if(x!=='')arr[+s+k]=(+x)/1e4;});if(id==='SPY')mkt=arr;else{ids.push(id);R.push(arr);}}
+  const months=[];let [y,m]=start.split('-').map(Number);for(let t=0;t<T;t++){months.push(y+'-'+String(m).padStart(2,'0'));m++;if(m>12){m=1;y++;}}
+  return {ids,R,mkt,months,T};}
+function sliceH(H,n){const a=Math.max(0,H.T-n);return {ids:H.ids,R:H.R.map(r=>r.slice(a)),mkt:H.mkt.slice(a),months:H.months.slice(a),T:H.T-a};}
+function matVec(S,w){const n=w.length,o=new Float64Array(n);for(let i=0;i<n;i++){let s=0;const r=S[i];for(let j=0;j<n;j++)s+=r[j]*w[j];o[i]=s;}return o;}
+function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;}
+function stats(w,mu,S){const v=dot(w,matVec(S,w));return {ret:dot(w,mu),vol:Math.sqrt(Math.max(v,0))};}
+function jacobiEig(A0){const n=A0.length,A=A0.map(r=>Float64Array.from(r)),V=[];for(let i=0;i<n;i++){V.push(new Float64Array(n));V[i][i]=1;}
+  for(let sw=0;sw<60;sw++){let off=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)off+=A[i][j]*A[i][j];if(off<1e-18)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){if(Math.abs(A[p][q])<1e-14)continue;const th=(A[q][q]-A[p][p])/(2*A[p][q]);const t=Math.sign(th||1)/(Math.abs(th)+Math.sqrt(th*th+1));const c=1/Math.sqrt(t*t+1),s=t*c;
+      for(let k=0;k<n;k++){const akp=A[k][p],akq=A[k][q];A[k][p]=c*akp-s*akq;A[k][q]=s*akp+c*akq;}
+      for(let k=0;k<n;k++){const apk=A[p][k],aqk=A[q][k];A[p][k]=c*apk-s*aqk;A[q][k]=s*apk+c*aqk;}
+      for(let k=0;k<n;k++){const vkp=V[k][p],vkq=V[k][q];V[k][p]=c*vkp-s*vkq;V[k][q]=s*vkp+c*vkq;}}}
+  return {vals:A.map((r,i)=>r[i]),V};}
+function psdCorr(C){const n=C.length,{vals,V}=jacobiEig(C);if(Math.min(...vals)>1e-4)return C;const l=vals.map(v=>Math.max(v,1e-4));const B=[];
+  for(let i=0;i<n;i++){B.push(new Float64Array(n));for(let j=0;j<n;j++){let s=0;for(let k=0;k<n;k++)s+=V[i][k]*l[k]*V[j][k];B[i][j]=s;}}
+  const d=B.map((r,i)=>Math.sqrt(r[i]));for(let i=0;i<n;i++)for(let j=0;j<n;j++)B[i][j]/=d[i]*d[j];return B;}
+function invSmall(M){const n=M.length,A=M.map((r,i)=>[...r,...Array.from({length:n},(_,j)=>i===j?1:0)]);
+  for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;[A[c],A[p]]=[A[p],A[c]];const d=A[c][c]||1e-12;for(let k=0;k<2*n;k++)A[c][k]/=d;
+    for(let r=0;r<n;r++){if(r===c)continue;const f=A[r][c];if(!f)continue;for(let k=0;k<2*n;k++)A[r][k]-=f*A[c][k];}}return A.map(r=>r.slice(n));}
+// Ledoit-Wolf (2003) optimal intensity toward constant correlation, on months where every asset has data
+function ledoitWolf(H){const N=H.ids.length,idx=[];for(let t=0;t<H.T;t++)if(H.R.every(r=>r[t]!=null))idx.push(t);const T=idx.length;if(T<24)return {delta:.3,T};
+  const X=H.R.map(r=>{const v=idx.map(t=>r[t]);const m=mean(v);return v.map(x=>x-m);});const S=[];for(let i=0;i<N;i++){S.push(new Float64Array(N));for(let j=0;j<N;j++)S[i][j]=dot(X[i],X[j])/T;}
+  let rb=0;for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)rb+=S[i][j]/Math.sqrt(S[i][i]*S[j][j]);rb/=N*(N-1)/2;
+  let pi=0,rho=0,gam=0;const Y2=X.map(x=>x.map(v=>v*v));
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){let pij=0,tii=0,tjj=0;for(let t=0;t<T;t++){const e=X[i][t]*X[j][t]-S[i][j];pij+=e*e;tii+=(Y2[i][t]-S[i][i])*e;tjj+=(Y2[j][t]-S[j][j])*e;}pij/=T;tii/=T;tjj/=T;pi+=pij;
+    if(i===j)rho+=pij;else{rho+=rb/2*(Math.sqrt(S[j][j]/S[i][i])*tii+Math.sqrt(S[i][i]/S[j][j])*tjj);const f=rb*Math.sqrt(S[i][i]*S[j][j]);gam+=(f-S[i][j])**2;}}
+  return {delta:Math.max(0,Math.min(1,(pi-rho)/gam/T)),T};}
+function blackLitterman(pi,S,views,tau,ids){const K=views.length;if(!K)return Array.from(pi);const n=pi.length;
+  const P=views.map(v=>{const p=new Float64Array(n);p[ids.indexOf(v.a)]=1;if(v.type==='rel')p[ids.indexOf(v.b)]-=1;return p;});
+  const tSP=P.map(p=>matVec(S,p).map(x=>x*tau));// tau*S*p_k
+  const M=P.map((p,k)=>P.map((q,l)=>dot(q,tSP[k])));// P tauS P'
+  // Omega: user views diagonal (Idzorek-style); history views share one block proportional to tau*S, so confidence c moves the prior exactly c of the way
+  views.forEach((v,k)=>{const c=Math.min(.999,Math.max(.001,v.conf)),f=1/c-1;
+    if(v.hist)views.forEach((u,l)=>{if(u.hist)M[k][l]+=f*dot(P[l],tSP[k]);});else M[k][k]+=f*dot(P[k],tSP[k]);});
+  const Mi=invSmall(M);const diff=views.map((v,k)=>v.q-dot(P[k],pi));const z=Mi.map(r=>dot(r,diff));
+  return Array.from(pi,(x,i)=>x+z.reduce((s,zk,k)=>s+zk*tSP[k][i],0));}
+function buildModel(H,o){
+  const n=H.ids.length,T=H.T,rf=o.rf,erp=o.erp,m=H.mkt,mm=mean(m);let vm=0;for(const x of m)vm+=(x-mm)**2;vm/=T-1;
+  const hm=[],sd=[],beta=[],cagr=[],nObs=[],first=[];
+  H.R.forEach(r=>{const idx=[];r.forEach((x,t)=>{if(x!=null)idx.push(t);});const v=idx.map(t=>r[t]);const mu=mean(v),mx=mean(idx.map(t=>m[t]));let s2=0,c=0,vx=0,g=1;
+    idx.forEach(t=>{s2+=(r[t]-mu)**2;c+=(r[t]-mu)*(m[t]-mx);vx+=(m[t]-mx)**2;g*=1+r[t];});
+    hm.push(mu*12);sd.push(Math.sqrt(s2/(v.length-1)*12));beta.push(c/vx);cagr.push(Math.pow(g,12/v.length)-1);nObs.push(v.length);first.push(idx[0]);});
+  const Cs=[];for(let i=0;i<n;i++)Cs.push(new Float64Array(n));
+  for(let i=0;i<n;i++){Cs[i][i]=1;for(let j=i+1;j<n;j++){const a=H.R[i],b=H.R[j];const idx=[];for(let t=0;t<T;t++)if(a[t]!=null&&b[t]!=null)idx.push(t);let r;
+    if(idx.length>=24){const ma=mean(idx.map(t=>a[t])),mb=mean(idx.map(t=>b[t]));let c=0,va=0,vb=0;idx.forEach(t=>{c+=(a[t]-ma)*(b[t]-mb);va+=(a[t]-ma)**2;vb+=(b[t]-mb)**2;});r=c/Math.sqrt(va*vb);}
+    else r=Math.max(-.9,Math.min(.9,beta[i]*beta[j]*vm*12/(sd[i]*sd[j])));Cs[i][j]=Cs[j][i]=r;}}
+  let rbar=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)rbar+=Cs[i][j];rbar/=n*(n-1)/2;
+  const d=o.shrink;let C=[];for(let i=0;i<n;i++){C.push(new Float64Array(n));for(let j=0;j<n;j++)C[i][j]=i===j?1:(1-d)*Cs[i][j]+d*rbar;}C=psdCorr(C);
+  const S=[];for(let i=0;i<n;i++){S.push(new Float64Array(n));for(let j=0;j<n;j++)S[i][j]=C[i][j]*sd[i]*sd[j];}
+  const capm=beta.map(b=>rf+b*erp);
+  const bl=blackLitterman(capm,S,o.views||[],o.tau,H.ids);
+  let mu=o.mode==='bl'?bl:o.mode==='hist'?hm.slice():hm.map((h,i)=>o.trust*h+(1-o.trust)*capm[i]);
+  mu=mu.map((x,i)=>o.override[i]!=null?o.override[i]:x);
+  // filled matrix (beta-backfill before listing) for co-movement based tools
+  const F=H.R.map((r,i)=>r.map((x,t)=>x!=null?x:beta[i]*m[t]));
+  const marM=(o.mar??rf)/12;const SC=[];for(let i=0;i<n;i++)SC.push(new Float64Array(n));const ng=F.map(r=>r.map(x=>Math.min(x-marM,0)));
+  for(let i=0;i<n;i++)for(let j=i;j<n;j++){let s=0;for(let t=0;t<T;t++)s+=ng[i][t]*ng[j][t];SC[i][j]=SC[j][i]=s/T*12;}
+  const mneg=m.map(x=>Math.min(x-mm,0));
+  const dbeta=H.R.map((r,i)=>{let s=0,q=0;const mu_=hm[i]/12;r.forEach((x,t)=>{if(x==null)return;s+=Math.min(x-mu_,0)*mneg[t];q+=mneg[t]*mneg[t];});return s/q;});
+  const risk=H.R.map(r=>riskStats(r.filter(x=>x!=null),marM));
+  return {n,T,hm,sd,beta,cagr,nObs,first,Cs,C,S,SC,F,capm,bl,mu,rbar,dbeta,risk,marM,mkt:{mu:mm*12,sd:Math.sqrt(vm*12)}};
+}
+function riskStats(r,marM){const T=r.length;let d2=0,gain=0,loss=0,negN=0;for(const x of r){const e=x-marM;if(e<0){d2+=e*e;loss-=e;}else gain+=e;if(x<0)negN++;}
+  const s=Array.from(r).sort((a,b)=>a-b);const k=Math.max(1,Math.round(T*.05));let tail=0;for(let i=0;i<k;i++)tail+=s[i];
+  let v=1,pk=1,mdd=0,uw=0,maxUw=0;for(const x of r){v*=1+x;if(v>=pk){pk=v;uw=0;}else{uw++;maxUw=Math.max(maxUw,uw);}mdd=Math.max(mdd,1-v/pk);}const cagr=Math.pow(v,12/T)-1;
+  return {dd:Math.sqrt(d2/T*12),var95:-s[k-1],cvar95:-tail/k,mdd,maxUw,omega:loss>0?gain/loss:Infinity,pctNeg:negN/T,worst:s[0],cagr,calmar:mdd>0?cagr/mdd:Infinity};}
+function maxEig(S){const n=S.length;let v=new Float64Array(n).fill(1/Math.sqrt(n)),l=0;for(let k=0;k<80;k++){const u=matVec(S,v);l=Math.sqrt(dot(u,u))||1e-12;for(let i=0;i<n;i++)v[i]=u[i]/l;}return l;}
+function project(v,cap){const n=v.length;let lo=-1e3,hi=1e3;const f=t=>{let s=0;for(let i=0;i<n;i++)s+=Math.min(Math.max(v[i]-t,0),cap[i]);return s;};
+  for(let k=0;k<70;k++){const m=(lo+hi)/2;if(f(m)>1)lo=m;else hi=m;}const t=(lo+hi)/2,w=new Float64Array(n);for(let i=0;i<n;i++)w[i]=Math.min(Math.max(v[i]-t,0),cap[i]);return w;}
+function solve(mu,S,cap,lam,L,w0,iters){const n=mu.length;const minVar=!isFinite(lam);const step=1/(minVar?2*L:lam*L);
+  let x=w0?project(Float64Array.from(w0),cap):project(new Float64Array(n).fill(1/n),cap),y=Float64Array.from(x),t=1;
+  for(let k=0;k<iters;k++){const Sy=matVec(S,y),v=new Float64Array(n);for(let i=0;i<n;i++)v[i]=y[i]+step*(minVar?-2*Sy[i]:(mu[i]-lam*Sy[i]));
+    const xn=project(v,cap);const tn=(1+Math.sqrt(1+4*t*t))/2;for(let i=0;i<n;i++)y[i]=xn[i]+((t-1)/tn)*(xn[i]-x[i]);x=xn;t=tn;}return x;}
+function fastTangency(mu,S,cap,rf,w0,L){L=L||maxEig(S);let best=null;const ev=ll=>{const w=solve(mu,S,cap,Math.exp(ll),L,best?best.w:w0,350);const s=stats(w,mu,S);const r={w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol};if(!best||r.sharpe>best.sharpe)best=r;return r.sharpe;};
+  let a=Math.log(.1),b=Math.log(800);for(let k=0;k<20;k++){const c=b-.618*(b-a),d=a+.618*(b-a);if(ev(c)>ev(d))b=d;else a=c;}return best;}
+function optimize(mu,S,cap,rf){const L=maxEig(S);const minv=solve(mu,S,cap,Infinity,L,null,2500);const front=[];let prev=null;
+  for(let k=31;k>=0;k--){const lam=Math.exp(Math.log(.2)+k*(Math.log(400)-Math.log(.2))/31);const w=solve(mu,S,cap,lam,L,prev,500);prev=w;const s=stats(w,mu,S);front.push({w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol});}
+  const best=fastTangency(mu,S,cap,rf,front.reduce((a,b)=>b.sharpe>a.sharpe?b:a).w,L);
+  const ms=stats(minv,mu,S);const mvp={w:minv,ret:ms.ret,vol:ms.vol,sharpe:(ms.ret-rf)/ms.vol};front.push(mvp,best);front.sort((p,q)=>p.vol-q.vol);
+  const eff=[];let top=-Infinity;for(const p of front){if(p.ret>=top-1e-9){eff.push(p);top=Math.max(top,p.ret);}}return {tangency:best,minvar:mvp,frontier:eff};}
+function riskParity(S,active){const n=S.length;let w=Float64Array.from(S.map((r,i)=>active[i]?1/Math.sqrt(r[i]):0));let s=w.reduce((a,b)=>a+b,0);w=w.map(x=>x/s);
+  const k=active.filter(Boolean).length;for(let it=0;it<600;it++){const m=matVec(S,w);const v=dot(w,m);for(let i=0;i<n;i++)if(active[i])w[i]*=Math.sqrt((v/k)/Math.max(w[i]*m[i],1e-14));s=w.reduce((a,b)=>a+b,0);w=w.map(x=>x/s);}return w;}
+function riskContrib(w,S){const m=matVec(S,w);const v=dot(w,m);return Array.from(w,(x,i)=>v>0?x*m[i]/v:0);}
+// monthly series: filled matrix (no gaps)
+function portSeries(F,w,mu){const T=F[0].length,out=new Float64Array(T);F.forEach((r,i)=>{if(!w[i])return;const adj=mu?mu[i]/12-mean(r):0;for(let t=0;t<T;t++)out[t]+=w[i]*(r[t]+adj);});return out;}
+// monthly series on real listings only: weights re-scaled across assets that traded that month
+function portListed(R,w){const T=R[0].length,out=new Float64Array(T),cov=new Float64Array(T);for(let t=0;t<T;t++){let s=0,ws=0;R.forEach((r,i)=>{if(w[i]>0&&r[t]!=null){s+=w[i]*r[t];ws+=w[i];}});out[t]=ws>0?s/ws:0;cov[t]=ws;}out.coverage=cov;return out;}
+function exactSC(F,w,marM){const n=F.length,T=F[0].length,p=portSeries(F,w),SC=[];for(let i=0;i<n;i++)SC.push(new Float64Array(n));
+  for(let t=0;t<T;t++){if(p[t]>=marM)continue;for(let i=0;i<n;i++){const a=F[i][t]-marM;const row=SC[i];for(let j=i;j<n;j++)row[j]+=a*(F[j][t]-marM);}}
+  for(let i=0;i<n;i++){for(let j=i;j<n;j++){SC[i][j]=SC[i][j]/T*12;SC[j][i]=SC[i][j];}SC[i][i]+=1e-6;}return SC;}
+function optimizeDownside(F,mu,cap,mar,marM,seeds){const dd=w=>riskStats(portSeries(F,w),marM).dd;const so=w=>{const d=dd(w);return d>0?(dot(w,mu)-mar)/d:0;};
+  let best=null;const consider=w=>{const s=so(w);if(!best||s>best.s)best={w:Float64Array.from(w),s};};seeds.forEach(consider);
+  for(let it=0;it<3;it++){const SC=exactSC(F,best.w,marM),L=maxEig(SC);let a=Math.log(.05),b=Math.log(800);
+    for(let k=0;k<14;k++){const c=b-.618*(b-a),d=a+.618*(b-a);const wc=solve(mu,SC,cap,Math.exp(c),L,best.w,450),wd=solve(mu,SC,cap,Math.exp(d),L,best.w,450);const sc=so(wc),sd=so(wd);consider(wc);consider(wd);if(sc>sd)b=d;else a=c;}}
+  let mw=seeds[seeds.length-1],md=dd(mw);for(let it=0;it<3;it++){const SC=exactSC(F,mw,marM),L=maxEig(SC);const w=solve(mu,SC,cap,Infinity,L,mw,1500);const d2=dd(w);if(d2<md-1e-6){mw=w;md=d2;}else break;}
+  const pack=w=>{const r=dot(w,mu),d=dd(w);return {w,ret:r,vol:d,sharpe:(r-mar)/d};};return {tangency:pack(best.w),minvar:pack(mw)};}
+function rng(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+function gauss(r){let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
+function randomPortfolios(mu,S,rf,n,seed,active){const r=rng(seed),N=mu.length,out=[];for(let k=0;k<n;k++){const w=new Float64Array(N);let s=0;const sp=r()<.5;for(let i=0;i<N;i++){if(!active[i])continue;let e=-Math.log(r()+1e-12);if(sp)e=e*e*e;w[i]=e;s+=e;}for(let i=0;i<N;i++)w[i]/=s;const st=stats(w,mu,S);out.push({ret:st.ret,vol:st.vol,sharpe:(st.ret-rf)/st.vol});}return out;}
+// Michaud resampling: perturb means & covariance by bootstrap sampling error, average max-Sharpe weights
+function resampleStep(M,o,cap,k,r){const n=M.n,T=M.T,F=M.F;const pick=Array.from({length:T},()=>Math.floor(r()*T));
+  const mus=F.map(row=>{let s=0;for(const t of pick)s+=row[t];return s/T;});const fm=F.map(row=>mean(row));
+  const sdv=F.map((row,i)=>{let s=0;for(const t of pick)s+=(row[t]-mus[i])**2;return Math.sqrt(s/(T-1));});
+  const C=[];for(let i=0;i<n;i++)C.push(new Float64Array(n));let rb=0;for(let i=0;i<n;i++)for(let j=i;j<n;j++){let c=0;for(const t of pick)c+=(F[i][t]-mus[i])*(F[j][t]-mus[j]);c/=(T-1)*sdv[i]*sdv[j];C[i][j]=C[j][i]=i===j?1:c;if(i!==j)rb+=c;}
+  rb/=n*(n-1)/2;const S=[];for(let i=0;i<n;i++){S.push(new Float64Array(n));for(let j=0;j<n;j++)S[i][j]=(i===j?1:(1-o.shrink)*C[i][j]+o.shrink*rb)*sdv[i]*sdv[j]*12;}
+  const mu=M.mu.map((x,i)=>x+(mus[i]-fm[i])*12);return fastTangency(mu,S,cap,o.rf,null).w;}
+function monteCarlo(o){const r=rng(o.seed),T=Math.round(o.years*12),P=o.paths;const vals=new Float64Array(P*(T+1));
+  const m=Math.log(1+o.mu)-0.5*Math.log(1+o.vol*o.vol/((1+o.mu)**2)),s=Math.sqrt(Math.log(1+o.vol*o.vol/((1+o.mu)**2)));const L=o.series.length;
+  for(let p=0;p<P;p++){let v=o.start,idx=Math.floor(r()*L);vals[p*(T+1)]=v;for(let t=1;t<=T;t++){let ret;if(o.method==='boot'){if(r()<1/6)idx=Math.floor(r()*L);else idx=(idx+1)%L;ret=o.series[idx];}else ret=Math.exp(m/12+s/Math.sqrt(12)*gauss(r))-1;v=Math.max(0,v*(1+ret)+o.monthly);vals[p*(T+1)+t]=v;}}
+  const pct=[5,25,50,75,95],bands=pct.map(()=>new Float64Array(T+1)),col=new Float64Array(P);
+  for(let t=0;t<=T;t++){for(let p=0;p<P;p++)col[p]=vals[p*(T+1)+t];col.sort();pct.forEach((q,k)=>bands[k][t]=col[Math.min(P-1,Math.floor(q/100*P))]);}
+  const invested=o.start+o.monthly*T;const fin=new Float64Array(P),ann=new Float64Array(P),dd=new Float64Array(P),y1=new Float64Array(P);
+  for(let p=0;p<P;p++){const b=p*(T+1);fin[p]=vals[b+T];let g=1,pk=0,md=0;for(let t=1;t<=T;t++){const prev=vals[b+t-1];if(prev>0)g*=(vals[b+t]-o.monthly)/prev;if(t===12)y1[p]=g-1;}ann[p]=Math.pow(Math.max(g,1e-9),12/T)-1;if(T<12)y1[p]=g-1;
+    for(let t=0;t<=T;t++){const x=vals[b+t];if(x>pk)pk=x;if(pk>0)md=Math.max(md,1-x/pk);}dd[p]=md;}
+  const so=a=>Float64Array.from(a).sort();const fs=so(fin),as=so(ann),ds=so(dd),ys=so(y1);const q=(a,x)=>a[Math.min(a.length-1,Math.floor(x*a.length))];const k5=Math.max(1,Math.floor(P*.05));let tl=0;for(let i=0;i<k5;i++)tl+=ys[i];
+  const samples=[];for(let p=0;p<Math.min(24,P);p++)samples.push(vals.subarray(p*(T+1),(p+1)*(T+1)));
+  return {T,bands,invested,ann:as,pLoss:fs.filter(x=>x<invested).length/P,pDouble:fs.filter(x=>x>=2*invested).length/P,annMed:q(as,.5),ann5:q(as,.05),ann95:q(as,.95),ddMed:q(ds,.5),dd95:q(ds,.95),var1y:-ys[k5-1],cvar1y:-tl/k5,pDown1y:ys.filter(x=>x<0).length/P,samples};}
+function growth(series){const v=[1];for(const r of series)v.push(v[v.length-1]*(1+r));let pk=1;const ddS=v.map(x=>{pk=Math.max(pk,x);return x/pk-1;});const T=series.length,m=mean(series);let s=0;for(const r of series)s+=(r-m)**2;
+  return {v,ddS,cagr:Math.pow(v[T],12/T)-1,vol:Math.sqrt(s/(T-1)*12),maxDD:-Math.min(...ddS),best:Math.max(...series),worst:Math.min(...series)};}
+// walk-forward: re-estimate on trailing window every `step` months, hold out-of-sample
+function walkForwardStep(H,o,t0,win){const n=H.ids.length,a=t0-win;const E=[];for(let i=0;i<n;i++){let c=0;for(let t=a;t<t0;t++)if(H.R[i][t]!=null)c++;if(c>=36&&H.R[i][t0-1]!=null&&o.active[i])E.push(i);}
+  const sub={ids:E.map(i=>H.ids[i]),R:E.map(i=>H.R[i].slice(a,t0)),mkt:H.mkt.slice(a,t0),T:win};const k=E.length;
+  const M=buildModel(sub,{...o,mode:o.mode==='bl'?'blend':o.mode,views:[],override:E.map(()=>null)});
+  const capE=Math.max(o.cap,1/k+1e-6),cap=new Float64Array(k).fill(capE);const L=maxEig(M.S);
+  const tan=fastTangency(M.mu,M.S,cap,o.rf,null,L).w,mv=solve(M.mu,M.S,cap,Infinity,L,null,1500),rp=riskParity(M.S,E.map(()=>true));
+  const up=w=>{const f=new Float64Array(n);E.forEach((i,q)=>f[i]=w[q]);return f;};
+  return {tan:up(tan),mv:up(mv),rp:up(rp),ew:up(new Float64Array(k).fill(1/k)),k};}
+if(typeof module!=='undefined')module.exports={META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};
+
+</script>
+<script>
+const CLS={tech:['Tech platforms','--c-tech'],semi:['Semis & AI hardware','--c-semi'],power:['AI power & industrials','--c-power'],fin:['Financials','--c-fin'],def:['Defensive & consumer','--c-def'],cmdty:['Commodities','--c-cmdty'],crypto:['Crypto','--c-crypto'],bond:['Bonds','--c-bond']};
+const $=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const pct=(x,d=1)=>(x*100).toFixed(d)+'%';
+const sp=(x,d=1)=>(x>=0?'+':'')+(x*100).toFixed(d)+'%';
+const eur=x=>(x<0?'−':'')+'€'+Math.abs(Math.round(x)).toLocaleString('en-GB');
+const HF=parseData(RAW),N=HF.ids.length,A=HF.ids.map(id=>({id,name:META[id][0],ticker:META[id][1],cls:META[id][2]}));
+const ORDER=A.map((a,i)=>i).sort((p,q)=>Object.keys(CLS).indexOf(A[p].cls)-Object.keys(CLS).indexOf(A[q].cls));
+const RF0=0.04057;
+const S={win:181,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
+let H,M,O,D,RP,RES=null,WF=null,cloud,LW;
+
+function opts(){return {rf:S.rf,erp:S.erp,mar:S.mar,shrink:S.shrink,mode:S.mode,trust:S.trust,tau:S.tau,views:effViews(),override:S.override,cap:S.cap,active:S.active};}
+function effViews(){const v=S.views.filter(x=>x.a&&(x.type==='abs'||x.b&&x.b!==x.a)).map(x=>({...x}));
+  if(S.mode==='bl'&&S.trust>0&&M0)A.forEach((a,i)=>{if(S.active[i])v.push({a:a.id,type:'abs',q:M0.hm[i],conf:S.trust,hist:true});});return v;}
+let M0=null;
+function rebuild(){
+  H=sliceH(HF,S.win);LW=ledoitWolf(H);if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);
+  M0=buildModel(H,{...opts(),views:[],mode:'hist'});M=buildModel(H,opts());
+  const k=S.active.filter(Boolean).length,capE=Math.max(S.cap,1/k+1e-6),capA=Float64Array.from(A.map((a,i)=>S.active[i]?capE:0));
+  O=optimize(M.mu,M.S,capA,S.rf);D=optimizeDownside(M.F,M.mu,capA,S.mar,M.marM,[O.tangency.w,O.minvar.w]);RP=riskParity(M.S,S.active);
+  cloud=randomPortfolios(M.mu,M.S,S.rf,4000,11,S.active);RES=null;WF=null;M._capA=capA;
+  if(!S.w)S.w=Float64Array.from(O.tangency.w);
+}
+function norm(w){let s=0;for(const x of w)s+=x;return s>0?Float64Array.from(w,x=>x/s):Float64Array.from(w);}
+const PC=new Map();
+function port(w){const wn=norm(w);const key=Array.from(wn,x=>x.toFixed(5)).join();if(PC.has(key))return PC.get(key);
+  const st=stats(wn,M.mu,M.S);const b=dot(wn,M.beta);const ser=portSeries(M.F,wn);const rs=riskStats(ser,M.marM);const sdd=Math.sqrt(Math.max(0,dot(wn,matVec(M.SC,wn))));
+  const sw=Array.from(wn).reduce((s,x,i)=>s+x*M.sd[i],0);
+  const p={w:wn,ret:st.ret,vol:st.vol,beta:b,sharpe:st.vol?(st.ret-S.rf)/st.vol:0,alpha:st.ret-(S.rf+b*S.erp),var95:Math.max(0,-(st.ret-1.645*st.vol)),effN:1/wn.reduce((t,x)=>t+x*x,0),rs,sdd,dbeta:dot(wn,M.dbeta),sortino:rs.dd?(st.ret-S.mar)/rs.dd:0,divRatio:st.vol?sw/st.vol:1};
+  if(PC.size>200)PC.clear();PC.set(key,p);return p;}
+
+/* ---------- chart kit ---------- */
+function setup(cv,minH){const dpr=window.devicePixelRatio||1;const w=cv.clientWidth||cv.parentElement.clientWidth;const base=+cv.getAttribute('height');const h=Math.max(minH||200,Math.round(base*Math.min(1,Math.max(.65,w/760))));cv.style.height=h+'px';cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,W:w,H:h};}
+function ticks(lo,hi,n){const span=hi-lo||1,raw=span/n,mag=Math.pow(10,Math.floor(Math.log10(raw)));const st=[1,2,2.5,5,10].map(m=>m*mag).find(s=>span/s<=n)||10*mag;const t=[];for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st)t.push(+v.toFixed(10));return t;}
+function axes(ctx,W,Hh,pad,xd,yd,xf,yf,xl,yl,xt){
+  const X=v=>pad.l+(v-xd[0])/(xd[1]-xd[0])*(W-pad.l-pad.r),Y=v=>Hh-pad.b-(v-yd[0])/(yd[1]-yd[0])*(Hh-pad.t-pad.b);
+  ctx.font='11px "JetBrains Mono",monospace';ctx.lineWidth=1;
+  for(const t of ticks(yd[0],yd[1],5)){const y=Y(t);ctx.strokeStyle=css('--line');ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle=css('--muted');ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(yf(t),pad.l-8,y);}
+  for(const t of (xt||ticks(xd[0],xd[1],W<520?4:7))){const x=X(t);if(x<pad.l-1||x>W-pad.r+1)continue;ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(xf(t),x,Hh-pad.b+7);}
+  ctx.font='11px "IBM Plex Sans",sans-serif';ctx.fillStyle=css('--faint');
+  if(xl){ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(xl,(pad.l+W-pad.r)/2,Hh-2);}
+  if(yl){ctx.save();ctx.translate(11,(pad.t+Hh-pad.b)/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(yl,0,0);ctx.restore();}
+  return {X,Y};}
+const HITS={};
+function tip(cv,key){const wrap=cv.parentElement;let t=wrap.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';t.hidden=true;wrap.appendChild(t);}
+  if(cv._t)return;cv._t=1;const mv=e=>{const r=cv.getBoundingClientRect(),p=e.touches?e.touches[0]:e,x=p.clientX-r.left,y=p.clientY-r.top;let b=null,bd=24*24;
+    for(const h of HITS[key]||[]){const d=(h.x-x)**2+(h.y-y)**2;if(d<bd){bd=d;b=h;}}if(!b){t.hidden=true;return;}t.textContent=b.label;t.hidden=false;const tw=t.offsetWidth;t.style.left=Math.min(Math.max(0,b.x-tw/2),r.width-tw)+'px';t.style.top=Math.max(0,b.y-36)+'px';};
+  cv.addEventListener('mousemove',mv);cv.addEventListener('click',mv);cv.addEventListener('touchstart',mv,{passive:true});cv.addEventListener('mouseleave',()=>t.hidden=true);}
+function dotC(ctx,x,y,r,f,s){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=f;ctx.fill();if(s){ctx.lineWidth=2;ctx.strokeStyle=s;ctx.stroke();}}
+function dia(ctx,x,y,r,f){ctx.beginPath();ctx.moveTo(x,y-r);ctx.lineTo(x+r,y);ctx.lineTo(x,y+r);ctx.lineTo(x-r,y);ctx.closePath();ctx.fillStyle=f;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=css('--panel');ctx.stroke();}
+function line(ctx,pts,col,w,dash){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.setLineDash(dash||[]);ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();ctx.setLineDash([]);}
+function hexMix(a,b,t){const p=c=>{c=c.replace('#','');return[0,2,4].map(k=>parseInt(c.substr(k,2),16));};const x=p(a),y=p(b);return `rgb(${x.map((v,k)=>Math.round(v+(y[k]-v)*t)).join(',')})`;}
+function label(ctx,txt,x,y){ctx.fillStyle=css('--muted');ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText(txt,x+6,y-5);}
+
+/* ---------- hero & allocation ---------- */
+function hero(){const y=port(S.w),t=port(O.tangency.w),mc=window._mc;
+  const d=(a,b,inv,f)=>{const df=a-b;const g=inv?df<=0:df>=0;return `<span class="${Math.abs(df)<1e-4?'':g?'up':'down'}">${f(df)}</span> vs max-Sharpe`;};
+  const k=(l,v,c)=>`<div class="hk"><div class="lbl">${l}</div><div class="val">${v}</div><div class="cmp">${c}</div></div>`;
+  $('hero').innerHTML=k('Expected return / yr',pct(y.ret),d(y.ret,t.ret,0,x=>sp(x)))+k('Volatility',pct(y.vol),d(y.vol,t.vol,1,x=>sp(x)))+k('Sharpe ratio',y.sharpe.toFixed(2),d(y.sharpe,t.sharpe,0,x=>(x>=0?'+':'')+x.toFixed(2)))+
+    k('Sortino ratio',y.sortino.toFixed(2),d(y.sortino,t.sortino,0,x=>(x>=0?'+':'')+x.toFixed(2)))+k('Beta · Jensen α',y.beta.toFixed(2)+' · '+sp(y.alpha),`CAPM requires ${pct(S.rf+y.beta*S.erp)}`)+
+    k(`Median in ${$('mcYears').value}y (MC)`,mc?eur(mc.y.bands[2][mc.y.T]):'—',mc?`<span class="${mc.y.bands[2][mc.y.T]>=mc.t.bands[2][mc.t.T]?'up':'down'}">${eur(mc.y.bands[2][mc.y.T]-mc.t.bands[2][mc.t.T])}</span> vs max-Sharpe`:'');}
+function allocList(){let h='',cur='';const t=O.tangency.w;
+  ORDER.forEach(i=>{const a=A[i];if(a.cls!==cur){cur=a.cls;h+=`<div class="grp"><span><span class="dot" style="background:var(${CLS[cur][1]})"></span>${CLS[cur][0]}</span><span id="g_${cur}"></span></div>`;}
+    h+=`<div class="ar${S.active[i]?'':' off'}"><div class="nm" title="${a.name}">${a.name}<small>${a.ticker}</small></div>
+      <input type="number" id="n${i}" data-i="${i}" min="0" max="100" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight %">
+      <input type="range" id="r${i}" data-i="${i}" min="0" max="40" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight slider">
+      <div class="optw"><span>max-Sh ${pct(t[i])}</span><span>E[R] ${pct(M.mu[i],0)} · σ ${pct(M.sd[i],0)}</span></div></div>`;});
+  $('alloc').innerHTML=h;updAlloc();}
+function updAlloc(){let s=0;for(const x of S.w)s+=x;$('sumTxt').textContent=`Σ ${(s*100).toFixed(1)}%`+(Math.abs(s-1)>.0005?' · scaled to 100% in all figures':'');
+  const wn=norm(S.w),g={};A.forEach((a,i)=>g[a.cls]=(g[a.cls]||0)+wn[i]);Object.keys(CLS).forEach(c=>{const el=$('g_'+c);if(el)el.textContent=pct(g[c]||0);});
+  $('mixLeg').innerHTML=Object.entries(g).filter(e=>e[1]>.0005).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<span><span><i style="background:var(${CLS[c][1]})"></i>${CLS[c][0]}</span><em>${pct(v,0)}</em></span>`).join('');
+  const cv=$('cDonut');const dpr=window.devicePixelRatio||1;cv.width=120*dpr;cv.height=120*dpr;cv.style.height='120px';const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  let a0=-Math.PI/2;Object.entries(g).forEach(([c,v])=>{if(v<=0)return;ctx.beginPath();ctx.arc(60,60,54,a0,a0+v*2*Math.PI);ctx.arc(60,60,36,a0+v*2*Math.PI,a0,true);ctx.closePath();ctx.fillStyle=css(CLS[c][1]);ctx.fill();a0+=v*2*Math.PI;});
+  const y=port(S.w);ctx.fillStyle=css('--fg');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 15px "Bricolage Grotesque",sans-serif';ctx.fillText(y.effN.toFixed(1),60,56);ctx.font='9px "IBM Plex Sans",sans-serif';ctx.fillStyle=css('--muted');ctx.fillText('effective #',60,72);}
+
+/* ---------- Monte Carlo ---------- */
+function runMC(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),paths=+$('mcPaths').value,st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
+  const y=port(S.w),t=port(O.tangency.w);const run=p=>monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths,start:st,monthly:mo,seed:42});
+  const ry=run(y),rt=run(t);window._mc={y:ry,t:rt};
+  const cv=$('cMC');const {ctx,W,H:Hh}=setup(cv,260);const pad={l:68,r:16,t:14,b:40};const top=Math.max(ry.bands[4][ry.T],rt.bands[3][rt.T]);
+  const {X,Y}=axes(ctx,W,Hh,pad,[0,yrs],[0,top*1.04],v=>v+'y',v=>v>=1e6?'€'+(v/1e6).toFixed(1)+'M':'€'+Math.round(v/1000)+'k','Years from today');
+  ctx.save();ctx.beginPath();ctx.rect(pad.l,pad.t,W-pad.l-pad.r,Hh-pad.t-pad.b);ctx.clip();
+  ctx.globalAlpha=.12;ry.samples.forEach(s=>line(ctx,Array.from(s,(v,i)=>[X(i/12),Y(v)]),css('--you'),.8));ctx.globalAlpha=1;
+  const band=(lo,hi,a)=>{ctx.beginPath();for(let i=0;i<=ry.T;i++)ctx.lineTo(X(i/12),Y(hi[i]));for(let i=ry.T;i>=0;i--)ctx.lineTo(X(i/12),Y(lo[i]));ctx.closePath();ctx.globalAlpha=a;ctx.fillStyle=css('--you');ctx.fill();ctx.globalAlpha=1;};
+  band(ry.bands[0],ry.bands[4],.13);band(ry.bands[1],ry.bands[3],.22);line(ctx,[[X(0),Y(st)],[X(yrs),Y(ry.invested)]],css('--faint'),1.5,[4,4]);
+  line(ctx,Array.from(rt.bands[2],(v,i)=>[X(i/12),Y(v)]),css('--accent'),2,[7,4]);line(ctx,Array.from(ry.bands[2],(v,i)=>[X(i/12),Y(v)]),css('--you'),3);ctx.restore();
+  HITS.mc=[];for(let k=1;k<=yrs;k++){const i=k*12;HITS.mc.push({x:X(k),y:Y(ry.bands[2][i]),label:`Year ${k} · yours: median ${eur(ry.bands[2][i])} (5%: ${eur(ry.bands[0][i])}, 95%: ${eur(ry.bands[4][i])}) · max-Sharpe ${eur(rt.bands[2][i])}`});}tip(cv,'mc');
+  const s=(k,v,c)=>`<div class="st"><span class="k">${k}</span><span class="v">${v}</span><span class="c">${c}</span></div>`;
+  $('mcStats').innerHTML=s('Money invested',eur(ry.invested),'same for both')+s('Median final value',eur(ry.bands[2][ry.T]),'max-Sh '+eur(rt.bands[2][rt.T]))+s('Bad case (5th pct)',eur(ry.bands[0][ry.T]),'max-Sh '+eur(rt.bands[0][rt.T]))+s('Good case (95th pct)',eur(ry.bands[4][ry.T]),'max-Sh '+eur(rt.bands[4][rt.T]))+
+    s('Expected annual return (median)',pct(ry.annMed),'max-Sh '+pct(rt.annMed))+s('Annual return range 5–95%',pct(ry.ann5,0)+' to '+pct(ry.ann95,0),'max-Sh '+pct(rt.ann5,0)+' to '+pct(rt.ann95,0))+
+    s('Chance of ending below invested',pct(ry.pLoss),'max-Sh '+pct(rt.pLoss))+s('Chance of doubling your money',pct(ry.pDouble),'max-Sh '+pct(rt.pDouble))+
+    s('1-year VaR 95%',pct(ry.var1y),'max-Sh '+pct(rt.var1y))+s('1-year CVaR 95%',pct(ry.cvar1y),'max-Sh '+pct(rt.cvar1y))+s('Chance of a losing first year',pct(ry.pDown1y),'max-Sh '+pct(rt.pDown1y))+
+    s('Max drawdown, median path',pct(ry.ddMed,0),'max-Sh '+pct(rt.ddMed,0))+s('Max drawdown, worst 5%',pct(ry.dd95,0),'max-Sh '+pct(rt.dd95,0));
+  const hv=$('cHistA');const g=setup(hv,170);const pd={l:44,r:16,t:10,b:30};const P=ry.ann.length;
+  const lo=Math.min(ry.ann[Math.floor(P*.01)],rt.ann[Math.floor(P*.01)]),hi=Math.max(ry.ann[Math.floor(P*.99)],rt.ann[Math.floor(P*.99)]);const B=40,bw=(hi-lo)/B;
+  const hist=a=>{const c=new Array(B).fill(0);for(const x of a){const k=Math.floor((x-lo)/bw);if(k>=0&&k<B)c[k]++;}return c.map(v=>v/a.length);};const hy=hist(ry.ann),ht=hist(rt.ann),mx=Math.max(...hy,...ht);
+  const ax=axes(g.ctx,g.W,g.H,pd,[lo,hi],[0,mx*1.1],v=>pct(v,0),v=>pct(v,0),'',' ');
+  hy.forEach((v,k)=>{g.ctx.fillStyle=css('--you');g.ctx.globalAlpha=.75;const x0=ax.X(lo+k*bw),x1=ax.X(lo+(k+1)*bw);g.ctx.fillRect(x0+.5,ax.Y(v),Math.max(1,x1-x0-1),ax.Y(0)-ax.Y(v));});g.ctx.globalAlpha=1;
+  line(g.ctx,ht.flatMap((v,k)=>[[ax.X(lo+k*bw),ax.Y(v)],[ax.X(lo+(k+1)*bw),ax.Y(v)]]),css('--accent'),2);if(lo<0&&hi>0)line(g.ctx,[[ax.X(0),ax.Y(0)],[ax.X(0),ax.Y(mx*1.1)]],css('--faint'),1,[3,3]);
+  HITS.hist=hy.map((v,k)=>({x:ax.X(lo+(k+.5)*bw),y:ax.Y(v),label:`${pct(lo+k*bw)} to ${pct(lo+(k+1)*bw)} a year: yours ${pct(v)} of paths, max-Sh ${pct(ht[k])}`}));tip(hv,'hist');
+  hero();}
+
+/* ---------- Frontier ---------- */
+function drawFrontier(){const cv=$('cFront');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const y=port(S.w),t=O.tangency,mv=O.minvar,rp=port(RP);
+  const xs=[...M.sd,...O.frontier.map(p=>p.vol),y.vol],ys=[...M.mu,...O.frontier.map(p=>p.ret),S.rf,y.ret];const xd=[0,Math.max(...xs)*1.04],yd=[Math.min(0,...ys)-.01,Math.max(...ys)*1.06];
+  const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>pct(v,0),v=>pct(v,0),'Volatility (σ, annual)','Expected return');const hl=HITS.front=[];
+  ctx.fillStyle=css('--faint');ctx.globalAlpha=.45;for(const p of cloud)ctx.fillRect(X(p.vol)-1,Y(p.ret)-1,2,2);ctx.globalAlpha=1;
+  line(ctx,[[X(0),Y(S.rf)],[X(xd[1]),Y(S.rf+t.sharpe*xd[1])]],css('--accent'),1.6,[7,5]);line(ctx,O.frontier.map(p=>[X(p.vol),Y(p.ret)]),css('--fg'),2.4);
+  A.forEach((a,i)=>{const x=X(M.sd[i]),yy=Y(M.mu[i]);ctx.globalAlpha=S.active[i]?1:.3;dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);ctx.globalAlpha=1;hl.push({x,y:yy,label:`${a.name} · E[R] ${pct(M.mu[i])} · σ ${pct(M.sd[i])} · Sharpe ${((M.mu[i]-S.rf)/M.sd[i]).toFixed(2)}`});});
+  dotC(ctx,X(0),Y(S.rf),5,css('--accent'));hl.push({x:X(0),y:Y(S.rf),label:`T-bill ${pct(S.rf,2)}`});
+  dia(ctx,X(mv.vol),Y(mv.ret),8,css('--minv'));hl.push({x:X(mv.vol),y:Y(mv.ret),label:`Min variance · ${pct(mv.ret)} / σ ${pct(mv.vol)}`});
+  dia(ctx,X(rp.vol),Y(rp.ret),8,css('--c-bond'));hl.push({x:X(rp.vol),y:Y(rp.ret),label:`Risk parity · Sharpe ${rp.sharpe.toFixed(2)} · ${pct(rp.ret)} / σ ${pct(rp.vol)}`});
+  dia(ctx,X(t.vol),Y(t.ret),9,css('--accent'));hl.push({x:X(t.vol),y:Y(t.ret),label:`Max Sharpe ${t.sharpe.toFixed(2)} · ${pct(t.ret)} / σ ${pct(t.vol)}`});
+  dotC(ctx,X(y.vol),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.vol),y:Y(y.ret),label:`Yours · Sharpe ${y.sharpe.toFixed(2)} · ${pct(y.ret)} / σ ${pct(y.vol)}`});tip(cv,'front');
+  $('legFront').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min variance</span><span><i class="dot" style="background:var(--c-bond)"></i>Risk parity</span><span><i style="background:var(--fg)"></i>Efficient frontier</span><span><i style="background:var(--accent)"></i>CML</span>`+Object.values(CLS).map(c=>`<span><i class="dot" style="background:var(${c[1]})"></i>${c[0]}</span>`).join('');
+  const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>E[R]</dt><dd>${pct(p.ret)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd><dt>Sharpe</dt><dd>${p.sharpe.toFixed(2)}</dd><dt>β</dt><dd>${p.beta.toFixed(2)}</dd><dt>VaR 95% 1y</dt><dd>${pct(p.var95)}</dd></dl></div>`;
+  $('cmpFront').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',port(t.w))+card('Min variance','--minv',port(mv.w))+card('Risk parity','--c-bond',rp);}
+
+/* ---------- Downside ---------- */
+function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(O.tangency.w),so=port(D.tangency.w),md=port(D.minvar.w);
+  const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><div class="big">${p.sortino.toFixed(2)}<small>Sortino</small></div><dl>
+    <dt>Downside dev.</dt><dd>${pct(p.rs.dd)}</dd><dt>Downside β</dt><dd>${p.dbeta.toFixed(2)}</dd><dt>VaR 95% (1m)</dt><dd class="down">${pct(-p.rs.var95)}</dd><dt>CVaR 95% (1m)</dt><dd class="down">${pct(-p.rs.cvar95)}</dd>
+    <dt>Max drawdown</dt><dd class="down">${pct(-p.rs.mdd)}</dd><dt>Longest underwater</dt><dd>${p.rs.maxUw} mo</dd><dt>Calmar</dt><dd>${isFinite(p.rs.calmar)?p.rs.calmar.toFixed(2):'—'}</dd><dt>Omega</dt><dd>${isFinite(p.rs.omega)?p.rs.omega.toFixed(2):'∞'}</dd><dt>Losing months</dt><dd>${pct(p.rs.pctNeg,0)}</dd></dl></div>`;
+  $('cmpDown').innerHTML=card('Yours','--you',y)+card('Max Sortino','--c-crypto',so)+card('Max Sharpe','--accent',t)+card('Min downside','--minv',md);
+  const cv=$('cDown');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const ddA=M.risk.map(r=>r.dd);
+  const xs=[...ddA,y.sdd,so.sdd],ys=[...M.mu,S.mar,y.ret];const xd=[0,Math.max(...xs)*1.05],yd=[Math.min(0,...ys)-.01,Math.max(...ys)*1.06];
+  const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>pct(v,0),v=>pct(v,0),'Downside deviation below MAR (annual)','Expected return');const hl=HITS.down=[];
+  line(ctx,[[X(0),Y(S.mar)],[X(xd[1]),Y(S.mar+so.sortino*xd[1])]],css('--c-crypto'),1.6,[7,5]);
+  A.forEach((a,i)=>{const x=X(ddA[i]),yy=Y(M.mu[i]);ctx.globalAlpha=S.active[i]?1:.3;dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);ctx.globalAlpha=1;hl.push({x,y:yy,label:`${a.name} · E[R] ${pct(M.mu[i])} · downside ${pct(ddA[i])} (σ ${pct(M.sd[i])})`});});
+  dotC(ctx,X(0),Y(S.mar),5,css('--c-crypto'));
+  const pt=(p,col,n,kind)=>{const x=X(p.rs.dd),yy=Y(p.ret);kind?dotC(ctx,x,yy,7.5,css(col),css('--panel')):dia(ctx,x,yy,8.5,css(col));hl.push({x,y:yy,label:`${n} · Sortino ${p.sortino.toFixed(2)} · ${pct(p.ret)} / downside ${pct(p.rs.dd)}`});};
+  pt(md,'--minv','Min downside');pt(t,'--accent','Max Sharpe');pt(so,'--c-crypto','Max Sortino');pt(y,'--you','Yours',1);tip(cv,'down');
+  $('legDown').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--c-crypto)"></i>Max Sortino</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min downside</span><span><i style="background:var(--c-crypto)"></i>From MAR through max Sortino</span>`;
+  const rows=A.map((a,i)=>({a,i,so:(M.mu[i]-S.mar)/M.risk[i].dd})).sort((p,q)=>q.so-p.so);
+  $('dTable').innerHTML=`<thead><tr><th>Asset</th><th>Sortino</th><th>Downside dev.</th><th>σ</th><th>Downside β</th><th>β</th><th>VaR 95% 1m</th><th>CVaR 95% 1m</th><th>Worst month</th><th>Max DD</th><th>Losing months</th><th>Omega</th></tr></thead><tbody>`+
+    rows.map(r=>{const k=M.risk[r.i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</td><td>${r.so.toFixed(2)}</td><td>${pct(k.dd)}</td><td>${pct(M.sd[r.i])}</td><td>${M.dbeta[r.i].toFixed(2)}</td><td>${M.beta[r.i].toFixed(2)}</td><td class="down">${pct(-k.var95)}</td><td class="down">${pct(-k.cvar95)}</td><td class="down">${pct(k.worst)}</td><td class="down">${pct(-k.mdd,0)}</td><td>${pct(k.pctNeg,0)}</td><td>${isFinite(k.omega)?k.omega.toFixed(2):'∞'}</td></tr>`;}).join('')+'</tbody>';}
+
+/* ---------- Risk budget ---------- */
+function drawRB(){const y=port(S.w);const rc=riskContrib(y.w,M.S);const rp=port(RP),t=port(O.tangency.w);
+  const top=(p,rcx)=>{const i=rcx.indexOf(Math.max(...rcx));return `${A[i].name} ${pct(rcx[i],0)}`;};
+  const card=(n,col,p)=>{const r=riskContrib(p.w,M.S);const s3=[...r].sort((a,b)=>b-a).slice(0,3).reduce((a,b)=>a+b,0);return `<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>Diversification ratio</dt><dd>${p.divRatio.toFixed(2)}</dd><dt>Top-3 risk share</dt><dd>${pct(s3,0)}</dd><dt>Largest risk</dt><dd>${top(p,r)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd></dl></div>`;};
+  $('rbCards').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',t)+card('Risk parity','--c-bond',rp);
+  const rows=A.map((a,i)=>({a,i,w:y.w[i],r:rc[i]})).filter(r=>r.w>.0005||Math.abs(r.r)>.0005).sort((p,q)=>q.r-p.r);const mx=Math.max(...rows.map(r=>Math.max(r.w,r.r)),.01);
+  $('rbList').innerHTML=`<span class="h">Asset</span><span class="h"></span><span class="h num">Weight</span><span class="h num">Risk</span>`+rows.map(r=>`<span class="nm" style="font-weight:500"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</span><span class="bars"><i style="width:${r.w/mx*100}%;background:var(--faint)"></i><i style="width:${Math.max(0,r.r)/mx*100}%;background:var(--you)"></i></span><span class="num">${pct(r.w)}</span><span class="num ${r.r>r.w*1.25?'down':r.r<r.w*.75?'up':''}">${pct(r.r)}</span>`).join('')||'<span class="note">Add some weights on the left.</span>';}
+
+/* ---------- Stress tests ---------- */
+const SCEN=[['2015–16 China & oil rout','2015-06','2016-02'],['Q4 2018 sell-off','2018-10','2018-12'],['COVID crash','2020-02','2020-03'],['2022 bear market','2022-01','2022-09'],['Mar 2023 bank stress','2023-03','2023-03'],['2025 tariff shock','2025-02','2025-04']];
+function drawStress(){const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Min variance','--minv',O.minvar.w],['Risk parity','--c-bond',RP]];
+  const ser=P.map(p=>portListed(HF.R,p[2]));const spy=HF.mkt;const mi=m=>HF.months.indexOf(m);
+  const cum=(s,a,b)=>{let g=1;for(let t=a;t<=b;t++)g*=1+s[t];return g-1;};const cov=(s,a,b)=>{let c=1;for(let t=a;t<=b;t++)c=Math.min(c,s.coverage[t]);return c;};
+  const cell=(v,c)=>{const t=Math.min(1,Math.abs(v)/.35);const bg=v<0?`color-mix(in srgb, var(--bad) ${Math.round(t*45)}%, transparent)`:`color-mix(in srgb, var(--good) ${Math.round(t*45)}%, transparent)`;return `<td style="background:${bg}">${sp(v)}${c<.8?'*':''}</td>`;};
+  let h=`<thead><tr><th>Scenario</th><th>Months</th>${P.map(p=>`<th><span class="dot" style="background:var(${p[1]})"></span>${p[0]}</th>`).join('')}<th>S&amp;P 500</th></tr></thead><tbody>`;
+  const res=[];SCEN.forEach(([n,a,b])=>{const ia=mi(a),ib=mi(b);const vals=ser.map(s=>cum(s,ia,ib));res.push({n,y:vals[0],t:vals[1],m:cum(spy,ia,ib)});
+    h+=`<tr><td class="n">${n}</td><td>${a}${a!==b?' → '+b:''}</td>${vals.map((v,k)=>cell(v,cov(ser[k],ia,ib))).join('')}${cell(cum(spy,ia,ib),1)}</tr>`;});
+  const worst12=s=>{let w=1e9;for(let t=11;t<s.length;t++){let g=1;for(let k=t-11;k<=t;k++)g*=1+s[k];w=Math.min(w,g-1);}return w;};
+  h+=`<tr><td class="n">Worst 12 months (2011–2026)</td><td>rolling</td>${ser.map(s=>cell(worst12(s),1)).join('')}${cell(worst12(spy),1)}</tr></tbody>`;$('stTable').innerHTML=h;
+  const cv=$('cStress');const {ctx,W,H:Hh}=setup(cv,220);const pad={l:52,r:14,t:12,b:44};const all=res.flatMap(r=>[r.y,r.t,r.m]);const yd=[Math.min(0,...all)*1.1,Math.max(.02,...all)*1.1];
+  const {Y}=axes(ctx,W,Hh,pad,[0,1],yd,()=>'',v=>pct(v,0),'','',[]);const gw=(W-pad.l-pad.r)/res.length,bw=Math.min(22,gw/4);HITS.stress=[];
+  res.forEach((r,k)=>{const cx=pad.l+gw*(k+.5);[[r.y,'--you','Yours'],[r.t,'--accent','Max Sharpe'],[r.m,'--spx','S&P 500']].forEach(([v,c,n],j)=>{const x=cx+(j-1.5)*bw;ctx.fillStyle=css(c);const y0=Y(0),y1=Y(v);ctx.fillRect(x,Math.min(y0,y1),bw-2,Math.abs(y1-y0));HITS.stress.push({x:x+bw/2,y:y1,label:`${r.n} · ${n}: ${sp(v)}`});});
+    ctx.fillStyle=css('--muted');ctx.font='10px "IBM Plex Sans",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';const words=r.n.split(' ');ctx.fillText(words.slice(0,2).join(' '),cx,Hh-pad.b+6);ctx.fillText(words.slice(2).join(' '),cx,Hh-pad.b+19);});
+  line(ctx,[[pad.l,Y(0)],[W-pad.r,Y(0)]],css('--faint'),1);tip(cv,'stress');}
+
+/* ---------- Backtests ---------- */
+let btMode='in';
+function drawSeries(sets,dates,note){const T=dates.length-1;const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(T>100?2:1)===0)xt.push(i);});const yr=i=>dates[i].slice(0,4);
+  const cv=$('cBT');const {ctx,W,H:Hh}=setup(cv,260);const pad={l:52,r:18,t:14,b:34};const all=sets.flatMap(s=>s.b.v);const lg=v=>Math.log(v);
+  const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lg(Math.min(...all)*.95),lg(Math.max(...all)*1.05)],i=>yr(i),v=>{const x=Math.exp(v);return (x>=10?x.toFixed(0):x.toFixed(1))+'×';},'','Growth of $1 (log scale)',xt);
+  HITS.bt=[];sets.slice().reverse().forEach(s=>{line(ctx,s.b.v.map((v,i)=>[X(i),Y(lg(v))]),css(s.c),s.n.startsWith('Yours')?3:1.7);s.b.v.forEach((v,i)=>{if(i%4===0||i===T)HITS.bt.push({x:X(i),y:Y(lg(v)),label:`${s.n} · ${dates[i]} · ${v.toFixed(2)}×`});});});tip(cv,'bt');
+  $('legBT').innerHTML=sets.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}</span>`).join('');
+  const dv=$('cDD');const g=setup(dv,130);const pd={l:52,r:18,t:8,b:24};const mn=Math.min(...sets.flatMap(s=>s.b.ddS));const ax=axes(g.ctx,g.W,g.H,pd,[0,T],[mn*1.05,0],i=>yr(i),v=>pct(v,0),'','Drawdown',xt);
+  sets.slice().reverse().forEach(s=>line(g.ctx,s.b.ddS.map((v,i)=>[ax.X(i),ax.Y(v)]),css(s.c),s.n.startsWith('Yours')?2.2:1.1));
+  $('btTable').innerHTML=`<thead><tr><th>Portfolio</th><th>Total</th><th>CAGR</th><th>Volatility</th><th>Sharpe</th><th>Max drawdown</th><th>Best month</th><th>Worst month</th>${sets[0].turn!=null?'<th>Turnover / yr</th>':''}</tr></thead><tbody>`+
+    sets.map(s=>`<tr><td class="n"><span class="dot" style="background:var(${s.c})"></span>${s.n}</td><td>${sp(s.b.v[T]-1,0)}</td><td>${pct(s.b.cagr)}</td><td>${pct(s.b.vol)}</td><td>${((s.b.cagr-S.rf)/s.b.vol).toFixed(2)}</td><td class="down">${pct(-s.b.maxDD)}</td><td>${sp(s.b.best)}</td><td>${sp(s.b.worst)}</td>${s.turn!=null?`<td>${s.turn==='—'?'—':pct(s.turn,0)}</td>`:''}</tr>`).join('')+'</tbody>';
+  $('btNote').innerHTML=note;}
+function drawBT(){$('btIn').setAttribute('aria-pressed',btMode==='in');$('btOut').setAttribute('aria-pressed',btMode==='out');
+  if(btMode==='in'){$('wfProg').hidden=true;const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--accent',O.tangency.w],['Min variance','--minv',O.minvar.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]];
+    const sets=P.map(p=>({n:p[0],c:p[1],b:growth(portListed(H.R,p[2]))}));sets.push({n:'S&P 500',c:'--spx',b:growth(H.mkt)});
+    $('btKick').textContent=`${H.months[0]} → ${H.months[H.T-1]}, today's weights, rebalanced monthly`;
+    drawSeries(sets,[prevMonth(H.months[0]),...H.months],'In-sample: the optimized weights were chosen using this same history, so their lines flatter them. Use <b>Walk-forward</b> for an honest test. Assets enter when they list. All backtests here also carry selection bias: these 32 assets were chosen in 2026, partly because they did well.');}
+  else{if(!WF){runWF();return;}drawSeries(WF.sets,WF.dates,`Out-of-sample: every quarter from ${WF.dates[0]}, each strategy is re-estimated on the previous 5 years only (assets need 3 years of history to qualify), then held for 3 months on returns it had not seen. Expected returns for the rolling max-Sharpe use the history–CAPM blend at your confidence (${pct(S.trust,0)}), since your views are about today. <b>Yours</b> is your current weights held throughout, so it still looks ahead. Selection bias remains: the 32 assets were picked in 2026, so every strategy here benefits from knowing which companies became winners.`);$('btKick').textContent=`Rebalanced quarterly · ${WF.n} re-estimations`;}}
+function prevMonth(m){let [y,mm]=m.split('-').map(Number);mm--;if(!mm){mm=12;y--;}return y+'-'+String(mm).padStart(2,'0');}
+function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;t+=step)t0s.push(t);const W={tan:[],mv:[],rp:[],ew:[]};const ret={tan:[],mv:[],rp:[],ew:[]};const turn={tan:0,mv:0,rp:0,ew:0};let prev=null;
+  $('wfProg').hidden=false;const bar=$('wfProg').firstElementChild;let k=0;$('btKick').textContent='Running walk-forward…';
+  const work=()=>{const t0=t0s[k];const r=walkForwardStep(HF,o,t0,win);
+    ['tan','mv','rp','ew'].forEach(s=>{if(prev)turn[s]+=r[s].reduce((a,x,i)=>a+Math.abs(x-prev[s][i]),0)/2;for(let t=t0;t<Math.min(t0+step,HF.T);t++){let s2=0,ws=0;r[s].forEach((w,i)=>{const x=HF.R[i][t];if(w>0&&x!=null){s2+=w*x;ws+=w;}});ret[s].push(ws?s2/ws:0);}});
+    prev=r;k++;bar.style.width=(k/t0s.length*100)+'%';if(k<t0s.length)setTimeout(work,0);else done();};
+  const done=()=>{$('wfProg').hidden=true;const a=t0s[0];const yrs=(HF.T-a)/12;const mk=(n,c,s)=>({n,c,b:growth(ret[s]),turn:turn[s]/yrs});
+    const yours=portListed(HF.R,norm(S.w)).slice(a);const spy=HF.mkt.slice(a);
+    WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:'Yours (static)',c:'--you',b:growth(yours),turn:'—'},mk('Max Sharpe (rolling)','--accent','tan'),mk('Min variance (rolling)','--minv','mv'),mk('Risk parity (rolling)','--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
+    if(btMode==='out')drawBT();};setTimeout(work,20);}
+
+/* ---------- CAPM ---------- */
+function drawSML(){const cv=$('cSML');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const b=M.beta,mu=M.mu;const xd=[Math.min(-.2,...b)-.05,Math.max(...b)*1.06],yd=[Math.min(0,...mu)-.01,Math.max(...mu,S.rf+xd[1]*S.erp)*1.06];
+  const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>v.toFixed(1),v=>pct(v,0),'Beta vs S&P 500','Expected return');line(ctx,[[X(xd[0]),Y(S.rf+xd[0]*S.erp)],[X(xd[1]),Y(S.rf+xd[1]*S.erp)]],css('--fg'),2);const hl=HITS.sml=[];
+  A.forEach((a,i)=>{const x=X(b[i]),yy=Y(mu[i]),req=S.rf+b[i]*S.erp;line(ctx,[[x,yy],[x,Y(req)]],mu[i]>=req?css('--good'):css('--bad'),1,[2,2]);dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);hl.push({x,y:yy,label:`${a.name} · β ${b[i].toFixed(2)} · α ${sp(mu[i]-req)}`});});
+  dotC(ctx,X(1),Y(S.rf+S.erp),5,css('--spx'));[[O.minvar.w,'--minv','Min variance'],[O.tangency.w,'--accent','Max Sharpe']].forEach(([w,c,n])=>{const p=port(w);dia(ctx,X(p.beta),Y(p.ret),8,css(c));hl.push({x:X(p.beta),y:Y(p.ret),label:`${n} · β ${p.beta.toFixed(2)} · α ${sp(p.alpha)}`});});
+  const y=port(S.w);dotC(ctx,X(y.beta),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.beta),y:Y(y.ret),label:`Yours · β ${y.beta.toFixed(2)} · α ${sp(y.alpha)}`});tip(cv,'sml');
+  const rows=A.map((a,i)=>({a,i,req:S.rf+b[i]*S.erp})).sort((p,q)=>(mu[q.i]-q.req)-(mu[p.i]-p.req));
+  $('alphaTable').innerHTML=`<thead><tr><th>Asset</th><th>β</th><th>CAPM required</th><th>E[R] in use</th><th>Jensen α</th><th>Treynor</th><th>Hist. CAGR</th></tr></thead><tbody>`+rows.map(r=>`<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</td><td>${b[r.i].toFixed(2)}</td><td>${pct(r.req)}</td><td>${pct(mu[r.i])}</td><td class="${mu[r.i]>=r.req?'up':'down'}">${sp(mu[r.i]-r.req)}</td><td>${Math.abs(b[r.i])>.05?pct((mu[r.i]-S.rf)/b[r.i]):'—'}</td><td>${pct(M.cagr[r.i])}</td></tr>`).join('')+'</tbody>';}
+
+/* ---------- Correlation ---------- */
+function drawCorr(){const cv=$('cCorr');const {ctx,W,H:Hh}=setup(cv,560);const lab=78,n=N;const cs=Math.min((W-lab-4)/n,(Hh-lab-4)/n);const nu=css('--panel2'),po=css('--accent'),ne=css('--bad');const hl=HITS.corr=[];ctx.font=`${Math.max(8,Math.min(10,cs*.55))}px "JetBrains Mono",monospace`;
+  ORDER.forEach((i,r)=>{ctx.fillStyle=css('--muted');ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(A[i].id,lab-5,lab+r*cs+cs/2);ctx.save();ctx.translate(lab+r*cs+cs/2,lab-5);ctx.rotate(-Math.PI/2);ctx.textAlign='left';ctx.fillText(A[i].id,0,0);ctx.restore();
+    ORDER.forEach((j,c)=>{const v=M.Cs[i][j];ctx.fillStyle=i===j?css('--faint'):(v>=0?hexMix(nu,po,Math.min(1,v)):hexMix(nu,ne,Math.min(1,-v)));ctx.fillRect(lab+c*cs,lab+r*cs,cs-1,cs-1);hl.push({x:lab+c*cs+cs/2,y:lab+r*cs+cs/2,label:`${A[i].name} × ${A[j].name}: ${v.toFixed(2)} (model ${M.C[i][j].toFixed(2)})`});});});tip(cv,'corr');
+  const pr=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)pr.push([A[i].name,A[j].name,M.Cs[i][j]]);pr.sort((a,b)=>b[2]-a[2]);
+  $('hiPairs').innerHTML=pr.slice(0,10).map(p=>`<li>${p[0]} – ${p[1]} <b>${p[2].toFixed(2)}</b></li>`).join('');$('loPairs').innerHTML=pr.slice(-10).reverse().map(p=>`<li>${p[0]} – ${p[1]} <b>${p[2].toFixed(2)}</b></li>`).join('');
+  $('rbar').textContent=`Sample correlations over overlapping months; average ${M.rbar.toFixed(2)}. Tooltips also show the shrunk value the model uses.`;}
+
+/* ---------- Model & views ---------- */
+function viewsUI(){const opt=sel=>A.map(a=>`<option value="${a.id}"${a.id===sel?' selected':''}>${a.name}</option>`).join('');
+  $('views').innerHTML=S.views.length?S.views.map((v,k)=>`<div class="vrow" data-k="${k}"><select data-f="a" aria-label="Asset">${opt(v.a)}</select>
+    <select data-f="type" aria-label="View type"><option value="abs"${v.type==='abs'?' selected':''}>will return</option><option value="rel"${v.type==='rel'?' selected':''}>will beat</option></select>
+    ${v.type==='rel'?`<select data-f="b" aria-label="Second asset">${opt(v.b)}</select><span class="kicker">by</span>`:''}<input type="number" data-f="q" step="0.5" value="${(v.q*100).toFixed(1)}" aria-label="Return %"><span class="kicker">% a year · confidence</span>
+    <input type="range" data-f="conf" min="5" max="95" value="${Math.round(v.conf*100)}" aria-label="Confidence"><b class="kicker">${Math.round(v.conf*100)}%</b><span class="eff">${viewEffect(v)}</span><button data-del="${k}" class="ghost" aria-label="Delete view">Remove</button></div>`).join(''):
+    `<p class="note">No views yet. A view is an opinion such as "Nvidia will beat Microsoft by 3% a year" or "Gold will return 6%", with a confidence. Without views, Black-Litterman uses equilibrium returns plus the history slider above.</p>`;}
+function viewEffect(v){const i=A.findIndex(a=>a.id===v.a);if(i<0)return '';if(v.type==='rel'){const j=A.findIndex(a=>a.id===v.b);return `now: ${A[i].id} − ${A[j].id} = ${sp(M.mu[i]-M.mu[j])} (prior ${sp(M.capm[i]-M.capm[j])})`;}return `${A[i].id}: prior ${pct(M.capm[i])} → ${pct(M.mu[i])}`;}
+function aTable(){$('aTable').innerHTML=`<thead><tr><th>Asset</th><th>In</th><th>Since</th><th>Hist. mean</th><th>CAGR</th><th>σ</th><th>β</th><th>Equilibrium</th><th>E[R] used %</th><th>Max-Sh.</th><th>Min-var</th><th>Risk parity</th></tr></thead><tbody>`+
+  ORDER.map(i=>{const a=A[i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[a.cls][1]})"></span>${a.name}<small>${a.ticker}</small></td><td><input type="checkbox" data-act="${i}" ${S.active[i]?'checked':''} aria-label="Include ${a.name}" style="width:auto"></td>
+  <td>${H.months[M.first[i]]}</td><td>${pct(M.hm[i])}</td><td>${pct(M.cagr[i])}</td><td>${pct(M.sd[i])}</td><td>${M.beta[i].toFixed(2)}</td><td>${pct(M.capm[i])}</td>
+  <td><input type="number" step="0.5" data-mu="${i}" value="${(M.mu[i]*100).toFixed(1)}" aria-label="Expected return ${a.name}" style="${S.override[i]!=null?'border-color:var(--you);color:var(--you)':''}"></td><td>${pct(O.tangency.w[i])}</td><td>${pct(O.minvar.w[i])}</td><td>${pct(RP[i])}</td></tr>`;}).join('')+'</tbody>';}
+function modelUI(){$('trustT').textContent=S.mode==='bl'?'Confidence in history as a view':S.mode==='blend'?'Weight on history (rest CAPM)':'History weight (fixed at 100%)';$('trust').disabled=S.mode==='hist';$('trustL').textContent=Math.round(S.trust*100)+'%';
+  $('shrink').value=Math.round(S.shrink*100);$('shrinkL').textContent=Math.round(S.shrink*100)+'%';$('lwBtn').textContent=`Use Ledoit-Wolf optimum (${Math.round(LW.delta*100)}%)`;viewsUI();aTable();
+  $('chips').innerHTML=`<span class="chip">Yahoo Finance · monthly · <b>${H.months[0]} – 2026-10-09</b></span><span class="chip">Returns: <b>${{bl:'Black-Litterman',blend:'History–CAPM blend',hist:'Pure history'}[S.mode]}</b></span><span class="chip">Shrinkage <b>${Math.round(S.shrink*100)}%</b></span><span class="chip">Risk-free <b>${pct(S.rf,2)}</b></span><span class="chip">All in <b>USD</b></span>`;}
+
+/* ---------- wiring ---------- */
+const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
+const DRAW={frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
+function drawVisible(){if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
+let mcT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,visible('mc')?120:30);}
+let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();allocList();modelUI();drawVisible();$('hero').classList.remove('busy');},20);}
+$('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(0,Math.min(100,+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(40,v);onWeights();});
+const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();};
+$('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
+$('pEq').onclick=()=>setW(A.map(()=>1/N));$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>setW(norm(S.w));
+$('pRes').onclick=()=>{if(RES){setW(RES);return;}const K=40,acc=new Float64Array(N),r=rng(7),o=opts();let k=0;const btn=$('pRes'),pb=$('resProg');btn.classList.add('busy');pb.hidden=false;
+  const step=()=>{const w=resampleStep(M,o,M._capA,k,r);for(let i=0;i<N;i++)acc[i]+=w[i]/K;k++;pb.firstElementChild.style.width=(k/K*100)+'%';btn.textContent=`Resampling ${k}/${K}`;if(k<K)setTimeout(step,0);else{RES=acc;btn.textContent='Resampled';btn.classList.remove('busy');pb.hidden=true;setW(RES);}};setTimeout(step,20);};
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);try{localStorage.setItem('fl3-tab',b.dataset.tab)}catch(_){}drawVisible();});
+['mcStart','mcMonthly','mcYears','mcMethod','mcPaths'].forEach(id=>$(id).addEventListener('change',runMC));
+$('btIn').onclick=()=>{btMode='in';drawBT();};$('btOut').onclick=()=>{btMode='out';drawBT();};
+$('rf').value=(S.rf*100).toFixed(2);$('mar').value=(S.mar*100).toFixed(2);
+const num=(id,f)=>$(id).addEventListener('change',e=>{f(+e.target.value);full();});
+num('rf',v=>S.rf=(v||0)/100);num('erp',v=>S.erp=(v||0)/100);num('mar',v=>S.mar=(v||0)/100);num('cap',v=>S.cap=Math.min(1,Math.max(.04,(v||15)/100)));num('tau',v=>S.tau=Math.min(1,Math.max(.01,v||.05)));
+$('win').addEventListener('change',e=>{S.win=+e.target.value;S.shrink=null;full();});
+$('mode').addEventListener('change',e=>{S.mode=e.target.value;S.override=A.map(()=>null);full();});
+$('trust').addEventListener('input',e=>$('trustL').textContent=e.target.value+'%');$('trust').addEventListener('change',e=>{S.trust=e.target.value/100;S.override=A.map(()=>null);full();});
+$('shrink').addEventListener('input',e=>$('shrinkL').textContent=e.target.value+'%');$('shrink').addEventListener('change',e=>{S.shrink=e.target.value/100;full();});
+$('lwBtn').onclick=()=>{S.shrink=+LW.delta.toFixed(2);full();};
+$('addView').onclick=()=>{S.views.push({a:'NVDA',type:'rel',b:'MSFT',q:.03,conf:.5});if(S.mode!=='bl'){S.mode='bl';$('mode').value='bl';}full();};
+$('views').addEventListener('input',e=>{const r=e.target.closest('.vrow');if(!r||e.target.dataset.f!=='conf')return;e.target.nextElementSibling.textContent=e.target.value+'%';});
+$('views').addEventListener('change',e=>{const r=e.target.closest('.vrow');if(!r)return;const v=S.views[+r.dataset.k],f=e.target.dataset.f;if(!f)return;
+  if(f==='q')v.q=(+e.target.value||0)/100;else if(f==='conf')v.conf=e.target.value/100;else v[f]=e.target.value;if(f==='type'&&v.type==='rel'&&!v.b)v.b=v.a==='MSFT'?'NVDA':'MSFT';full();});
+$('views').addEventListener('click',e=>{const d=e.target.dataset.del;if(d==null)return;S.views.splice(+d,1);full();});
+$('aTable').addEventListener('change',e=>{const t=e.target;if(t.dataset.mu!=null){S.override[+t.dataset.mu]=(+t.value||0)/100;full();}
+  if(t.dataset.act!=null){const i=+t.dataset.act;S.active[i]=t.checked;if(S.active.filter(Boolean).length<2){S.active[i]=true;t.checked=true;}full();}});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{updAlloc();drawVisible();},160);});
+try{window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{updAlloc();drawVisible();});}catch(_){}
+new MutationObserver(()=>{if(M){updAlloc();drawVisible();}}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+try{const t=localStorage.getItem('fl3-tab');const b=t&&document.querySelector(`#tabs [data-tab="${t}"]`);if(b){document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==t);}}catch(_){}
+full();
+</script>
