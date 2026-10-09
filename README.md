@@ -2,7 +2,9 @@
 
 An interactive portfolio-construction lab for 32 assets (US and Asian tech, AI infrastructure, financials, defensives, commodities, Bitcoin and US Treasuries), built on 15 years of real monthly prices (October 2011 – October 2026).
 
-It runs entirely in the browser: open `index.html`. There is no server, no build step and no dependencies; the data is embedded in the page.
+**Live app: https://gabichu18.github.io/OPTIMAL-PORTFOLIO/**
+
+It runs entirely in the browser: use the live link above, or download the repo and open `index.html`. There is no server, no build step and no dependencies; the data is embedded in the page.
 
 ## What it does
 
