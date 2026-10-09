@@ -24,6 +24,12 @@
 .btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .busy{opacity:.55;pointer-events:none}
 .kicker{font-size:.72rem;color:var(--muted)}
+.presets{position:relative}
+.ptip{position:absolute;z-index:20;left:0;right:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:.78rem;line-height:1.45;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.ptip b.t{font-family:var(--display);font-size:.98rem}
+.ptip .pc{display:grid;grid-template-columns:auto 1fr;gap:3px 8px}
+.ptip .pc span:nth-child(odd){font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;padding-top:2px}
+.ptip .pro{color:var(--good)} .ptip .con{color:var(--bad)}
 </style>
 
 <div class="wrap">
@@ -43,6 +49,7 @@
   <div class="presets">
     <button id="pTan">Max Sharpe</button><button id="pMin">Min variance</button><button id="pSor">Max Sortino</button><button id="pMdd">Min downside</button><button id="pRP">Risk parity</button><button id="pRes">Resampled</button><button id="pEq">Equal</button><button id="pClr" class="ghost">Clear</button>
   </div>
+  <div class="ptip" id="ptip" role="tooltip" hidden></div>
   <div class="prog" id="resProg" hidden><div></div></div>
   <div class="mixrow"><canvas id="cDonut" height="120" style="width:120px"></canvas><div class="mixleg" id="mixLeg"></div></div>
   <div class="sumbar"><span id="sumTxt">Σ 100%</span><button id="normBtn">Scale to 100%</button></div>
@@ -202,7 +209,7 @@ function port(w){const wn=norm(w);const key=Array.from(wn,x=>x.toFixed(5)).join(
   if(PC.size>200)PC.clear();PC.set(key,p);return p;}
 
 /* ---------- chart kit ---------- */
-function setup(cv,minH){const dpr=window.devicePixelRatio||1;const w=cv.clientWidth||cv.parentElement.clientWidth;const base=+cv.getAttribute('height');const h=Math.max(minH||200,Math.round(base*Math.min(1,Math.max(.65,w/760))));cv.style.height=h+'px';cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,W:w,H:h};}
+function setup(cv,minH,ar){const dpr=window.devicePixelRatio||1;const w=cv.clientWidth||cv.parentElement.clientWidth;const base=+(cv.dataset.h||(cv.dataset.h=cv.getAttribute('height')));const h=ar?Math.round(Math.min(base*1.15,Math.max(minH||200,w*ar))):Math.max(minH||200,Math.round(base*Math.min(1,Math.max(.65,w/760))));cv.style.height=h+'px';cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,W:w,H:h};}
 function ticks(lo,hi,n){const span=hi-lo||1,raw=span/n,mag=Math.pow(10,Math.floor(Math.log10(raw)));const st=[1,2,2.5,5,10].map(m=>m*mag).find(s=>span/s<=n)||10*mag;const t=[];for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st)t.push(+v.toFixed(10));return t;}
 function axes(ctx,W,Hh,pad,xd,yd,xf,yf,xl,yl,xt){
   const X=v=>pad.l+(v-xd[0])/(xd[1]-xd[0])*(W-pad.l-pad.r),Y=v=>Hh-pad.b-(v-yd[0])/(yd[1]-yd[0])*(Hh-pad.t-pad.b);
@@ -249,7 +256,7 @@ function updAlloc(){let s=0;for(const x of S.w)s+=x;$('sumTxt').textContent=`Σ 
 function runMC(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),paths=+$('mcPaths').value,st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
   const y=port(S.w),t=port(O.tangency.w);const run=p=>monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths,start:st,monthly:mo,seed:42});
   const ry=run(y),rt=run(t);window._mc={y:ry,t:rt};
-  const cv=$('cMC');const {ctx,W,H:Hh}=setup(cv,260);const pad={l:68,r:16,t:14,b:40};const top=Math.max(ry.bands[4][ry.T],rt.bands[3][rt.T]);
+  const cv=$('cMC');const {ctx,W,H:Hh}=setup(cv,260,.42);const pad={l:68,r:16,t:14,b:40};const top=Math.max(ry.bands[4][ry.T],rt.bands[3][rt.T]);
   const {X,Y}=axes(ctx,W,Hh,pad,[0,yrs],[0,top*1.04],v=>v+'y',v=>v>=1e6?'€'+(v/1e6).toFixed(1)+'M':'€'+Math.round(v/1000)+'k','Years from today');
   ctx.save();ctx.beginPath();ctx.rect(pad.l,pad.t,W-pad.l-pad.r,Hh-pad.t-pad.b);ctx.clip();
   ctx.globalAlpha=.12;ry.samples.forEach(s=>line(ctx,Array.from(s,(v,i)=>[X(i/12),Y(v)]),css('--you'),.8));ctx.globalAlpha=1;
@@ -263,7 +270,7 @@ function runMC(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),path
     s('Chance of ending below invested',pct(ry.pLoss),'max-Sh '+pct(rt.pLoss))+s('Chance of doubling your money',pct(ry.pDouble),'max-Sh '+pct(rt.pDouble))+
     s('1-year VaR 95%',pct(ry.var1y),'max-Sh '+pct(rt.var1y))+s('1-year CVaR 95%',pct(ry.cvar1y),'max-Sh '+pct(rt.cvar1y))+s('Chance of a losing first year',pct(ry.pDown1y),'max-Sh '+pct(rt.pDown1y))+
     s('Max drawdown, median path',pct(ry.ddMed,0),'max-Sh '+pct(rt.ddMed,0))+s('Max drawdown, worst 5%',pct(ry.dd95,0),'max-Sh '+pct(rt.dd95,0));
-  const hv=$('cHistA');const g=setup(hv,170);const pd={l:44,r:16,t:10,b:30};const P=ry.ann.length;
+  const hv=$('cHistA');const g=setup(hv,150,.22);const pd={l:44,r:16,t:10,b:30};const P=ry.ann.length;
   const lo=Math.min(ry.ann[Math.floor(P*.01)],rt.ann[Math.floor(P*.01)]),hi=Math.max(ry.ann[Math.floor(P*.99)],rt.ann[Math.floor(P*.99)]);const B=40,bw=(hi-lo)/B;
   const hist=a=>{const c=new Array(B).fill(0);for(const x of a){const k=Math.floor((x-lo)/bw);if(k>=0&&k<B)c[k]++;}return c.map(v=>v/a.length);};const hy=hist(ry.ann),ht=hist(rt.ann),mx=Math.max(...hy,...ht);
   const ax=axes(g.ctx,g.W,g.H,pd,[lo,hi],[0,mx*1.1],v=>pct(v,0),v=>pct(v,0),'',' ');
@@ -404,6 +411,19 @@ $('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))
 const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();};
 $('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
 $('pEq').onclick=()=>setW(A.map(()=>1/N));$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>setW(norm(S.w));
+const PINFO={
+ pTan:['Max Sharpe','The tangency portfolio: the highest expected return per unit of total volatility.','The textbook optimum and industry benchmark. Best risk-adjusted return if your inputs are right.','Very sensitive to expected-return estimates and tends to concentrate. In the walk-forward test it lost to equal weight.'],
+ pMin:['Min variance','The lowest-volatility portfolio possible. It ignores expected returns completely.','Needs no return forecasts, so it is stable. Smallest swings and drawdowns.','Low expected return. Piles into bonds, gold and defensive stocks.'],
+ pSor:['Max Sortino','The highest return per unit of downside risk: only months below your minimum acceptable return count as risk.','Matches how investors feel about risk. Rewards assets whose big moves were mostly upward.','Downside risk is estimated from fewer months, so it is noisier. Can chase past upside streaks (Bitcoin, momentum stocks).'],
+ pMdd:['Min downside','The portfolio with the smallest losses below your minimum acceptable return.','Built to protect capital. Holds up well in sell-offs.','Low expected return. Assumes past crash patterns repeat.'],
+ pRP:['Risk parity','Every asset contributes the same share of total portfolio risk.','Needs no return forecasts. Very broad diversification and shallow drawdowns in the walk-forward test.','Heavy in bonds, so returns are low without leverage. Equal risk does not mean equal opportunity.'],
+ pRes:['Resampled (Michaud)','The average of 40 max-Sharpe portfolios, each built on a randomly resampled version of the past.','Smoother, more diversified weights that change less when the data updates.','Takes a few seconds to compute and has no single theoretical optimum. Still relies on the same expected returns.'],
+ pEq:['Equal weight (1/N)','The same weight in every asset.','No estimation at all, so nothing to get wrong. Hard to beat out of sample: best Sharpe in your walk-forward test.','Ignores risk: Bitcoin gets as much money as Treasuries. Ignores any view on quality or valuation.'],
+ pClr:['Clear','Sets every weight to zero so you can build your own allocation from scratch.','',''] };
+(()=>{const tipEl=$('ptip'),box=document.querySelector('.presets');box.appendChild(tipEl);const show=b=>{const d=PINFO[b.id];if(!d)return;
+  tipEl.innerHTML=`<b class="t">${d[0]}</b><span>${d[1]}</span>`+(d[2]?`<div class="pc"><span class="pro">Pros</span><span>${d[2]}</span><span class="con">Cons</span><span>${d[3]}</span></div>`:'');
+  tipEl.hidden=false;tipEl.style.top=(b.offsetTop+b.offsetHeight+8)+'px';};const hide=()=>tipEl.hidden=true;
+  box.querySelectorAll('button').forEach(b=>{b.addEventListener('mouseenter',()=>show(b));b.addEventListener('focus',()=>show(b));b.addEventListener('mouseleave',hide);b.addEventListener('blur',hide);b.addEventListener('click',hide);});})();
 $('pRes').onclick=()=>{if(RES){setW(RES);return;}const K=40,acc=new Float64Array(N),r=rng(7),o=opts();let k=0;const btn=$('pRes'),pb=$('resProg');btn.classList.add('busy');pb.hidden=false;
   const step=()=>{const w=resampleStep(M,o,M._capA,k,r);for(let i=0;i<N;i++)acc[i]+=w[i]/K;k++;pb.firstElementChild.style.width=(k/K*100)+'%';btn.textContent=`Resampling ${k}/${K}`;if(k<K)setTimeout(step,0);else{RES=acc;btn.textContent='Resampled';btn.classList.remove('busy');pb.hidden=true;setW(RES);}};setTimeout(step,20);};
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);try{localStorage.setItem('fl3-tab',b.dataset.tab)}catch(_){}drawVisible();});
