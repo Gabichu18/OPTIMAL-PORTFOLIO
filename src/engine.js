@@ -1,11 +1,11 @@
 // ===== Frontier Lab engine v3: 15y data, Black-Litterman, Ledoit-Wolf, risk parity, resampling, walk-forward =====
 const META={NVDA:['Nvidia','NVDA','semi'],AMZN:['Amazon','AMZN','tech'],GOOGL:['Alphabet','GOOGL','tech'],MSFT:['Microsoft','MSFT','tech'],META:['Meta Platforms','META','tech'],AAPL:['Apple','AAPL','tech'],VRT:['Vertiv','VRT','power'],VST:['Vistra','VST','power'],ETN:['Eaton','ETN','power'],ANET:['Arista Networks','ANET','semi'],MU:['Micron','MU','semi'],TSM:['TSMC','TSM','semi'],XIAOMI:['Xiaomi','1810.HK','tech'],AMAT:['Applied Materials','AMAT','semi'],SAMSUNG:['Samsung Electronics','005930.KS','semi'],CAT:['Caterpillar','CAT','power'],AVGO:['Broadcom','AVGO','semi'],CRWD:['CrowdStrike','CRWD','tech'],JPM:['JPMorgan Chase','JPM','fin'],GS:['Goldman Sachs','GS','fin'],LMT:['Lockheed Martin','LMT','def'],NUE:['Nucor','NUE','power'],TM:['Toyota','TM','def'],PFE:['Pfizer','PFE','def'],ITX:['Inditex','ITX.MC','def'],ASML:['ASML','ASML','semi'],SKHYNIX:['SK Hynix','000660.KS','semi'],GOLD:['Gold','GC=F','cmdty'],COPX:['Global X Copper Miners','4COP.DE / COPX','cmdty'],OIL:['Brent crude','BZ=F','cmdty'],BTC:['Bitcoin','BTC-USD','crypto'],UST:['US Treasuries 7–10y','IEF','bond']};
 const mean=a=>{let s=0;for(const x of a)s+=x;return s/a.length;};
-function parseData(txt){const L=txt.trim().split('\n');const [start,Ts]=L[0].split('|');const T=+Ts;const ids=[],R=[];let mkt=null;
-  for(const l of L.slice(1)){const [id,s,v]=l.split('|');const arr=new Array(T).fill(null);v.split(',').forEach((x,k)=>{if(x!=='')arr[+s+k]=(+x)/1e4;});if(id==='SPY')mkt=arr;else{ids.push(id);R.push(arr);}}
+function parseData(txt){const L=txt.trim().split('\n');const [start,Ts]=L[0].split('|');const T=+Ts;const ids=[],R=[];let mkt=null,rfm=null;
+  for(const l of L.slice(1)){const [id,s,v]=l.split('|');const arr=new Array(T).fill(null);v.split(',').forEach((x,k)=>{if(x!=='')arr[+s+k]=(+x)/1e4;});if(id==='SPY')mkt=arr;else if(id==='RF')rfm=arr;else{ids.push(id);R.push(arr);}}
   const months=[];let [y,m]=start.split('-').map(Number);for(let t=0;t<T;t++){months.push(y+'-'+String(m).padStart(2,'0'));m++;if(m>12){m=1;y++;}}
-  return {ids,R,mkt,months,T};}
-function sliceH(H,n){const a=Math.max(0,H.T-n);return {ids:H.ids,R:H.R.map(r=>r.slice(a)),mkt:H.mkt.slice(a),months:H.months.slice(a),T:H.T-a};}
+  return {ids,R,mkt,rfm:rfm||new Array(T).fill(0),months,T};}
+function sliceH(H,n){const a=Math.max(0,H.T-n);return {ids:H.ids,R:H.R.map(r=>r.slice(a)),mkt:H.mkt.slice(a),rfm:H.rfm.slice(a),months:H.months.slice(a),T:H.T-a};}
 function matVec(S,w){const n=w.length,o=new Float64Array(n);for(let i=0;i<n;i++){let s=0;const r=S[i];for(let j=0;j<n;j++)s+=r[j]*w[j];o[i]=s;}return o;}
 function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;}
 function stats(w,mu,S){const v=dot(w,matVec(S,w));return {ret:dot(w,mu),vol:Math.sqrt(Math.max(v,0))};}
@@ -99,6 +99,13 @@ function optimizeDownside(F,mu,cap,mar,marM,seeds){const dd=w=>riskStats(portSer
     for(let k=0;k<14;k++){const c=b-.618*(b-a),d=a+.618*(b-a);const wc=solve(mu,SC,cap,Math.exp(c),L,best.w,450),wd=solve(mu,SC,cap,Math.exp(d),L,best.w,450);const sc=so(wc),sd=so(wd);consider(wc);consider(wd);if(sc>sd)b=d;else a=c;}}
   let mw=seeds[seeds.length-1],md=dd(mw);for(let it=0;it<3;it++){const SC=exactSC(F,mw,marM),L=maxEig(SC);const w=solve(mu,SC,cap,Infinity,L,mw,1500);const d2=dd(w);if(d2<md-1e-6){mw=w;md=d2;}else break;}
   const pack=w=>{const r=dot(w,mu),d=dd(w);return {w,ret:r,vol:d,sharpe:(r-mar)/d};};return {tangency:pack(best.w),minvar:pack(mw)};}
+// realized alpha: OLS of portfolio excess returns on market excess returns (monthly T-bill as risk-free)
+function alphaStats(p,m,rf){const n=p.length;const y=[],x=[];for(let t=0;t<n;t++){y.push(p[t]-rf[t]);x.push(m[t]-rf[t]);}
+  const mx=mean(x),my=mean(y);let sxx=0,sxy=0;for(let t=0;t<n;t++){sxx+=(x[t]-mx)**2;sxy+=(x[t]-mx)*(y[t]-my);}const b=sxy/sxx,a=my-b*mx;
+  let sse=0,sst=0;const e=[];for(let t=0;t<n;t++){const r=y[t]-a-b*x[t];e.push(r);sse+=r*r;sst+=(y[t]-my)**2;}const s2=sse/(n-2);const se=Math.sqrt(s2*(1/n+mx*mx/sxx));
+  const act=p.map((v,t)=>v-m[t]);const ma=mean(act);let te=0;for(const v of act)te+=(v-ma)**2;te=Math.sqrt(te/(n-1)*12);
+  const cum=[1];for(let t=0;t<n;t++)cum.push(cum[t]*(1+a+e[t]));const g=s=>{let v=1;for(const r of s)v*=1+r;return Math.pow(v,12/n)-1;};
+  const resVol=Math.sqrt(s2*12);return {alpha:a*12,t:a/se,beta:b,r2:sst?1-sse/sst:0,resVol,appraisal:resVol?a*12/resVol:0,active:g(p)-g(m),te,ir:te?ma*12/te:0,cum,n};}
 function rng(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 function gauss(r){let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
 function randomPortfolios(mu,S,rf,n,seed,active){const r=rng(seed),N=mu.length,out=[];for(let k=0;k<n;k++){const w=new Float64Array(N);let s=0;const sp=r()<.5;for(let i=0;i<N;i++){if(!active[i])continue;let e=-Math.log(r()+1e-12);if(sp)e=e*e*e;w[i]=e;s+=e;}for(let i=0;i<N;i++)w[i]/=s;const st=stats(w,mu,S);out.push({ret:st.ret,vol:st.vol,sharpe:(st.ret-rf)/st.vol});}return out;}
@@ -130,4 +137,4 @@ function walkForwardStep(H,o,t0,win){const n=H.ids.length,a=t0-win;const E=[];fo
   const tan=fastTangency(M.mu,M.S,cap,o.rf,null,L).w,mv=solve(M.mu,M.S,cap,Infinity,L,null,1500),rp=riskParity(M.S,E.map(()=>true));
   const up=w=>{const f=new Float64Array(n);E.forEach((i,q)=>f[i]=w[q]);return f;};
   return {tan:up(tan),mv:up(mv),rp:up(rp),ew:up(new Float64Array(k).fill(1/k)),k};}
-if(typeof module!=='undefined')module.exports={META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};
+if(typeof module!=='undefined')module.exports={alphaStats,META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};

@@ -64,7 +64,7 @@
     <button role="tab" data-tab="rb">Risk budget</button>
     <button role="tab" data-tab="stress">Stress tests</button>
     <button role="tab" data-tab="bt">Backtests</button>
-    <button role="tab" data-tab="capm">CAPM &amp; SML</button>
+    <button role="tab" data-tab="capm">CAPM &amp; alpha</button>
     <button role="tab" data-tab="corr">Correlation</button>
     <button role="tab" data-tab="model">Model &amp; views</button>
   </nav>
@@ -134,6 +134,12 @@
 
   <!-- CAPM -->
   <div data-pane="capm" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Alpha generated</h2><span class="kicker" id="alphaKick"></span></div>
+    <div class="cmpgrid" id="alphaCards"></div>
+    <div class="chart"><canvas id="cAlpha" height="300"></canvas></div>
+    <div class="legend" id="legAlpha"></div>
+    <p class="note">Realized alpha is the intercept of a regression of each portfolio's monthly return above the T-bill on the S&amp;P 500's return above the T-bill (Jensen, 1968), using today's weights over the estimation window. It is the return the market exposure does not explain. The <b>t-statistic</b> says whether it is distinguishable from luck: above 2 is significant at 95%. The chart compounds that unexplained return month by month: a rising line is alpha being earned, a falling one is alpha being lost. Same caveats as the backtests: the weights and the 32 assets were chosen with hindsight.</p>
+    <h2>Expected alpha (CAPM &amp; SML)</h2>
     <div class="chart"><canvas id="cSML" height="420"></canvas></div>
     <p class="note">Betas against SPY (S&amp;P 500 with dividends), monthly, over each asset's history in the window. SML: r<sub>f</sub> + β·ERP. Dots above the line carry positive Jensen's alpha on the expected returns in use.</p>
     <div class="scroll"><table id="alphaTable"></table></div>
@@ -206,7 +212,7 @@ function port(w){const wn=norm(w);const key=Array.from(wn,x=>x.toFixed(5)).join(
   const st=stats(wn,M.mu,M.S);const b=dot(wn,M.beta);const ser=portSeries(M.F,wn);const rs=riskStats(ser,M.marM);const sdd=Math.sqrt(Math.max(0,dot(wn,matVec(M.SC,wn))));
   const sw=Array.from(wn).reduce((s,x,i)=>s+x*M.sd[i],0);
   const p={w:wn,ret:st.ret,vol:st.vol,beta:b,sharpe:st.vol?(st.ret-S.rf)/st.vol:0,alpha:st.ret-(S.rf+b*S.erp),var95:Math.max(0,-(st.ret-1.645*st.vol)),effN:1/wn.reduce((t,x)=>t+x*x,0),rs,sdd,dbeta:dot(wn,M.dbeta),sortino:rs.dd?(st.ret-S.mar)/rs.dd:0,divRatio:st.vol?sw/st.vol:1};
-  if(PC.size>200)PC.clear();PC.set(key,p);return p;}
+  p.ra=alphaStats(portListed(H.R,wn),H.mkt,H.rfm);if(PC.size>200)PC.clear();PC.set(key,p);return p;}
 
 /* ---------- chart kit ---------- */
 function setup(cv,minH,ar){const dpr=window.devicePixelRatio||1;const w=cv.clientWidth||cv.parentElement.clientWidth;const base=+(cv.dataset.h||(cv.dataset.h=cv.getAttribute('height')));const h=ar?Math.round(Math.min(base*1.15,Math.max(minH||200,w*ar))):Math.max(minH||200,Math.round(base*Math.min(1,Math.max(.65,w/760))));cv.style.height=h+'px';cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,W:w,H:h};}
@@ -237,6 +243,7 @@ function hero(){const y=port(S.w),t=port(O.tangency.w),mc=window._mc;
   const k=(l,v,c)=>`<div class="hk"><div class="lbl">${l}</div><div class="val">${v}</div><div class="cmp">${c}</div></div>`;
   $('hero').innerHTML=k('Expected return / yr',pct(y.ret),d(y.ret,t.ret,0,x=>sp(x)))+k('Volatility',pct(y.vol),d(y.vol,t.vol,1,x=>sp(x)))+k('Sharpe ratio',y.sharpe.toFixed(2),d(y.sharpe,t.sharpe,0,x=>(x>=0?'+':'')+x.toFixed(2)))+
     k('Sortino ratio',y.sortino.toFixed(2),d(y.sortino,t.sortino,0,x=>(x>=0?'+':'')+x.toFixed(2)))+k('Beta · Jensen α',y.beta.toFixed(2)+' · '+sp(y.alpha),`CAPM requires ${pct(S.rf+y.beta*S.erp)}`)+
+    k('Alpha generated / yr',`<span class="${y.ra.alpha>=0?'up':'down'}" style="color:inherit">${sp(y.ra.alpha)}</span>`,`t = ${y.ra.t.toFixed(1)} · ${sigTxt(y.ra.t)} · vs S&P since ${H.months[0].slice(0,4)}`)+
     k(`Median in ${$('mcYears').value}y (MC)`,mc?eur(mc.y.bands[2][mc.y.T]):'—',mc?`<span class="${mc.y.bands[2][mc.y.T]>=mc.t.bands[2][mc.t.T]?'up':'down'}">${eur(mc.y.bands[2][mc.y.T]-mc.t.bands[2][mc.t.T])}</span> vs max-Sharpe`:'');}
 function allocList(){let h='',cur='';const t=O.tangency.w;
   ORDER.forEach(i=>{const a=A[i];if(a.cls!==cur){cur=a.cls;h+=`<div class="grp"><span><span class="dot" style="background:var(${CLS[cur][1]})"></span>${CLS[cur][0]}</span><span id="g_${cur}"></span></div>`;}
@@ -368,8 +375,21 @@ function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;
     WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:'Yours (static)',c:'--you',b:growth(yours),turn:'—'},mk('Max Sharpe (rolling)','--accent','tan'),mk('Min variance (rolling)','--minv','mv'),mk('Risk parity (rolling)','--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
     if(btMode==='out')drawBT();};setTimeout(work,20);}
 
+/* ---------- Alpha ---------- */
+function sigTxt(t){const a=Math.abs(t);return a>=2.58?'significant at 99%':a>=1.96?'significant at 95%':a>=1.65?'weak (90%)':'not significant';}
+function drawAlpha(){const P=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]].map(([n,c,w])=>({n,c,p:port(w)}));
+  $('alphaKick').textContent=`Realized vs S&P 500 · ${H.months[0]} → ${H.months[H.T-1]} · ${H.T} months`;
+  $('alphaCards').innerHTML=P.map(({n,c,p})=>{const r=p.ra;return `<div class="cc"><div class="t"><span class="dot" style="background:var(${c})"></span>${n}</div><div class="big ${r.alpha>=0?'up':'down'}">${sp(r.alpha)}<small>alpha / yr</small></div><dl>
+    <dt>t-statistic</dt><dd>${r.t.toFixed(2)}</dd><dt>Verdict</dt><dd>${sigTxt(r.t)}</dd><dt>Realized β</dt><dd>${r.beta.toFixed(2)}</dd><dt>R²</dt><dd>${pct(r.r2,0)}</dd>
+    <dt>Return vs S&amp;P / yr</dt><dd>${sp(r.active)}</dd><dt>Tracking error</dt><dd>${pct(r.te)}</dd><dt>Information ratio</dt><dd>${r.ir.toFixed(2)}</dd><dt>Appraisal ratio</dt><dd>${r.appraisal.toFixed(2)}</dd></dl></div>`;}).join('');
+  const cv=$('cAlpha');const {ctx,W,H:Hh}=setup(cv,220,.3);const pad={l:56,r:18,t:12,b:30};const dates=[prevMonth(H.months[0]),...H.months],T=H.T;
+  const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(T>100?2:1)===0)xt.push(i);});
+  const all=P.flatMap(x=>x.p.ra.cum);const lg=Math.log;const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lg(Math.min(1,...all)*.95),lg(Math.max(...all)*1.05)],i=>dates[i].slice(0,4),v=>sp(Math.exp(v)-1,0),'','Cumulative alpha',xt);
+  line(ctx,[[X(0),Y(0)],[X(T),Y(0)]],css('--faint'),1,[3,3]);HITS.alpha=[];
+  P.slice().reverse().forEach(({n,c,p})=>{line(ctx,p.ra.cum.map((v,i)=>[X(i),Y(lg(v))]),css(c),n==='Yours'?3:1.6);p.ra.cum.forEach((v,i)=>{if(i%4===0||i===T)HITS.alpha.push({x:X(i),y:Y(lg(v)),label:`${n} · ${dates[i]} · cumulative alpha ${sp(v-1,0)}`});});});tip(cv,'alpha');
+  $('legAlpha').innerHTML=P.map(x=>`<span><i style="background:var(${x.c})"></i>${x.n}</span>`).join('');}
 /* ---------- CAPM ---------- */
-function drawSML(){const cv=$('cSML');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const b=M.beta,mu=M.mu;const xd=[Math.min(-.2,...b)-.05,Math.max(...b)*1.06],yd=[Math.min(0,...mu)-.01,Math.max(...mu,S.rf+xd[1]*S.erp)*1.06];
+function drawSML(){drawAlpha();const cv=$('cSML');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const b=M.beta,mu=M.mu;const xd=[Math.min(-.2,...b)-.05,Math.max(...b)*1.06],yd=[Math.min(0,...mu)-.01,Math.max(...mu,S.rf+xd[1]*S.erp)*1.06];
   const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>v.toFixed(1),v=>pct(v,0),'Beta vs S&P 500','Expected return');line(ctx,[[X(xd[0]),Y(S.rf+xd[0]*S.erp)],[X(xd[1]),Y(S.rf+xd[1]*S.erp)]],css('--fg'),2);const hl=HITS.sml=[];
   A.forEach((a,i)=>{const x=X(b[i]),yy=Y(mu[i]),req=S.rf+b[i]*S.erp;line(ctx,[[x,yy],[x,Y(req)]],mu[i]>=req?css('--good'):css('--bad'),1,[2,2]);dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);hl.push({x,y:yy,label:`${a.name} · β ${b[i].toFixed(2)} · α ${sp(mu[i]-req)}`});});
   dotC(ctx,X(1),Y(S.rf+S.erp),5,css('--spx'));[[O.minvar.w,'--minv','Min variance'],[O.tangency.w,'--accent','Max Sharpe']].forEach(([w,c,n])=>{const p=port(w);dia(ctx,X(p.beta),Y(p.ret),8,css(c));hl.push({x:X(p.beta),y:Y(p.ret),label:`${n} · β ${p.beta.toFixed(2)} · α ${sp(p.alpha)}`});});

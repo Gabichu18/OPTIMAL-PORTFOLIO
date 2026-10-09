@@ -14,7 +14,7 @@ It runs entirely in the browser: use the live link above, or download the repo a
 | Risk model | Pairwise sample correlations on each asset's own history, Ledoit-Wolf (2003) optimal shrinkage toward constant correlation, eigenvalue repair to keep the matrix positive semi-definite |
 | Portfolios | Max Sharpe (tangency), min variance, max Sortino and min downside (iterative semicovariance), risk parity (equal risk contribution), Michaud resampled, equal weight, or your own weights |
 | Frontier | Efficient frontier, capital market line, 4,000 random portfolios |
-| CAPM | Betas vs S&P 500 (SPY with dividends), security market line, Jensen's alpha, Treynor |
+| CAPM & alpha | Betas vs S&P 500 (SPY with dividends), security market line, expected Jensen's alpha, Treynor; realized alpha from a regression on S&P 500 excess returns with monthly T-bill rates, t-statistic, R², tracking error, information and appraisal ratios, cumulative alpha chart |
 | Downside risk | Downside deviation vs a minimum acceptable return, Sortino, downside beta, historical VaR and CVaR (95%), max drawdown, time underwater, Calmar, Omega |
 | Risk budget | Risk contribution per asset, diversification ratio, top-3 risk concentration |
 | Stress tests | 2015–16 China/oil rout, Q4 2018, COVID crash, 2022 bear market, March 2023 bank stress, 2025 tariff shock, worst rolling 12 months |
@@ -51,7 +51,7 @@ python scripts/build.py
 - Copper miners: the shipped data uses the UCITS ETF (4COP, EUR→USD) since November 2021 and the US-listed COPX before that. `fetch_data.py` uses COPX throughout.
 - Vertiv starts in February 2020; earlier prices belong to the pre-merger SPAC shell.
 - Assets that listed after 2011 (Meta, Vertiv, Vistra, Arista, Xiaomi, CrowdStrike, Bitcoin) are estimated on their own history. For tools that need a complete history (Monte Carlo bootstrap, downside optimization) their earlier months are back-filled from their beta to the S&P 500. Backtests and stress tests never use back-filled months; weights are re-scaled over the assets that were trading.
-- Risk-free rate: 13-week US T-bill, 4.06% on 9 October 2026.
+- Risk-free rate: 13-week US T-bill. Forward-looking figures use today's 4.06%; realized alpha uses each month's actual T-bill rate.
 
 ## Caveats
 

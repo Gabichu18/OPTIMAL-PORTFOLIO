@@ -50,13 +50,13 @@ h3{margin:0;font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;color
 .note{font-size:.8rem;color:var(--muted);max-width:72ch;margin:0}
 .note b{color:var(--fg);font-weight:600}
 /* hero */
-.hero{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hero{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .hk{background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .hk .lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .hk .val{font-family:var(--display);font-size:clamp(1.5rem,2.6vw,2.1rem);font-weight:700;line-height:1;color:var(--you);font-variant-numeric:tabular-nums}
 .hk .cmp{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
 .up{color:var(--good)} .down{color:var(--bad)}
-@media (max-width:1200px){.hero{grid-template-columns:repeat(3,minmax(0,1fr))}}@media (max-width:640px){.hero{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1300px){.hero{grid-template-columns:repeat(4,minmax(0,1fr))}}@media (max-width:640px){.hero{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* layout */
 .main{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
 @media (max-width:1000px){.main{grid-template-columns:1fr}}
@@ -193,7 +193,7 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
     <button role="tab" data-tab="rb">Risk budget</button>
     <button role="tab" data-tab="stress">Stress tests</button>
     <button role="tab" data-tab="bt">Backtests</button>
-    <button role="tab" data-tab="capm">CAPM &amp; SML</button>
+    <button role="tab" data-tab="capm">CAPM &amp; alpha</button>
     <button role="tab" data-tab="corr">Correlation</button>
     <button role="tab" data-tab="model">Model &amp; views</button>
   </nav>
@@ -263,6 +263,12 @@ td input{width:62px;font-family:var(--mono);font-size:.76rem;text-align:right;ba
 
   <!-- CAPM -->
   <div data-pane="capm" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Alpha generated</h2><span class="kicker" id="alphaKick"></span></div>
+    <div class="cmpgrid" id="alphaCards"></div>
+    <div class="chart"><canvas id="cAlpha" height="300"></canvas></div>
+    <div class="legend" id="legAlpha"></div>
+    <p class="note">Realized alpha is the intercept of a regression of each portfolio's monthly return above the T-bill on the S&amp;P 500's return above the T-bill (Jensen, 1968), using today's weights over the estimation window. It is the return the market exposure does not explain. The <b>t-statistic</b> says whether it is distinguishable from luck: above 2 is significant at 95%. The chart compounds that unexplained return month by month: a rising line is alpha being earned, a falling one is alpha being lost. Same caveats as the backtests: the weights and the 32 assets were chosen with hindsight.</p>
+    <h2>Expected alpha (CAPM &amp; SML)</h2>
     <div class="chart"><canvas id="cSML" height="420"></canvas></div>
     <p class="note">Betas against SPY (S&amp;P 500 with dividends), monthly, over each asset's history in the window. SML: r<sub>f</sub> + β·ERP. Dots above the line carry positive Jensen's alpha on the expected returns in use.</p>
     <div class="scroll"><table id="alphaTable"></table></div>
@@ -333,16 +339,17 @@ COPX|0|2783,-439,-283,1651,140,-1009,-7,-2025,248,-153,392,1105,213,-8,417,69,-9
 OIL|0|662,115,-310,688,688,18,-895,-895,-400,823,823,-190,-328,233,-11,400,-361,-122,-695,-193,176,542,586,-229,-229,78,-151,-151,251,-120,29,124,-156,-156,-267,-826,-931,-1830,-1828,-757,802,802,802,-183,-300,-1790,372,-1067,246,-1327,-1327,-681,354,1009,2154,160,160,-1453,1079,429,-155,449,1121,-48,-48,-496,-208,-275,-475,987,-51,985,511,511,477,368,-474,683,508,508,238,-128,-128,685,-876,-2221,-836,1504,669,357,645,-1141,319,-207,-727,-17,-17,365,-348,-348,-1314,-2928,-2928,3981,1647,522,457,-956,-852,1759,1759,788,1834,-392,584,354,790,160,142,142,746,-1637,1022,1727,1072,685,133,247,247,-418,-1229,-884,781,-991,56,-118,-118,-491,-29,-865,308,1423,152,973,-678,-678,-699,606,234,462,43,-710,587,-658,-238,-365,-365,-30,259,259,-466,213,-1555,124,654,654,-608,-161,-291,-287,-372,1617,1727,1727,1727,-1926,-2078,2359,41,1441,87
 BTC|36|-1257,1174,-1530,-3208,1692,-395,-331,-252,1428,820,-1918,261,3309,2010,1411,-1435,1869,-479,758,1853,2671,-723,-788,595,1496,638,2924,69,2160,-917,2576,6963,850,1590,6358,-775,4909,5821,3833,-2780,173,-3293,3251,-1890,-1455,2149,-955,-585,-465,-3641,-683,-761,1148,650,3033,6025,2615,-676,-451,-1388,1092,-1772,-497,2998,-803,-2513,3448,927,-341,2392,316,-767,2779,4241,4777,1418,3631,3053,-198,-3535,-614,1879,1331,-716,4003,-703,-1877,-1689,1224,543,-1718,-1570,-3777,1795,-1409,-308,548,-1623,-362,3984,3,2303,278,-700,1197,-409,-1129,400,2855,878,1207,75,4372,1656,-1500,1130,-713,310,-874,739,1087,3736,-313,961,-1761,-216,1412,1107,239,805,-650,538,-395,-1749,-319,-1016,-1479,185,1183,-357,-2041,727,2505,637,-138
 UST|0|-129,58,199,86,-110,-159,251,287,-41,140,-12,-35,-40,98,-94,-129,113,29,153,-311,-255,-35,-142,185,78,-88,-209,306,36,-56,76,183,-22,-22,188,-105,154,129,13,430,-247,86,-63,-42,-163,152,8,158,-64,-43,-45,333,149,-7,-16,-10,309,25,-101,24,-149,-423,-12,22,72,8,111,83,-51,37,146,-144,-19,-28,18,-215,-93,116,-128,99,20,-53,101,-121,-30,133,280,65,-53,266,-52,305,122,4,395,-119,19,-69,-93,347,296,372,28,33,4,85,-97,33,-138,34,-24,-109,-236,-239,100,42,102,199,-39,-160,-44,109,-52,-211,-30,-406,-423,62,-86,296,-385,-473,-145,361,-149,358,-327,372,81,-144,-126,-65,-73,-314,-193,455,377,7,-208,73,-313,180,122,290,135,138,-339,102,-226,62,280,34,106,-124,160,-59,165,65,71,99,-76,-23,247,-232,-15,-2,25,-139,12,-335,45
-SPY|0|1091,-41,104,464,434,322,-67,-601,406,118,251,254,-182,57,89,512,128,380,192,236,-133,517,-300,316,463,296,259,-352,455,83,70,232,206,-134,395,-138,236,275,-25,-296,562,-157,98,129,-203,226,-610,-255,851,37,-173,-498,-8,673,39,170,35,365,12,1,-173,368,203,179,393,13,99,141,64,206,29,201,236,306,121,564,-364,-274,52,243,58,370,319,59,-691,185,-880,801,324,181,409,-638,696,151,-167,195,221,362,291,-4,-792,-1249,1270,476,177,589,698,-374,-249,1088,370,-102,278,454,529,66,224,244,298,-466,702,-80,462,-527,-295,376,-878,23,-825,921,-408,-924,813,556,-576,629,-251,371,160,46,648,327,-163,-474,-217,913,457,159,522,327,-403,506,353,121,234,210,-89,596,-241,269,-127,-557,-87,628,514,230,205,356,238,19,8,147,-86,-494,1051,526,-103,3,268,-33,209`;</script>
+SPY|0|1091,-41,104,464,434,322,-67,-601,406,118,251,254,-182,57,89,512,128,380,192,236,-133,517,-300,316,463,296,259,-352,455,83,70,232,206,-134,395,-138,236,275,-25,-296,562,-157,98,129,-203,226,-610,-255,851,37,-173,-498,-8,673,39,170,35,365,12,1,-173,368,203,179,393,13,99,141,64,206,29,201,236,306,121,564,-364,-274,52,243,58,370,319,59,-691,185,-880,801,324,181,409,-638,696,151,-167,195,221,362,291,-4,-792,-1249,1270,476,177,589,698,-374,-249,1088,370,-102,278,454,529,66,224,244,298,-466,702,-80,462,-527,-295,376,-878,23,-825,921,-408,-924,813,556,-576,629,-251,371,160,46,648,327,-163,-474,-217,913,457,159,522,327,-403,506,353,121,234,210,-89,596,-241,269,-127,-557,-87,628,514,230,205,356,238,19,8,147,-86,-494,1051,526,-103,3,268,-33,209
+RF|0|0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,3,3,2,2,2,2,2,3,2,2,4,4,4,4,6,7,8,8,9,8,9,9,10,11,12,13,14,15,16,16,17,17,18,19,19,19,19,20,19,20,19,17,17,16,15,12,13,13,13,10,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,2,4,7,9,13,19,24,27,33,35,36,38,39,38,41,44,43,44,44,44,44,44,43,43,44,43,44,44,43,43,41,37,37,36,35,35,35,35,35,35,35,35,34,32,31,31,30,30,30,30,30,30,31,31,31,34`;</script>
 <script>
 // ===== Frontier Lab engine v3: 15y data, Black-Litterman, Ledoit-Wolf, risk parity, resampling, walk-forward =====
 const META={NVDA:['Nvidia','NVDA','semi'],AMZN:['Amazon','AMZN','tech'],GOOGL:['Alphabet','GOOGL','tech'],MSFT:['Microsoft','MSFT','tech'],META:['Meta Platforms','META','tech'],AAPL:['Apple','AAPL','tech'],VRT:['Vertiv','VRT','power'],VST:['Vistra','VST','power'],ETN:['Eaton','ETN','power'],ANET:['Arista Networks','ANET','semi'],MU:['Micron','MU','semi'],TSM:['TSMC','TSM','semi'],XIAOMI:['Xiaomi','1810.HK','tech'],AMAT:['Applied Materials','AMAT','semi'],SAMSUNG:['Samsung Electronics','005930.KS','semi'],CAT:['Caterpillar','CAT','power'],AVGO:['Broadcom','AVGO','semi'],CRWD:['CrowdStrike','CRWD','tech'],JPM:['JPMorgan Chase','JPM','fin'],GS:['Goldman Sachs','GS','fin'],LMT:['Lockheed Martin','LMT','def'],NUE:['Nucor','NUE','power'],TM:['Toyota','TM','def'],PFE:['Pfizer','PFE','def'],ITX:['Inditex','ITX.MC','def'],ASML:['ASML','ASML','semi'],SKHYNIX:['SK Hynix','000660.KS','semi'],GOLD:['Gold','GC=F','cmdty'],COPX:['Global X Copper Miners','4COP.DE / COPX','cmdty'],OIL:['Brent crude','BZ=F','cmdty'],BTC:['Bitcoin','BTC-USD','crypto'],UST:['US Treasuries 7–10y','IEF','bond']};
 const mean=a=>{let s=0;for(const x of a)s+=x;return s/a.length;};
-function parseData(txt){const L=txt.trim().split('\n');const [start,Ts]=L[0].split('|');const T=+Ts;const ids=[],R=[];let mkt=null;
-  for(const l of L.slice(1)){const [id,s,v]=l.split('|');const arr=new Array(T).fill(null);v.split(',').forEach((x,k)=>{if(x!=='')arr[+s+k]=(+x)/1e4;});if(id==='SPY')mkt=arr;else{ids.push(id);R.push(arr);}}
+function parseData(txt){const L=txt.trim().split('\n');const [start,Ts]=L[0].split('|');const T=+Ts;const ids=[],R=[];let mkt=null,rfm=null;
+  for(const l of L.slice(1)){const [id,s,v]=l.split('|');const arr=new Array(T).fill(null);v.split(',').forEach((x,k)=>{if(x!=='')arr[+s+k]=(+x)/1e4;});if(id==='SPY')mkt=arr;else if(id==='RF')rfm=arr;else{ids.push(id);R.push(arr);}}
   const months=[];let [y,m]=start.split('-').map(Number);for(let t=0;t<T;t++){months.push(y+'-'+String(m).padStart(2,'0'));m++;if(m>12){m=1;y++;}}
-  return {ids,R,mkt,months,T};}
-function sliceH(H,n){const a=Math.max(0,H.T-n);return {ids:H.ids,R:H.R.map(r=>r.slice(a)),mkt:H.mkt.slice(a),months:H.months.slice(a),T:H.T-a};}
+  return {ids,R,mkt,rfm:rfm||new Array(T).fill(0),months,T};}
+function sliceH(H,n){const a=Math.max(0,H.T-n);return {ids:H.ids,R:H.R.map(r=>r.slice(a)),mkt:H.mkt.slice(a),rfm:H.rfm.slice(a),months:H.months.slice(a),T:H.T-a};}
 function matVec(S,w){const n=w.length,o=new Float64Array(n);for(let i=0;i<n;i++){let s=0;const r=S[i];for(let j=0;j<n;j++)s+=r[j]*w[j];o[i]=s;}return o;}
 function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;}
 function stats(w,mu,S){const v=dot(w,matVec(S,w));return {ret:dot(w,mu),vol:Math.sqrt(Math.max(v,0))};}
@@ -436,6 +443,13 @@ function optimizeDownside(F,mu,cap,mar,marM,seeds){const dd=w=>riskStats(portSer
     for(let k=0;k<14;k++){const c=b-.618*(b-a),d=a+.618*(b-a);const wc=solve(mu,SC,cap,Math.exp(c),L,best.w,450),wd=solve(mu,SC,cap,Math.exp(d),L,best.w,450);const sc=so(wc),sd=so(wd);consider(wc);consider(wd);if(sc>sd)b=d;else a=c;}}
   let mw=seeds[seeds.length-1],md=dd(mw);for(let it=0;it<3;it++){const SC=exactSC(F,mw,marM),L=maxEig(SC);const w=solve(mu,SC,cap,Infinity,L,mw,1500);const d2=dd(w);if(d2<md-1e-6){mw=w;md=d2;}else break;}
   const pack=w=>{const r=dot(w,mu),d=dd(w);return {w,ret:r,vol:d,sharpe:(r-mar)/d};};return {tangency:pack(best.w),minvar:pack(mw)};}
+// realized alpha: OLS of portfolio excess returns on market excess returns (monthly T-bill as risk-free)
+function alphaStats(p,m,rf){const n=p.length;const y=[],x=[];for(let t=0;t<n;t++){y.push(p[t]-rf[t]);x.push(m[t]-rf[t]);}
+  const mx=mean(x),my=mean(y);let sxx=0,sxy=0;for(let t=0;t<n;t++){sxx+=(x[t]-mx)**2;sxy+=(x[t]-mx)*(y[t]-my);}const b=sxy/sxx,a=my-b*mx;
+  let sse=0,sst=0;const e=[];for(let t=0;t<n;t++){const r=y[t]-a-b*x[t];e.push(r);sse+=r*r;sst+=(y[t]-my)**2;}const s2=sse/(n-2);const se=Math.sqrt(s2*(1/n+mx*mx/sxx));
+  const act=p.map((v,t)=>v-m[t]);const ma=mean(act);let te=0;for(const v of act)te+=(v-ma)**2;te=Math.sqrt(te/(n-1)*12);
+  const cum=[1];for(let t=0;t<n;t++)cum.push(cum[t]*(1+a+e[t]));const g=s=>{let v=1;for(const r of s)v*=1+r;return Math.pow(v,12/n)-1;};
+  const resVol=Math.sqrt(s2*12);return {alpha:a*12,t:a/se,beta:b,r2:sst?1-sse/sst:0,resVol,appraisal:resVol?a*12/resVol:0,active:g(p)-g(m),te,ir:te?ma*12/te:0,cum,n};}
 function rng(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 function gauss(r){let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
 function randomPortfolios(mu,S,rf,n,seed,active){const r=rng(seed),N=mu.length,out=[];for(let k=0;k<n;k++){const w=new Float64Array(N);let s=0;const sp=r()<.5;for(let i=0;i<N;i++){if(!active[i])continue;let e=-Math.log(r()+1e-12);if(sp)e=e*e*e;w[i]=e;s+=e;}for(let i=0;i<N;i++)w[i]/=s;const st=stats(w,mu,S);out.push({ret:st.ret,vol:st.vol,sharpe:(st.ret-rf)/st.vol});}return out;}
@@ -467,7 +481,7 @@ function walkForwardStep(H,o,t0,win){const n=H.ids.length,a=t0-win;const E=[];fo
   const tan=fastTangency(M.mu,M.S,cap,o.rf,null,L).w,mv=solve(M.mu,M.S,cap,Infinity,L,null,1500),rp=riskParity(M.S,E.map(()=>true));
   const up=w=>{const f=new Float64Array(n);E.forEach((i,q)=>f[i]=w[q]);return f;};
   return {tan:up(tan),mv:up(mv),rp:up(rp),ew:up(new Float64Array(k).fill(1/k)),k};}
-if(typeof module!=='undefined')module.exports={META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};
+if(typeof module!=='undefined')module.exports={alphaStats,META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};
 
 </script>
 <script>
@@ -501,7 +515,7 @@ function port(w){const wn=norm(w);const key=Array.from(wn,x=>x.toFixed(5)).join(
   const st=stats(wn,M.mu,M.S);const b=dot(wn,M.beta);const ser=portSeries(M.F,wn);const rs=riskStats(ser,M.marM);const sdd=Math.sqrt(Math.max(0,dot(wn,matVec(M.SC,wn))));
   const sw=Array.from(wn).reduce((s,x,i)=>s+x*M.sd[i],0);
   const p={w:wn,ret:st.ret,vol:st.vol,beta:b,sharpe:st.vol?(st.ret-S.rf)/st.vol:0,alpha:st.ret-(S.rf+b*S.erp),var95:Math.max(0,-(st.ret-1.645*st.vol)),effN:1/wn.reduce((t,x)=>t+x*x,0),rs,sdd,dbeta:dot(wn,M.dbeta),sortino:rs.dd?(st.ret-S.mar)/rs.dd:0,divRatio:st.vol?sw/st.vol:1};
-  if(PC.size>200)PC.clear();PC.set(key,p);return p;}
+  p.ra=alphaStats(portListed(H.R,wn),H.mkt,H.rfm);if(PC.size>200)PC.clear();PC.set(key,p);return p;}
 
 /* ---------- chart kit ---------- */
 function setup(cv,minH,ar){const dpr=window.devicePixelRatio||1;const w=cv.clientWidth||cv.parentElement.clientWidth;const base=+(cv.dataset.h||(cv.dataset.h=cv.getAttribute('height')));const h=ar?Math.round(Math.min(base*1.15,Math.max(minH||200,w*ar))):Math.max(minH||200,Math.round(base*Math.min(1,Math.max(.65,w/760))));cv.style.height=h+'px';cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,W:w,H:h};}
@@ -532,6 +546,7 @@ function hero(){const y=port(S.w),t=port(O.tangency.w),mc=window._mc;
   const k=(l,v,c)=>`<div class="hk"><div class="lbl">${l}</div><div class="val">${v}</div><div class="cmp">${c}</div></div>`;
   $('hero').innerHTML=k('Expected return / yr',pct(y.ret),d(y.ret,t.ret,0,x=>sp(x)))+k('Volatility',pct(y.vol),d(y.vol,t.vol,1,x=>sp(x)))+k('Sharpe ratio',y.sharpe.toFixed(2),d(y.sharpe,t.sharpe,0,x=>(x>=0?'+':'')+x.toFixed(2)))+
     k('Sortino ratio',y.sortino.toFixed(2),d(y.sortino,t.sortino,0,x=>(x>=0?'+':'')+x.toFixed(2)))+k('Beta · Jensen α',y.beta.toFixed(2)+' · '+sp(y.alpha),`CAPM requires ${pct(S.rf+y.beta*S.erp)}`)+
+    k('Alpha generated / yr',`<span class="${y.ra.alpha>=0?'up':'down'}" style="color:inherit">${sp(y.ra.alpha)}</span>`,`t = ${y.ra.t.toFixed(1)} · ${sigTxt(y.ra.t)} · vs S&P since ${H.months[0].slice(0,4)}`)+
     k(`Median in ${$('mcYears').value}y (MC)`,mc?eur(mc.y.bands[2][mc.y.T]):'—',mc?`<span class="${mc.y.bands[2][mc.y.T]>=mc.t.bands[2][mc.t.T]?'up':'down'}">${eur(mc.y.bands[2][mc.y.T]-mc.t.bands[2][mc.t.T])}</span> vs max-Sharpe`:'');}
 function allocList(){let h='',cur='';const t=O.tangency.w;
   ORDER.forEach(i=>{const a=A[i];if(a.cls!==cur){cur=a.cls;h+=`<div class="grp"><span><span class="dot" style="background:var(${CLS[cur][1]})"></span>${CLS[cur][0]}</span><span id="g_${cur}"></span></div>`;}
@@ -663,8 +678,21 @@ function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;
     WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:'Yours (static)',c:'--you',b:growth(yours),turn:'—'},mk('Max Sharpe (rolling)','--accent','tan'),mk('Min variance (rolling)','--minv','mv'),mk('Risk parity (rolling)','--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
     if(btMode==='out')drawBT();};setTimeout(work,20);}
 
+/* ---------- Alpha ---------- */
+function sigTxt(t){const a=Math.abs(t);return a>=2.58?'significant at 99%':a>=1.96?'significant at 95%':a>=1.65?'weak (90%)':'not significant';}
+function drawAlpha(){const P=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]].map(([n,c,w])=>({n,c,p:port(w)}));
+  $('alphaKick').textContent=`Realized vs S&P 500 · ${H.months[0]} → ${H.months[H.T-1]} · ${H.T} months`;
+  $('alphaCards').innerHTML=P.map(({n,c,p})=>{const r=p.ra;return `<div class="cc"><div class="t"><span class="dot" style="background:var(${c})"></span>${n}</div><div class="big ${r.alpha>=0?'up':'down'}">${sp(r.alpha)}<small>alpha / yr</small></div><dl>
+    <dt>t-statistic</dt><dd>${r.t.toFixed(2)}</dd><dt>Verdict</dt><dd>${sigTxt(r.t)}</dd><dt>Realized β</dt><dd>${r.beta.toFixed(2)}</dd><dt>R²</dt><dd>${pct(r.r2,0)}</dd>
+    <dt>Return vs S&amp;P / yr</dt><dd>${sp(r.active)}</dd><dt>Tracking error</dt><dd>${pct(r.te)}</dd><dt>Information ratio</dt><dd>${r.ir.toFixed(2)}</dd><dt>Appraisal ratio</dt><dd>${r.appraisal.toFixed(2)}</dd></dl></div>`;}).join('');
+  const cv=$('cAlpha');const {ctx,W,H:Hh}=setup(cv,220,.3);const pad={l:56,r:18,t:12,b:30};const dates=[prevMonth(H.months[0]),...H.months],T=H.T;
+  const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(T>100?2:1)===0)xt.push(i);});
+  const all=P.flatMap(x=>x.p.ra.cum);const lg=Math.log;const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lg(Math.min(1,...all)*.95),lg(Math.max(...all)*1.05)],i=>dates[i].slice(0,4),v=>sp(Math.exp(v)-1,0),'','Cumulative alpha',xt);
+  line(ctx,[[X(0),Y(0)],[X(T),Y(0)]],css('--faint'),1,[3,3]);HITS.alpha=[];
+  P.slice().reverse().forEach(({n,c,p})=>{line(ctx,p.ra.cum.map((v,i)=>[X(i),Y(lg(v))]),css(c),n==='Yours'?3:1.6);p.ra.cum.forEach((v,i)=>{if(i%4===0||i===T)HITS.alpha.push({x:X(i),y:Y(lg(v)),label:`${n} · ${dates[i]} · cumulative alpha ${sp(v-1,0)}`});});});tip(cv,'alpha');
+  $('legAlpha').innerHTML=P.map(x=>`<span><i style="background:var(${x.c})"></i>${x.n}</span>`).join('');}
 /* ---------- CAPM ---------- */
-function drawSML(){const cv=$('cSML');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const b=M.beta,mu=M.mu;const xd=[Math.min(-.2,...b)-.05,Math.max(...b)*1.06],yd=[Math.min(0,...mu)-.01,Math.max(...mu,S.rf+xd[1]*S.erp)*1.06];
+function drawSML(){drawAlpha();const cv=$('cSML');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const b=M.beta,mu=M.mu;const xd=[Math.min(-.2,...b)-.05,Math.max(...b)*1.06],yd=[Math.min(0,...mu)-.01,Math.max(...mu,S.rf+xd[1]*S.erp)*1.06];
   const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>v.toFixed(1),v=>pct(v,0),'Beta vs S&P 500','Expected return');line(ctx,[[X(xd[0]),Y(S.rf+xd[0]*S.erp)],[X(xd[1]),Y(S.rf+xd[1]*S.erp)]],css('--fg'),2);const hl=HITS.sml=[];
   A.forEach((a,i)=>{const x=X(b[i]),yy=Y(mu[i]),req=S.rf+b[i]*S.erp;line(ctx,[[x,yy],[x,Y(req)]],mu[i]>=req?css('--good'):css('--bad'),1,[2,2]);dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);hl.push({x,y:yy,label:`${a.name} · β ${b[i].toFixed(2)} · α ${sp(mu[i]-req)}`});});
   dotC(ctx,X(1),Y(S.rf+S.erp),5,css('--spx'));[[O.minvar.w,'--minv','Min variance'],[O.tangency.w,'--accent','Max Sharpe']].forEach(([w,c,n])=>{const p=port(w);dia(ctx,X(p.beta),Y(p.ret),8,css(c));hl.push({x:X(p.beta),y:Y(p.ret),label:`${n} · β ${p.beta.toFixed(2)} · α ${sp(p.alpha)}`});});

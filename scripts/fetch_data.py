@@ -66,6 +66,10 @@ def main() -> None:
         first = int(np.argmax(r.notna().values))
         vals = ["" if pd.isna(x) else str(int(round(x * 1e4))) for x in r.values[first:]]
         lines.append(f"{aid}|{first}|{','.join(vals)}")
+    # risk-free: 13-week T-bill yield at the end of the previous month, as a monthly rate
+    irx = monthly("^IRX").reindex(P.index).ffill()
+    rf = (irx.shift(1) / 12 / 100).loc[R.index]
+    lines.append("RF|0|" + ",".join("" if pd.isna(x) else str(int(round(x * 1e4))) for x in rf.values))
     out = Path(__file__).resolve().parent.parent / "data/monthly_returns_bp.txt"
     out.write_text("\n".join(lines) + "\n")
     print(f"Wrote {out} ({months[0]} to {months[-1]}, {len(months)} months)")
