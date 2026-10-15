@@ -24,7 +24,8 @@ ASSETS = {  # id -> (Yahoo ticker, currency)
     "GS": ("GS", "USD"), "LMT": ("LMT", "USD"), "NUE": ("NUE", "USD"), "TM": ("TM", "USD"),
     "PFE": ("PFE", "USD"), "ITX": ("ITX.MC", "EUR"), "ASML": ("ASML", "USD"),
     "SKHYNIX": ("000660.KS", "KRW"), "GOLD": ("GC=F", "USD"), "COPX": ("COPX", "USD"),
-    "OIL": ("BZ=F", "USD"), "BTC": ("BTC-USD", "USD"), "UST": ("IEF", "USD"), "SPY": ("SPY", "USD"),
+    "OIL": ("BZ=F", "USD"), "BTC": ("BTC-USD", "USD"), "UST": ("IEF", "USD"),
+    "FER": ("FER.MC", "EUR"), "IBE": ("IBE.MC", "EUR"), "COST": ("COST", "USD"), "SPY": ("SPY", "USD"),
 }
 FX = {"HKD": "HKD=X", "KRW": "KRW=X", "EUR": "EURUSD=X"}  # HKD/KRW quoted per USD, EUR as USD per EUR
 
