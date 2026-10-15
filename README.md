@@ -1,6 +1,6 @@
 # OPTIMAL PORTFOLIO — Frontier Lab
 
-An interactive portfolio-construction lab for 35 assets (US and Asian tech, AI infrastructure, Spanish infrastructure and utilities, financials, defensives, commodities, Bitcoin and US Treasuries), built on 15 years of real monthly prices (October 2011 – October 2026).
+An interactive portfolio-construction lab for 35 assets (US and Asian tech, AI infrastructure, Spanish infrastructure and utilities, financials, defensives, commodities, Bitcoin and US Treasuries), built on 30 years of real monthly prices (October 1996 – October 2026), including the dot-com crash and the 2008 financial crisis.
 
 **Live app: https://gabichu18.github.io/OPTIMAL-PORTFOLIO/**
 
@@ -17,8 +17,8 @@ It runs entirely in the browser: use the live link above, or download the repo a
 | CAPM & alpha | Betas vs S&P 500 (SPY with dividends), security market line, expected Jensen's alpha, Treynor; realized alpha from a regression on S&P 500 excess returns with monthly T-bill rates, t-statistic, R², tracking error, information and appraisal ratios, cumulative alpha chart |
 | Downside risk | Downside deviation vs a minimum acceptable return, Sortino, downside beta, historical VaR and CVaR (95%), max drawdown, time underwater, Calmar, Omega |
 | Risk budget | Risk contribution per asset, diversification ratio, top-3 risk concentration |
-| Stress tests | 2015–16 China/oil rout, Q4 2018, COVID crash, 2022 bear market, March 2023 bank stress, 2025 tariff shock, worst rolling 12 months |
-| Backtests | In-sample, and walk-forward out-of-sample (quarterly re-estimation on a trailing 5-year window) with turnover |
+| Stress tests | 1998 LTCM/Russia crisis, dot-com crash (2000–02), 2008 financial crisis, 2011 euro debt crisis, 2015–16 China/oil rout, Q4 2018, COVID crash, 2022 bear market, March 2023 bank stress, 2025 tariff shock, worst rolling 12 months |
+| Backtests | In-sample, and walk-forward out-of-sample from October 2001 (quarterly re-estimation on a trailing 5-year window) with turnover |
 | Monte Carlo | Block bootstrap of real months (re-centred on forward expected returns) or log-normal; percentile fan, distribution of annual returns, 1-year VaR/CVaR, drawdowns; compares your weights with max Sharpe |
 
 Every figure recomputes as you move the weight sliders.
@@ -45,12 +45,13 @@ python scripts/build.py
 
 ## Data notes
 
-- Source: Yahoo Finance adjusted closes (dividends and splits included), monthly.
-- Non-USD listings (Xiaomi in HKD, Samsung and SK Hynix in KRW, Inditex, Ferrovial and Iberdrola in EUR) are converted to USD at month-end FX rates. A handful of corrupted KRW/USD quotes on Yahoo were removed and interpolated.
-- Gold and Brent use front-month futures (`GC=F`, `BZ=F`); short gaps are interpolated. Futures roll yield is not captured.
-- Copper miners: the shipped data uses the UCITS ETF (4COP, EUR→USD) since November 2021 and the US-listed COPX before that. `fetch_data.py` uses COPX throughout.
-- Vertiv starts in February 2020; earlier prices belong to the pre-merger SPAC shell.
-- Assets that listed after 2011 (Meta, Vertiv, Vistra, Arista, Xiaomi, CrowdStrike, Bitcoin) are estimated on their own history. For tools that need a complete history (Monte Carlo bootstrap, downside optimization) their earlier months are back-filled from their beta to the S&P 500. Backtests and stress tests never use back-filled months; weights are re-scaled over the assets that were trading.
+- Window: October 1996 – 9 October 2026, 361 monthly returns, all in USD with dividends reinvested. The estimation window can be cut to 20, 15, 10 or 5 years in the app.
+- US listings: Yahoo Finance adjusted closes.
+- Non-US listings (Xiaomi in HKD, Samsung and SK Hynix in KRW, Inditex, Ferrovial and Iberdrola in EUR): from October 2011, Yahoo adjusted closes converted at Yahoo month-end FX (a handful of corrupted KRW quotes removed). Before 2011, total return is rebuilt from Yahoo closes plus cash dividends, because Yahoo's adjusted close for some of these contains bad dividend factors, and converted at FRED month-end FX (DEXUSEU, DEXKOUS).
+- Ferrovial: an unadjusted 5:1 split on 27 Oct 2004 is neutralised. SK Hynix starts in February 2004, after its 2003 restructuring. Vertiv starts in February 2020 (earlier prices are the pre-merger SPAC).
+- Stand-in series: US Treasuries use IEF from August 2002 and Vanguard's Intermediate-Term Treasury fund (VFITX) before. Oil uses the Brent future (BZ=F) from August 2007 and FRED Brent spot before. Copper miners use the UCITS ETF (4COP, EUR→USD) from November 2021 and the US-listed COPX before. Gold uses the front-month future (GC=F) from September 2000. Futures roll yield is not captured.
+- Listing dates: assets enter when they start trading (Amazon 1997, TSMC ADR 1997, Nvidia 1999, Goldman Sachs 1999, Ferrovial/Iberdrola/Samsung 2000 on Yahoo, Inditex 2001, Google 2004, Broadcom 2009, Meta 2012, Bitcoin 2014, Vistra 2016, Xiaomi 2018, CrowdStrike 2019, Vertiv 2020).
+- Unequal histories: for the risk model, months before an asset listed are filled with alpha + beta × S&P 500 + one of the asset's own residuals drawn at random, so volatilities and correlations of young assets include the dot-com crash and 2008. Historical means of young assets are adjusted for how the market did while they traded (Stambaugh, 1997). Backtests and stress tests never use filled months; weights are re-scaled over the assets that were trading.
 - Risk-free rate: 13-week US T-bill. Forward-looking figures use today's 4.06%; realized alpha uses each month's actual T-bill rate.
 
 ## Caveats
@@ -70,4 +71,5 @@ python scripts/build.py
 - Michaud, R. (1998). *Efficient Asset Management*.
 - Estrada, J. (2008). Mean-Semivariance Optimization: A Heuristic Approach. *Journal of Applied Finance*.
 - Maillard, S., Roncalli, T. & Teïletche, J. (2010). The Properties of Equally Weighted Risk Contribution Portfolios. *Journal of Portfolio Management*.
+- Stambaugh, R. (1997). Analyzing Investments Whose Histories Differ in Length. *Journal of Financial Economics*.
 - DeMiguel, V., Garlappi, L. & Uppal, R. (2009). Optimal Versus Naive Diversification. *Review of Financial Studies*.

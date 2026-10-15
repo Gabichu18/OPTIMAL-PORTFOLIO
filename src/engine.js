@@ -41,29 +41,31 @@ function blackLitterman(pi,S,views,tau,ids){const K=views.length;if(!K)return Ar
   return Array.from(pi,(x,i)=>x+z.reduce((s,zk,k)=>s+zk*tSP[k][i],0));}
 function buildModel(H,o){
   const n=H.ids.length,T=H.T,rf=o.rf,erp=o.erp,m=H.mkt,mm=mean(m);let vm=0;for(const x of m)vm+=(x-mm)**2;vm/=T-1;
-  const hm=[],sd=[],beta=[],cagr=[],nObs=[],first=[];
+  const hm=[],hmAdj=[],sd=[],beta=[],cagr=[],nObs=[],first=[];
   H.R.forEach(r=>{const idx=[];r.forEach((x,t)=>{if(x!=null)idx.push(t);});const v=idx.map(t=>r[t]);const mu=mean(v),mx=mean(idx.map(t=>m[t]));let s2=0,c=0,vx=0,g=1;
     idx.forEach(t=>{s2+=(r[t]-mu)**2;c+=(r[t]-mu)*(m[t]-mx);vx+=(m[t]-mx)**2;g*=1+r[t];});
-    hm.push(mu*12);sd.push(Math.sqrt(s2/(v.length-1)*12));beta.push(c/vx);cagr.push(Math.pow(g,12/v.length)-1);nObs.push(v.length);first.push(idx[0]);});
+    hmAdj.push((mu+(c/vx)*(mm-mx))*12);hm.push(mu*12);sd.push(Math.sqrt(s2/(v.length-1)*12));beta.push(c/vx);cagr.push(Math.pow(g,12/v.length)-1);nObs.push(v.length);first.push(idx[0]);});
+  // complete matrix for co-movement tools: before an asset lists, alpha + beta x market + one of its own residuals drawn at random (keeps its volatility and fat tails)
+  const F=H.R.map((r,i)=>{const idx=[];r.forEach((x,t)=>{if(x!=null)idx.push(t);});if(idx.length===T)return r.slice();
+    const am=mean(idx.map(t=>r[t]))-beta[i]*mean(idx.map(t=>m[t]));const res=idx.map(t=>r[t]-am-beta[i]*m[t]);const g=rng(1000+i);
+    return r.map((x,t)=>x!=null?x:am+beta[i]*m[t]+res[Math.floor(g()*res.length)]);});
+  // risk model on the complete matrix: assets listed after the window starts inherit market crashes through their beta (Stambaugh-style), instead of looking safe because they only lived through bull markets
+  const sdOwn=sd.slice();const fm=F.map(r=>mean(r));for(let i=0;i<n;i++){let s2=0;for(let t=0;t<T;t++)s2+=(F[i][t]-fm[i])**2;sd[i]=Math.sqrt(s2/(T-1)*12);}
   const Cs=[];for(let i=0;i<n;i++)Cs.push(new Float64Array(n));
-  for(let i=0;i<n;i++){Cs[i][i]=1;for(let j=i+1;j<n;j++){const a=H.R[i],b=H.R[j];const idx=[];for(let t=0;t<T;t++)if(a[t]!=null&&b[t]!=null)idx.push(t);let r;
-    if(idx.length>=24){const ma=mean(idx.map(t=>a[t])),mb=mean(idx.map(t=>b[t]));let c=0,va=0,vb=0;idx.forEach(t=>{c+=(a[t]-ma)*(b[t]-mb);va+=(a[t]-ma)**2;vb+=(b[t]-mb)**2;});r=c/Math.sqrt(va*vb);}
-    else r=Math.max(-.9,Math.min(.9,beta[i]*beta[j]*vm*12/(sd[i]*sd[j])));Cs[i][j]=Cs[j][i]=r;}}
+  for(let i=0;i<n;i++){Cs[i][i]=1;for(let j=i+1;j<n;j++){let c=0;for(let t=0;t<T;t++)c+=(F[i][t]-fm[i])*(F[j][t]-fm[j]);c/=T-1;Cs[i][j]=Cs[j][i]=c/((sd[i]/Math.sqrt(12))*(sd[j]/Math.sqrt(12)));}}
   let rbar=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)rbar+=Cs[i][j];rbar/=n*(n-1)/2;
   const d=o.shrink;let C=[];for(let i=0;i<n;i++){C.push(new Float64Array(n));for(let j=0;j<n;j++)C[i][j]=i===j?1:(1-d)*Cs[i][j]+d*rbar;}C=psdCorr(C);
   const S=[];for(let i=0;i<n;i++){S.push(new Float64Array(n));for(let j=0;j<n;j++)S[i][j]=C[i][j]*sd[i]*sd[j];}
   const capm=beta.map(b=>rf+b*erp);
   const bl=blackLitterman(capm,S,o.views||[],o.tau,H.ids);
-  let mu=o.mode==='bl'?bl:o.mode==='hist'?hm.slice():hm.map((h,i)=>o.trust*h+(1-o.trust)*capm[i]);
+  let mu=o.mode==='bl'?bl:o.mode==='hist'?hmAdj.slice():hmAdj.map((h,i)=>o.trust*h+(1-o.trust)*capm[i]);
   mu=mu.map((x,i)=>o.override[i]!=null?o.override[i]:x);
-  // filled matrix (beta-backfill before listing) for co-movement based tools
-  const F=H.R.map((r,i)=>r.map((x,t)=>x!=null?x:beta[i]*m[t]));
   const marM=(o.mar??rf)/12;const SC=[];for(let i=0;i<n;i++)SC.push(new Float64Array(n));const ng=F.map(r=>r.map(x=>Math.min(x-marM,0)));
   for(let i=0;i<n;i++)for(let j=i;j<n;j++){let s=0;for(let t=0;t<T;t++)s+=ng[i][t]*ng[j][t];SC[i][j]=SC[j][i]=s/T*12;}
   const mneg=m.map(x=>Math.min(x-mm,0));
   const dbeta=H.R.map((r,i)=>{let s=0,q=0;const mu_=hm[i]/12;r.forEach((x,t)=>{if(x==null)return;s+=Math.min(x-mu_,0)*mneg[t];q+=mneg[t]*mneg[t];});return s/q;});
   const risk=H.R.map(r=>riskStats(r.filter(x=>x!=null),marM));
-  return {n,T,hm,sd,beta,cagr,nObs,first,Cs,C,S,SC,F,capm,bl,mu,rbar,dbeta,risk,marM,mkt:{mu:mm*12,sd:Math.sqrt(vm*12)}};
+  return {n,T,hm,hmAdj,sd,sdOwn,beta,cagr,nObs,first,Cs,C,S,SC,F,capm,bl,mu,rbar,dbeta,risk,marM,mkt:{mu:mm*12,sd:Math.sqrt(vm*12)}};
 }
 function riskStats(r,marM){const T=r.length;let d2=0,gain=0,loss=0,negN=0;for(const x of r){const e=x-marM;if(e<0){d2+=e*e;loss-=e;}else gain+=e;if(x<0)negN++;}
   const s=Array.from(r).sort((a,b)=>a-b);const k=Math.max(1,Math.round(T*.05));let tail=0;for(let i=0;i<k;i++)tail+=s[i];

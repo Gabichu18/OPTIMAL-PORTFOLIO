@@ -48,12 +48,12 @@
 <header>
   <div>
     <h1>Frontier <em>Lab</em></h1>
-    <div class="sub">Portfolio construction on 15 years of real monthly prices: Black-Litterman, Ledoit-Wolf, downside risk, stress tests and out-of-sample backtests.</div>
+    <div class="sub">Portfolio construction on 30 years of real monthly prices, through the dot-com crash and 2008: Black-Litterman, Ledoit-Wolf, downside risk, stress tests and out-of-sample backtests.</div>
   </div>
   <div class="chips" id="chips"></div>
 </header>
 
-<section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 35 assets on 15 years of data…</div></div></section>
+<section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 35 assets on 30 years of data…</div></div></section>
 
 <div class="main">
 <aside class="panel" aria-label="Allocation">
@@ -141,7 +141,7 @@
     <div class="scroll"><table id="stTable" class="heat"></table></div>
     <div class="chart"><canvas id="cStress" height="300"></canvas></div>
     <div class="legend"><span><i style="background:var(--you)"></i>Yours</span><span><i style="background:var(--accent)"></i>Max Sharpe</span><span><i style="background:var(--spx)"></i>S&amp;P 500</span></div>
-    <p class="note">What each portfolio would have done, with today's weights, through real market episodes. Assets not yet listed at the time are left out and the remaining weights rescaled; cells marked * covered less than 80% of the portfolio. Worst 12 months is the worst rolling 12-month return over the full 15 years.</p>
+    <p class="note">What each portfolio would have done, with today's weights, through real market episodes. Assets not yet listed at the time are left out and the remaining weights rescaled; cells marked * covered less than 80% of the portfolio. Worst 12 months is the worst rolling 12-month return over the full 30 years.</p>
   </div>
 
   <!-- BACKTESTS -->
@@ -178,7 +178,7 @@
   <!-- MODEL -->
   <div data-pane="model" hidden style="display:flex;flex-direction:column;gap:16px">
     <div class="controls">
-      <div class="field"><label for="win">Estimation window</label><select id="win"><option value="181">15 years (Oct 2011–)</option><option value="120">10 years</option><option value="60">5 years</option></select></div>
+      <div class="field"><label for="win">Estimation window</label><select id="win"><option value="361">30 years (Oct 1996–)</option><option value="240">20 years</option><option value="181">15 years</option><option value="120">10 years</option><option value="60">5 years</option></select></div>
       <div class="field"><label for="mode">Expected returns</label><select id="mode"><option value="bl">Black-Litterman</option><option value="blend">History–CAPM blend</option><option value="hist">Pure history</option></select></div>
       <div class="field"><label for="trust"><span id="trustT">Confidence in history as a view</span>: <b id="trustL">25%</b></label><input id="trust" type="range" min="0" max="100" value="25"></div>
     </div>
@@ -191,7 +191,7 @@
       <div class="field"><label for="shrink">Correlation shrinkage: <b id="shrinkL"></b></label><input id="shrink" type="range" min="0" max="100"></div>
       <button id="lwBtn">Use Ledoit-Wolf optimum</button>
     </div>
-    <p class="note"><b>Black-Litterman</b> starts from equilibrium returns (CAPM: r<sub>f</sub> + β × ERP), which carry no opinion, then tilts them toward views in proportion to your confidence. The slider adds each asset's own history as a view; your views below come on top. <b>Ledoit-Wolf</b> picks the shrinkage that minimises expected estimation error, computed on the months where all 35 assets traded.</p>
+    <p class="note"><b>Black-Litterman</b> starts from equilibrium returns (CAPM: r<sub>f</sub> + β × ERP), which carry no opinion, then tilts them toward views in proportion to your confidence. The slider adds each asset's own history as a view; your views below come on top. <b>Ledoit-Wolf</b> picks the shrinkage that minimises expected estimation error, computed on the full window. Assets that listed after the window starts are put on the same footing as the rest (Stambaugh, 1997): their history is adjusted for how much better or worse the market did while they traded (<b>Window-adj.</b>), and before listing they are filled with their beta to the S&amp;P 500 plus their own residuals, so volatility and correlations include the dot-com crash and 2008.</p>
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Your views</h2><button id="addView">Add view</button></div>
     <div class="views" id="views"></div>
     <div class="scroll"><table id="aTable"></table></div>
@@ -214,16 +214,15 @@ const eur=x=>(x<0?'−':'')+'€'+Math.abs(Math.round(x)).toLocaleString('en-GB'
 const HF=parseData(RAW),N=HF.ids.length,A=HF.ids.map(id=>({id,name:META[id][0],ticker:META[id][1],cls:META[id][2]}));
 const ORDER=A.map((a,i)=>i).sort((p,q)=>Object.keys(CLS).indexOf(A[p].cls)-Object.keys(CLS).indexOf(A[q].cls));
 const RF0=0.04057;
-const S={win:181,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
+const S={win:361,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
 let H,M,O,D,RP,RES=null,WF=null,cloud,LW;
 
 function opts(){return {rf:S.rf,erp:S.erp,mar:S.mar,shrink:S.shrink,mode:S.mode,trust:S.trust,tau:S.tau,views:effViews(),override:S.override,cap:S.cap,active:S.active};}
 function effViews(){const v=S.views.filter(x=>x.a&&(x.type==='abs'||x.b&&x.b!==x.a)).map(x=>({...x}));
-  if(S.mode==='bl'&&S.trust>0&&M0)A.forEach((a,i)=>{if(S.active[i])v.push({a:a.id,type:'abs',q:M0.hm[i],conf:S.trust,hist:true});});return v;}
+  if(S.mode==='bl'&&S.trust>0&&M0)A.forEach((a,i)=>{if(S.active[i])v.push({a:a.id,type:'abs',q:M0.hmAdj[i],conf:S.trust,hist:true});});return v;}
 let M0=null;
 function rebuild(){
-  H=sliceH(HF,S.win);LW=ledoitWolf(H);if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);
-  M0=buildModel(H,{...opts(),views:[],mode:'hist'});M=buildModel(H,opts());
+  H=sliceH(HF,S.win);M0=buildModel(H,{...opts(),shrink:S.shrink??.3,views:[],mode:'hist'});LW=ledoitWolf({ids:H.ids,R:M0.F,T:H.T});if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);M=buildModel(H,opts());
   const k=S.active.filter(Boolean).length,capE=Math.max(S.cap,1/k+1e-6),capA=Float64Array.from(A.map((a,i)=>S.active[i]?capE:0));
   O=optimize(M.mu,M.S,capA,S.rf);D=optimizeDownside(M.F,M.mu,capA,S.mar,M.marM,[O.tangency.w,O.minvar.w]);RP=riskParity(M.S,S.active);
   cloud=randomPortfolios(M.mu,M.S,S.rf,4000,11,S.active);RES=null;WF=null;M._capA=capA;
@@ -354,7 +353,7 @@ function drawRB(){const y=port(S.w);const rc=riskContrib(y.w,M.S);const rp=port(
   $('rbList').innerHTML=`<span class="h">Asset</span><span class="h"></span><span class="h num">Weight</span><span class="h num">Risk</span>`+rows.map(r=>`<span class="nm" style="font-weight:500"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</span><span class="bars"><i style="width:${r.w/mx*100}%;background:var(--faint)"></i><i style="width:${Math.max(0,r.r)/mx*100}%;background:var(--you)"></i></span><span class="num">${pct(r.w)}</span><span class="num ${r.r>r.w*1.25?'down':r.r<r.w*.75?'up':''}">${pct(r.r)}</span>`).join('')||'<span class="note">Add some weights on the left.</span>';}
 
 /* ---------- Stress tests ---------- */
-const SCEN=[['2015–16 China & oil rout','2015-06','2016-02'],['Q4 2018 sell-off','2018-10','2018-12'],['COVID crash','2020-02','2020-03'],['2022 bear market','2022-01','2022-09'],['Mar 2023 bank stress','2023-03','2023-03'],['2025 tariff shock','2025-02','2025-04']];
+const SCEN=[['1998 LTCM & Russia crisis','1998-07','1998-09'],['Dot-com crash','2000-04','2002-09'],['2008 financial crisis','2007-11','2009-02'],['2011 euro debt crisis','2011-05','2011-09'],['2015–16 China & oil rout','2015-06','2016-02'],['Q4 2018 sell-off','2018-10','2018-12'],['COVID crash','2020-02','2020-03'],['2022 bear market','2022-01','2022-09'],['Mar 2023 bank stress','2023-03','2023-03'],['2025 tariff shock','2025-02','2025-04']];
 function drawStress(){const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Min variance','--minv',O.minvar.w],['Risk parity','--c-bond',RP]];
   const ser=P.map(p=>portListed(HF.R,p[2]));const spy=HF.mkt;const mi=m=>HF.months.indexOf(m);
   const cum=(s,a,b)=>{let g=1;for(let t=a;t<=b;t++)g*=1+s[t];return g-1;};const cov=(s,a,b)=>{let c=1;for(let t=a;t<=b;t++)c=Math.min(c,s.coverage[t]);return c;};
@@ -363,7 +362,7 @@ function drawStress(){const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--acce
   const res=[];SCEN.forEach(([n,a,b])=>{const ia=mi(a),ib=mi(b);const vals=ser.map(s=>cum(s,ia,ib));res.push({n,y:vals[0],t:vals[1],m:cum(spy,ia,ib)});
     h+=`<tr><td class="n">${n}</td><td>${a}${a!==b?' → '+b:''}</td>${vals.map((v,k)=>cell(v,cov(ser[k],ia,ib))).join('')}${cell(cum(spy,ia,ib),1)}</tr>`;});
   const worst12=s=>{let w=1e9;for(let t=11;t<s.length;t++){let g=1;for(let k=t-11;k<=t;k++)g*=1+s[k];w=Math.min(w,g-1);}return w;};
-  h+=`<tr><td class="n">Worst 12 months (2011–2026)</td><td>rolling</td>${ser.map(s=>cell(worst12(s),1)).join('')}${cell(worst12(spy),1)}</tr></tbody>`;$('stTable').innerHTML=h;
+  h+=`<tr><td class="n">Worst 12 months (${HF.months[0].slice(0,4)}–2026)</td><td>rolling</td>${ser.map(s=>cell(worst12(s),1)).join('')}${cell(worst12(spy),1)}</tr></tbody>`;$('stTable').innerHTML=h;
   const cv=$('cStress');const {ctx,W,H:Hh}=setup(cv,220);const pad={l:52,r:14,t:12,b:44};const all=res.flatMap(r=>[r.y,r.t,r.m]);const yd=[Math.min(0,...all)*1.1,Math.max(.02,...all)*1.1];
   const {Y}=axes(ctx,W,Hh,pad,[0,1],yd,()=>'',v=>pct(v,0),'','',[]);const gw=(W-pad.l-pad.r)/res.length,bw=Math.min(22,gw/4);HITS.stress=[];
   res.forEach((r,k)=>{const cx=pad.l+gw*(k+.5);[[r.y,'--you','Yours'],[r.t,'--accent','Max Sharpe'],[r.m,'--spx','S&P 500']].forEach(([v,c,n],j)=>{const x=cx+(j-1.5)*bw;ctx.fillStyle=css(c);const y0=Y(0),y1=Y(v);ctx.fillRect(x,Math.min(y0,y1),bw-2,Math.abs(y1-y0));HITS.stress.push({x:x+bw/2,y:y1,label:`${r.n} · ${n}: ${sp(v)}`});});
@@ -457,9 +456,9 @@ function viewsUI(){const opt=sel=>A.map(a=>`<option value="${a.id}"${a.id===sel?
     <input type="range" data-f="conf" min="5" max="95" value="${Math.round(v.conf*100)}" aria-label="Confidence"><b class="kicker">${Math.round(v.conf*100)}%</b><span class="eff">${viewEffect(v)}</span><button data-del="${k}" class="ghost" aria-label="Delete view">Remove</button></div>`).join(''):
     `<p class="note">No views yet. A view is an opinion such as "Nvidia will beat Microsoft by 3% a year" or "Gold will return 6%", with a confidence. Without views, Black-Litterman uses equilibrium returns plus the history slider above.</p>`;}
 function viewEffect(v){const i=A.findIndex(a=>a.id===v.a);if(i<0)return '';if(v.type==='rel'){const j=A.findIndex(a=>a.id===v.b);return `now: ${A[i].id} − ${A[j].id} = ${sp(M.mu[i]-M.mu[j])} (prior ${sp(M.capm[i]-M.capm[j])})`;}return `${A[i].id}: prior ${pct(M.capm[i])} → ${pct(M.mu[i])}`;}
-function aTable(){$('aTable').innerHTML=`<thead><tr><th>Asset</th><th>In</th><th>Since</th><th>Hist. mean</th><th>CAGR</th><th>σ</th><th>β</th><th>Equilibrium</th><th>E[R] used %</th><th>Max-Sh.</th><th>Min-var</th><th>Risk parity</th></tr></thead><tbody>`+
+function aTable(){$('aTable').innerHTML=`<thead><tr><th>Asset</th><th>In</th><th>Since</th><th>Hist. mean</th><th>Window-adj.</th><th>CAGR</th><th>σ</th><th>β</th><th>Equilibrium</th><th>E[R] used %</th><th>Max-Sh.</th><th>Min-var</th><th>Risk parity</th></tr></thead><tbody>`+
   ORDER.map(i=>{const a=A[i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[a.cls][1]})"></span>${a.name}<small>${a.ticker}</small></td><td><input type="checkbox" data-act="${i}" ${S.active[i]?'checked':''} aria-label="Include ${a.name}" style="width:auto"></td>
-  <td>${H.months[M.first[i]]}</td><td>${pct(M.hm[i])}</td><td>${pct(M.cagr[i])}</td><td>${pct(M.sd[i])}</td><td>${M.beta[i].toFixed(2)}</td><td>${pct(M.capm[i])}</td>
+  <td>${H.months[M.first[i]]}</td><td>${pct(M.hm[i])}</td><td>${pct(M.hmAdj[i])}</td><td>${pct(M.cagr[i])}</td><td>${pct(M.sd[i])}</td><td>${M.beta[i].toFixed(2)}</td><td>${pct(M.capm[i])}</td>
   <td><input type="number" step="0.5" data-mu="${i}" value="${(M.mu[i]*100).toFixed(1)}" aria-label="Expected return ${a.name}" style="${S.override[i]!=null?'border-color:var(--you);color:var(--you)':''}"></td><td>${pct(O.tangency.w[i])}</td><td>${pct(O.minvar.w[i])}</td><td>${pct(RP[i])}</td></tr>`;}).join('')+'</tbody>';}
 function modelUI(){$('trustT').textContent=S.mode==='bl'?'Confidence in history as a view':S.mode==='blend'?'Weight on history (rest CAPM)':'History weight (fixed at 100%)';$('trust').disabled=S.mode==='hist';$('trustL').textContent=Math.round(S.trust*100)+'%';
   $('shrink').value=Math.round(S.shrink*100);$('shrinkL').textContent=Math.round(S.shrink*100)+'%';$('lwBtn').textContent=`Use Ledoit-Wolf optimum (${Math.round(LW.delta*100)}%)`;viewsUI();aTable();
@@ -484,9 +483,9 @@ const PINFO={
  pMin:['Min variance','The lowest-volatility portfolio possible. It ignores expected returns completely.','Needs no return forecasts, so it is stable. Smallest swings and drawdowns.','Low expected return. Piles into bonds, gold and defensive stocks.'],
  pSor:['Max Sortino','The highest return per unit of downside risk: only months below your minimum acceptable return count as risk.','Matches how investors feel about risk. Rewards assets whose big moves were mostly upward.','Downside risk is estimated from fewer months, so it is noisier. Can chase past upside streaks (Bitcoin, momentum stocks).'],
  pMdd:['Min downside','The portfolio with the smallest losses below your minimum acceptable return.','Built to protect capital. Holds up well in sell-offs.','Low expected return. Assumes past crash patterns repeat.'],
- pRP:['Risk parity','Every asset contributes the same share of total portfolio risk.','Needs no return forecasts. Very broad diversification and shallow drawdowns in the walk-forward test.','Heavy in bonds, so returns are low without leverage. Equal risk does not mean equal opportunity.'],
+ pRP:['Risk parity','Every asset contributes the same share of total portfolio risk.','Needs no return forecasts. Very broad diversification; in the 25-year walk-forward test it had the best Sharpe ratio and a much shallower drawdown than equal weight.','Heavy in bonds, so returns are low without leverage. Equal risk does not mean equal opportunity.'],
  pRes:['Resampled (Michaud)','The average of 40 max-Sharpe portfolios, each built on a randomly resampled version of the past.','Smoother, more diversified weights that change less when the data updates.','Takes a few seconds to compute and has no single theoretical optimum. Still relies on the same expected returns.'],
- pEq:['Equal weight (1/N)','The same weight in every asset.','No estimation at all, so nothing to get wrong. Hard to beat out of sample: best Sharpe in your walk-forward test.','Ignores risk: Bitcoin gets as much money as Treasuries. Ignores any view on quality or valuation.'],
+ pEq:['Equal weight (1/N)','The same weight in every asset.','No estimation at all, so nothing to get wrong. Hard to beat out of sample: in the 25-year walk-forward test it beat the rolling max-Sharpe portfolio.','Ignores risk: Bitcoin gets as much money as Treasuries. Ignores any view on quality or valuation.'],
  pClr:['Clear','Sets every weight to zero so you can build your own allocation from scratch.','',''] };
 (()=>{const tipEl=$('ptip'),box=document.querySelector('.presets');box.appendChild(tipEl);const show=b=>{const d=PINFO[b.id];if(!d)return;
   tipEl.innerHTML=`<b class="t">${d[0]}</b><span>${d[1]}</span>`+(d[2]?`<div class="pc"><span class="pro">Pros</span><span>${d[2]}</span><span class="con">Cons</span><span>${d[3]}</span></div>`:'');
