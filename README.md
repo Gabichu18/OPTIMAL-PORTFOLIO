@@ -1,6 +1,6 @@
 # OPTIMAL PORTFOLIO — Frontier Lab
 
-An interactive portfolio-construction lab for 32 assets (US and Asian tech, AI infrastructure, financials, defensives, commodities, Bitcoin and US Treasuries), built on 15 years of real monthly prices (October 2011 – October 2026).
+An interactive portfolio-construction lab for 35 assets (US and Asian tech, AI infrastructure, Spanish infrastructure and utilities, financials, defensives, commodities, Bitcoin and US Treasuries), built on 15 years of real monthly prices (October 2011 – October 2026).
 
 **Live app: https://gabichu18.github.io/OPTIMAL-PORTFOLIO/**
 
@@ -46,7 +46,7 @@ python scripts/build.py
 ## Data notes
 
 - Source: Yahoo Finance adjusted closes (dividends and splits included), monthly.
-- Non-USD listings (Xiaomi in HKD, Samsung and SK Hynix in KRW, Inditex in EUR) are converted to USD at month-end FX rates. A handful of corrupted KRW/USD quotes on Yahoo were removed and interpolated.
+- Non-USD listings (Xiaomi in HKD, Samsung and SK Hynix in KRW, Inditex, Ferrovial and Iberdrola in EUR) are converted to USD at month-end FX rates. A handful of corrupted KRW/USD quotes on Yahoo were removed and interpolated.
 - Gold and Brent use front-month futures (`GC=F`, `BZ=F`); short gaps are interpolated. Futures roll yield is not captured.
 - Copper miners: the shipped data uses the UCITS ETF (4COP, EUR→USD) since November 2021 and the US-listed COPX before that. `fetch_data.py` uses COPX throughout.
 - Vertiv starts in February 2020; earlier prices belong to the pre-merger SPAC shell.
@@ -55,7 +55,7 @@ python scripts/build.py
 
 ## Caveats
 
-- **Selection bias.** The 32 assets were chosen in 2026, partly because they did well. Every backtest, including walk-forward, benefits from that hindsight.
+- **Selection bias.** The 35 assets were chosen in 2026, partly because they did well. Every backtest, including walk-forward, benefits from that hindsight.
 - **Estimation error.** Expected returns are the noisiest input. The walk-forward results show the rolling max-Sharpe optimizer losing to equal weight out of sample (DeMiguel, Garlappi & Uppal, 2009).
 - **Single currency.** Everything is in USD; EUR/USD exposure for a euro-based investor is not modelled.
 - This is an educational and analytical tool, not investment advice.
