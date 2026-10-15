@@ -17,8 +17,13 @@ Sources and splices (all returns are monthly, in USD, dividends reinvested):
   (DEXUSEU, DEXKOUS, DEXHKUS), which has no gaps or corrupted quotes.
 - US Treasuries: IEF from August 2002, Vanguard Intermediate-Term Treasury
   fund (VFITX) before that.
-- Oil: Brent front-month future (BZ=F) from August 2007, FRED Brent spot
-  (DCOILBRENTEU) before that.
+- Energy: Xtrackers MSCI World Energy UCITS ETF (XDW0, EUR) from May 2016,
+  iShares Global Energy (IXC) from December 2001, Vanguard Energy fund
+  (VGENX) before that.
+- Currency: EUR/USD month-end from FRED (DEXUSEU; German mark at the fixed
+  1.95583 conversion rate before 1999) and the euro 3-month interbank rate
+  (IR3TIB01EZM156N, ECB deposit rate for the latest months) for the euro
+  base-currency views.
 - Copper miners: Global X Copper Miners UCITS (4COP.DE, EUR) from November
   2021, US-listed COPX before that.
 - Ferrovial: an unadjusted 5:1 split on 27 Oct 2004 is neutralised (that
@@ -46,7 +51,7 @@ LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local 
 }
 ORDER = ["NVDA", "AMZN", "GOOGL", "MSFT", "META", "AAPL", "VRT", "VST", "ETN", "ANET", "MU", "TSM", "XIAOMI",
          "AMAT", "SAMSUNG", "CAT", "AVGO", "CRWD", "JPM", "GS", "LMT", "NUE", "TM", "PFE", "ITX", "ASML",
-         "SKHYNIX", "GOLD", "COPX", "OIL", "BTC", "UST", "FER", "IBE", "COST", "SPY"]
+         "SKHYNIX", "GOLD", "COPX", "ENERGY", "BTC", "UST", "FER", "IBE", "COST", "SPY"]
 
 
 def daily(ticker: str, adjusted: bool = True) -> pd.DataFrame:
@@ -96,9 +101,10 @@ def main() -> None:
     pr = lambda s: s.pct_change(fill_method=None).reindex(P.index).iloc[1:]
     R["UST"] = splice(pr(month_end(daily("IEF")["Close"].squeeze())),
                       pr(month_end(daily("VFITX")["Close"].squeeze())), "2002-08")
-    R["OIL"] = splice(pr(month_end(daily("BZ=F")["Close"].squeeze()).interpolate(limit=3)),
-                      pr(fred("DCOILBRENTEU")), "2007-08")
     eur = fred("DEXUSEU")
+    xdw0 = month_end(daily("XDW0.DE")["Close"].squeeze()) * eur
+    R["ENERGY"] = splice(pr(xdw0), splice(pr(month_end(daily("IXC")["Close"].squeeze())),
+                                          pr(month_end(daily("VGENX")["Close"].squeeze())), "2001-12"), "2016-05")
     cop_ucits = month_end(daily("4COP.DE")["Close"].squeeze()) * eur
     R["COPX"] = splice(pr(cop_ucits), pr(month_end(daily("COPX")["Close"].squeeze())), "2021-12")
     R["GOLD"] = pr(prices["GOLD"].interpolate(limit=3))
@@ -116,6 +122,13 @@ def main() -> None:
     irx = month_end(daily("^IRX", adjusted=False)["Close"].squeeze()).reindex(P.index).ffill()
     rf = (irx.shift(1) / 12 / 100).loc[R.index]
     lines.append("RF|0|" + ",".join("" if pd.isna(x) else str(int(round(x * 1e4))) for x in rf.values))
+    # euro views: EUR/USD returns in 1e-5 units, euro short rate as a monthly rate
+    eur_full = eur.combine_first(1.95583 / fred("EXGEUS"))
+    fx = eur_full.reindex(P.index).pct_change().iloc[1:]
+    lines.append("EURX5|0|" + ",".join("" if pd.isna(x) else str(int(round(x * 1e5))) for x in fx.values))
+    ibor = fred("IR3TIB01EZM156N").combine_first(fred("ECBDFR")).reindex(P.index).ffill()
+    rfe = (ibor.shift(1) / 12 / 100).loc[R.index]
+    lines.append("RFEUR|0|" + ",".join("" if pd.isna(x) else str(int(round(x * 1e4))) for x in rfe.values))
     out = Path(__file__).resolve().parent.parent / "data/monthly_returns_bp.txt"
     out.write_text("\n".join(lines) + "\n")
     print(f"Wrote {out} ({months[0]} to {months[-1]}, {len(months)} months)")

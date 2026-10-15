@@ -50,7 +50,10 @@
     <h1>Frontier <em>Lab</em></h1>
     <div class="sub">Portfolio construction on 30 years of real monthly prices, through the dot-com crash and 2008: Black-Litterman, Ledoit-Wolf, downside risk, stress tests and out-of-sample backtests.</div>
   </div>
-  <div class="chips" id="chips"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+    <div class="field" style="flex-direction:row;align-items:center;gap:8px"><label for="cur" style="font-size:.74rem">Base currency</label><select id="cur" style="font-family:var(--mono);font-size:.8rem;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 8px"><option value="eurb">EUR · hedge bonds only</option><option value="eur">EUR · unhedged</option><option value="eurh">EUR · fully hedged</option><option value="usd">USD</option></select></div>
+    <div class="chips" id="chips"></div>
+  </div>
 </header>
 
 <section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 35 assets on 30 years of data…</div></div></section>
@@ -87,7 +90,7 @@
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Portfolio comparison</h2><span class="kicker" id="cmpKick"></span></div>
     <div class="scroll"><table id="cmpTable" class="cmpt"></table></div>
     <div class="legend"><span><i style="background:var(--good);height:9px"></i>Best in column</span><span><i style="background:var(--bad);height:9px"></i>Worst in column</span></div>
-    <p class="note"><b>Expected</b> columns come from the model (expected returns in use, covariance). <b>Future</b> columns come from a Monte Carlo with the settings on the Monte Carlo tab (2,000 paths each): final value and IRR are for the median path, where IRR is the annual money-weighted return on your starting capital plus monthly contributions. <b>Past</b> columns use real returns over the estimation window with today's weights, so they carry hindsight. Cap-weighted holds the 30 stocks and Bitcoin in proportion to market value on 9 Oct 2026; gold, oil, copper miners and Treasuries have no comparable market cap and get zero.</p>
+    <p class="note"><b>Expected</b> columns come from the model (expected returns in use, covariance). <b>Future</b> columns come from a Monte Carlo with the settings on the Monte Carlo tab (2,000 paths each): final value and IRR are for the median path, where IRR is the annual money-weighted return on your starting capital plus monthly contributions. <b>Past</b> columns use real returns over the estimation window with today's weights, so they carry hindsight. Cap-weighted holds the 30 stocks and Bitcoin in proportion to market value on 9 Oct 2026; gold, copper miners, the energy ETF and Treasuries have no comparable market cap and get zero.</p>
   </div>
 
   <!-- MONTE CARLO -->
@@ -106,7 +109,7 @@
     <div class="stats" id="mcStats"></div>
     <h3>Distribution of annualized returns over the horizon</h3>
     <div class="chart"><canvas id="cHistA" height="220"></canvas></div>
-    <p class="note">Re-runs on every weight change. <b>Bootstrap</b> replays real months from the estimation window in random 6-month blocks, keeping crashes, fat tails and co-movement; each asset's average is shifted to its forward expected return. Before an asset listed, its months are back-filled from its beta to the S&amp;P 500. <b>Log-normal</b> uses only expected return and volatility. Teal figures are the max-Sharpe portfolio. In <b>today's euros</b>, every future value is divided by (1 + inflation)<sup>years</sup>, so the chart shows purchasing power; contributions stay fixed in nominal euros, so their real value shrinks over time. Returns are modelled in USD, and the euros label assumes EUR/USD stays flat.</p>
+    <p class="note">Re-runs on every weight change. <b>Bootstrap</b> replays real months from the estimation window in random 6-month blocks, keeping crashes, fat tails and co-movement; each asset's average is shifted to its forward expected return. Before an asset listed, its months are back-filled from its beta to the S&amp;P 500. <b>Log-normal</b> uses only expected return and volatility. Teal figures are the max-Sharpe portfolio. In <b>today's euros</b>, every future value is divided by (1 + inflation)<sup>years</sup>, so the chart shows purchasing power; contributions stay fixed in nominal euros, so their real value shrinks over time. <span id="curNote"></span></p>
   </div>
 
   <!-- FRONTIER -->
@@ -205,16 +208,18 @@
 /*__ENGINE__*/
 </script>
 <script>
-const CLS={tech:['Tech platforms','--c-tech'],semi:['Semis & AI hardware','--c-semi'],power:['AI power & industrials','--c-power'],fin:['Financials','--c-fin'],def:['Defensive & consumer','--c-def'],cmdty:['Commodities','--c-cmdty'],crypto:['Crypto','--c-crypto'],bond:['Bonds','--c-bond']};
+const CLS={tech:['Tech platforms','--c-tech'],semi:['Semis & AI hardware','--c-semi'],power:['AI power & industrials','--c-power'],fin:['Financials','--c-fin'],def:['Defensive & consumer','--c-def'],cmdty:['Commodities & energy','--c-cmdty'],crypto:['Crypto','--c-crypto'],bond:['Bonds','--c-bond']};
 const $=id=>document.getElementById(id);
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const pct=(x,d=1)=>(x*100).toFixed(d)+'%';
 const sp=(x,d=1)=>(x>=0?'+':'')+(x*100).toFixed(d)+'%';
 const eur=x=>(x<0?'−':'')+'€'+Math.abs(Math.round(x)).toLocaleString('en-GB');
-const HF=parseData(RAW),N=HF.ids.length,A=HF.ids.map(id=>({id,name:META[id][0],ticker:META[id][1],cls:META[id][2]}));
+const HF0=parseData(RAW);let HF=HF0;const N=HF0.ids.length,A=HF0.ids.map(id=>({id,name:META[id][0],ticker:META[id][1],cls:META[id][2]}));
 const ORDER=A.map((a,i)=>i).sort((p,q)=>Object.keys(CLS).indexOf(A[p].cls)-Object.keys(CLS).indexOf(A[q].cls));
-const RF0=0.04057;
-const S={win:361,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
+const RFX={usd:0.04057,eur:0.025,eurh:0.025,eurb:0.025};// 13-week T-bill / ECB deposit rate, 9 Oct 2026
+const CURL={usd:'USD',eur:'EUR, unhedged',eurh:'EUR, hedged',eurb:'EUR, bonds hedged'};
+const RF0=RFX.eurb;
+const S={cur:'eurb',win:361,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
 let H,M,O,D,RP,RES=null,WF=null,cloud,LW;
 
 function opts(){return {rf:S.rf,erp:S.erp,mar:S.mar,shrink:S.shrink,mode:S.mode,trust:S.trust,tau:S.tau,views:effViews(),override:S.override,cap:S.cap,active:S.active};}
@@ -222,7 +227,7 @@ function effViews(){const v=S.views.filter(x=>x.a&&(x.type==='abs'||x.b&&x.b!==x
   if(S.mode==='bl'&&S.trust>0&&M0)A.forEach((a,i)=>{if(S.active[i])v.push({a:a.id,type:'abs',q:M0.hmAdj[i],conf:S.trust,hist:true});});return v;}
 let M0=null;
 function rebuild(){
-  H=sliceH(HF,S.win);M0=buildModel(H,{...opts(),shrink:S.shrink??.3,views:[],mode:'hist'});LW=ledoitWolf({ids:H.ids,R:M0.F,T:H.T});if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);M=buildModel(H,opts());
+  HF=toBase(HF0,S.cur);H=sliceH(HF,S.win);M0=buildModel(H,{...opts(),shrink:S.shrink??.3,views:[],mode:'hist'});LW=ledoitWolf({ids:H.ids,R:M0.F,T:H.T});if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);M=buildModel(H,opts());
   const k=S.active.filter(Boolean).length,capE=Math.max(S.cap,1/k+1e-6),capA=Float64Array.from(A.map((a,i)=>S.active[i]?capE:0));
   O=optimize(M.mu,M.S,capA,S.rf);D=optimizeDownside(M.F,M.mu,capA,S.mar,M.marM,[O.tangency.w,O.minvar.w]);RP=riskParity(M.S,S.active);
   cloud=randomPortfolios(M.mu,M.S,S.rf,4000,11,S.active);RES=null;WF=null;M._capA=capA;
@@ -460,9 +465,10 @@ function aTable(){$('aTable').innerHTML=`<thead><tr><th>Asset</th><th>In</th><th
   ORDER.map(i=>{const a=A[i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[a.cls][1]})"></span>${a.name}<small>${a.ticker}</small></td><td><input type="checkbox" data-act="${i}" ${S.active[i]?'checked':''} aria-label="Include ${a.name}" style="width:auto"></td>
   <td>${H.months[M.first[i]]}</td><td>${pct(M.hm[i])}</td><td>${pct(M.hmAdj[i])}</td><td>${pct(M.cagr[i])}</td><td>${pct(M.sd[i])}</td><td>${M.beta[i].toFixed(2)}</td><td>${pct(M.capm[i])}</td>
   <td><input type="number" step="0.5" data-mu="${i}" value="${(M.mu[i]*100).toFixed(1)}" aria-label="Expected return ${a.name}" style="${S.override[i]!=null?'border-color:var(--you);color:var(--you)':''}"></td><td>${pct(O.tangency.w[i])}</td><td>${pct(O.minvar.w[i])}</td><td>${pct(RP[i])}</td></tr>`;}).join('')+'</tbody>';}
-function modelUI(){$('trustT').textContent=S.mode==='bl'?'Confidence in history as a view':S.mode==='blend'?'Weight on history (rest CAPM)':'History weight (fixed at 100%)';$('trust').disabled=S.mode==='hist';$('trustL').textContent=Math.round(S.trust*100)+'%';
+const CURNOTE={usd:'All returns are in US dollars; the euros label assumes EUR/USD stays flat.',eur:'All returns are converted to euros at month-end EUR/USD, so the dollar\'s swings are included.',eurh:'All returns are hedged to euros: the dollar\'s swings are removed, at the cost (or gain) of the gap between US and euro short-term rates each month.',eurb:'Returns are in euros: stocks, gold, energy and Bitcoin unhedged, US Treasuries hedged to euros.'};
+function modelUI(){$('curNote').textContent=CURNOTE[S.cur];$('trustT').textContent=S.mode==='bl'?'Confidence in history as a view':S.mode==='blend'?'Weight on history (rest CAPM)':'History weight (fixed at 100%)';$('trust').disabled=S.mode==='hist';$('trustL').textContent=Math.round(S.trust*100)+'%';
   $('shrink').value=Math.round(S.shrink*100);$('shrinkL').textContent=Math.round(S.shrink*100)+'%';$('lwBtn').textContent=`Use Ledoit-Wolf optimum (${Math.round(LW.delta*100)}%)`;viewsUI();aTable();
-  $('chips').innerHTML=`<span class="chip">Yahoo Finance · monthly · <b>${H.months[0]} – 2026-10-09</b></span><span class="chip">Returns: <b>${{bl:'Black-Litterman',blend:'History–CAPM blend',hist:'Pure history'}[S.mode]}</b></span><span class="chip">Shrinkage <b>${Math.round(S.shrink*100)}%</b></span><span class="chip">Risk-free <b>${pct(S.rf,2)}</b></span><span class="chip">All in <b>USD</b></span>`;}
+  $('chips').innerHTML=`<span class="chip">Yahoo Finance · monthly · <b>${H.months[0]} – 2026-10-09</b></span><span class="chip">Returns: <b>${{bl:'Black-Litterman',blend:'History–CAPM blend',hist:'Pure history'}[S.mode]}</b></span><span class="chip">Shrinkage <b>${Math.round(S.shrink*100)}%</b></span><span class="chip">Risk-free <b>${pct(S.rf,2)}</b></span><span class="chip">Currency: <b>${CURL[S.cur]}</b></span>`;}
 
 /* ---------- wiring ---------- */
 const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
@@ -478,7 +484,7 @@ $('pEq').onclick=()=>setW(A.map(()=>1/N));$('pCap').onclick=()=>setW(capW());$('
 const CAPS={NVDA:5536.4,AMZN:2830.7,GOOGL:4300.8,MSFT:3973.2,META:1830.8,AAPL:4913.0,VRT:93.5,VST:54.2,ETN:166.8,ANET:273.4,MU:1162.1,TSM:2351.1,XIAOMI:85.2,AMAT:402.4,SAMSUNG:1283.9,CAT:368.0,AVGO:1725.9,CRWD:281.6,JPM:885.1,GS:260.7,LMT:117.6,NUE:56.8,TM:219.4,PFE:161.2,ITX:188.0,ASML:683.8,SKHYNIX:892.0,BTC:1658.9,FER:36.0,IBE:159.1,COST:419.6};
 function capW(){const w=Float64Array.from(A.map((a,i)=>S.active[i]?(CAPS[a.id]||0):0));return norm(w);}
 const PINFO={
- pCap:['Cap-weighted','Each stock (and Bitcoin) weighted by its market value, like the S&P 500 or MSCI World. Gold, oil, copper miners and Treasuries get zero.','The market portfolio of CAPM. Zero estimation, low turnover, what index funds hold.','Concentrated in the largest companies (Nvidia, Apple, Alphabet, Microsoft). Buys more of whatever has already risen.'],
+ pCap:['Cap-weighted','Each stock (and Bitcoin) weighted by its market value, like the S&P 500 or MSCI World. Gold, copper miners, the energy ETF and Treasuries get zero.','The market portfolio of CAPM. Zero estimation, low turnover, what index funds hold.','Concentrated in the largest companies (Nvidia, Apple, Alphabet, Microsoft). Buys more of whatever has already risen.'],
  pTan:['Max Sharpe','The tangency portfolio: the highest expected return per unit of total volatility.','The textbook optimum and industry benchmark. Best risk-adjusted return if your inputs are right.','Very sensitive to expected-return estimates and tends to concentrate. In the walk-forward test it lost to equal weight.'],
  pMin:['Min variance','The lowest-volatility portfolio possible. It ignores expected returns completely.','Needs no return forecasts, so it is stable. Smallest swings and drawdowns.','Low expected return. Piles into bonds, gold and defensive stocks.'],
  pSor:['Max Sortino','The highest return per unit of downside risk: only months below your minimum acceptable return count as risk.','Matches how investors feel about risk. Rewards assets whose big moves were mostly upward.','Downside risk is estimated from fewer months, so it is noisier. Can chase past upside streaks (Bitcoin, momentum stocks).'],
@@ -503,6 +509,7 @@ $('win').addEventListener('change',e=>{S.win=+e.target.value;S.shrink=null;full(
 $('mode').addEventListener('change',e=>{S.mode=e.target.value;S.override=A.map(()=>null);full();});
 $('trust').addEventListener('input',e=>$('trustL').textContent=e.target.value+'%');$('trust').addEventListener('change',e=>{S.trust=e.target.value/100;S.override=A.map(()=>null);full();});
 $('shrink').addEventListener('input',e=>$('shrinkL').textContent=e.target.value+'%');$('shrink').addEventListener('change',e=>{S.shrink=e.target.value/100;full();});
+$('cur').addEventListener('change',e=>{S.cur=e.target.value;S.rf=RFX[S.cur];S.mar=RFX[S.cur];$('rf').value=(S.rf*100).toFixed(2);$('mar').value=(S.mar*100).toFixed(2);S.shrink=null;full();});
 $('lwBtn').onclick=()=>{S.shrink=+LW.delta.toFixed(2);full();};
 $('addView').onclick=()=>{S.views.push({a:'NVDA',type:'rel',b:'MSFT',q:.03,conf:.5});if(S.mode!=='bl'){S.mode='bl';$('mode').value='bl';}full();};
 $('views').addEventListener('input',e=>{const r=e.target.closest('.vrow');if(!r||e.target.dataset.f!=='conf')return;e.target.nextElementSibling.textContent=e.target.value+'%';});
