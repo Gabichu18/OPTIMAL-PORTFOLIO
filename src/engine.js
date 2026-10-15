@@ -85,8 +85,13 @@ function solve(mu,S,cap,lam,L,w0,iters){const n=mu.length;const minVar=!isFinite
     const xn=project(v,cap);const tn=(1+Math.sqrt(1+4*t*t))/2;for(let i=0;i<n;i++)y[i]=xn[i]+((t-1)/tn)*(xn[i]-x[i]);x=xn;t=tn;}return x;}
 function fastTangency(mu,S,cap,rf,w0,L){L=L||maxEig(S);let best=null;const ev=ll=>{const w=solve(mu,S,cap,Math.exp(ll),L,best?best.w:w0,350);const s=stats(w,mu,S);const r={w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol};if(!best||r.sharpe>best.sharpe)best=r;return r.sharpe;};
   let a=Math.log(.1),b=Math.log(800);for(let k=0;k<20;k++){const c=b-.618*(b-a),d=a+.618*(b-a);if(ev(c)>ev(d))b=d;else a=c;}return best;}
+// highest-expected-return portfolio with volatility <= target: blend of the two efficient-frontier points that bracket it (any blend of feasible portfolios is feasible)
+function frontierAt(front,mu,S,target){const f=front.slice().sort((a,b)=>a.vol-b.vol);if(target<=f[0].vol)return f[0];if(target>=f[f.length-1].vol)return f[f.length-1];
+  let k=0;while(f[k+1].vol<target)k++;const a=f[k],b=f[k+1];let lo=0,hi=1;
+  for(let it=0;it<40;it++){const m=(lo+hi)/2;const w=a.w.map((x,i)=>x*(1-m)+b.w[i]*m);if(stats(w,mu,S).vol>target)hi=m;else lo=m;}
+  const w=Float64Array.from(a.w,(x,i)=>x*(1-lo)+b.w[i]*lo);const s=stats(w,mu,S);return {w,ret:s.ret,vol:s.vol};}
 function optimize(mu,S,cap,rf){const L=maxEig(S);const minv=solve(mu,S,cap,Infinity,L,null,2500);const front=[];let prev=null;
-  for(let k=31;k>=0;k--){const lam=Math.exp(Math.log(.2)+k*(Math.log(400)-Math.log(.2))/31);const w=solve(mu,S,cap,lam,L,prev,500);prev=w;const s=stats(w,mu,S);front.push({w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol});}
+  for(let k=47;k>=0;k--){const lam=Math.exp(Math.log(.1)+k*(Math.log(600)-Math.log(.1))/47);const w=solve(mu,S,cap,lam,L,prev,500);prev=w;const s=stats(w,mu,S);front.push({w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol});}
   const best=fastTangency(mu,S,cap,rf,front.reduce((a,b)=>b.sharpe>a.sharpe?b:a).w,L);
   const ms=stats(minv,mu,S);const mvp={w:minv,ret:ms.ret,vol:ms.vol,sharpe:(ms.ret-rf)/ms.vol};front.push(mvp,best);front.sort((p,q)=>p.vol-q.vol);
   const eff=[];let top=-Infinity;for(const p of front){if(p.ret>=top-1e-9){eff.push(p);top=Math.max(top,p.ret);}}return {tangency:best,minvar:mvp,frontier:eff};}
@@ -151,4 +156,4 @@ function walkForwardStep(H,o,t0,win){const n=H.ids.length,a=t0-win;const E=[];fo
   const tan=fastTangency(M.mu,M.S,cap,o.rf,null,L).w,mv=solve(M.mu,M.S,cap,Infinity,L,null,1500),rp=riskParity(M.S,E.map(()=>true));
   const up=w=>{const f=new Float64Array(n);E.forEach((i,q)=>f[i]=w[q]);return f;};
   return {tan:up(tan),mv:up(mv),rp:up(rp),ew:up(new Float64Array(k).fill(1/k)),k};}
-if(typeof module!=='undefined')module.exports={toBase,alphaStats,META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};
+if(typeof module!=='undefined')module.exports={frontierAt,toBase,alphaStats,META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};

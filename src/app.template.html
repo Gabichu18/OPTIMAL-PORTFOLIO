@@ -37,6 +37,11 @@
 .cmpt td small{color:var(--faint)}
 .cmpt tr.you td{font-weight:600}
 .presets{position:relative}
+.trisk{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.trrow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem}
+.trrow label{font-weight:600}.trrow b{font-family:var(--mono);color:var(--you)}
+.trisk input[type=range]{width:100%;accent-color:var(--you)}
+.trrow button{padding:4px 10px;font-size:.72rem}
 .ptip{position:absolute;z-index:20;left:0;right:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:.78rem;line-height:1.45;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .ptip b.t{font-family:var(--display);font-size:.98rem}
 .ptip .pc{display:grid;grid-template-columns:auto 1fr;gap:3px 8px}
@@ -66,6 +71,11 @@
   </div>
   <div class="ptip" id="ptip" role="tooltip" hidden></div>
   <div class="prog" id="resProg" hidden><div></div></div>
+  <div class="trisk">
+    <div class="trrow"><label for="tRisk">Target risk</label><b id="tRiskL">—</b></div>
+    <input type="range" id="tRisk" min="5" max="30" step="0.5" value="15" aria-describedby="tRiskInfo">
+    <div class="trrow"><span class="kicker" id="tRiskInfo">Best expected return on the frontier for a chosen volatility.</span><button id="tRiskBtn">Apply</button></div>
+  </div>
   <div class="mixrow"><canvas id="cDonut" height="120" style="width:120px"></canvas><div class="mixleg" id="mixLeg"></div></div>
   <div class="sumbar"><span id="sumTxt">Σ 100%</span><button id="normBtn">Scale to 100%</button></div>
   <div class="alloc" id="alloc"></div>
@@ -475,7 +485,7 @@ const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
 const DRAW={cmp:drawCompare,frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
 function drawVisible(){if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
 let mcT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,(visible('mc')||visible('cmp'))?150:30);}
-let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();allocList();modelUI();drawVisible();$('hero').classList.remove('busy');},20);}
+let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();trSetup();allocList();modelUI();drawVisible();$('hero').classList.remove('busy');},20);}
 $('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(0,Math.min(100,+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(40,v);onWeights();});
 const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();};
 $('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
@@ -497,6 +507,13 @@ const PINFO={
   tipEl.innerHTML=`<b class="t">${d[0]}</b><span>${d[1]}</span>`+(d[2]?`<div class="pc"><span class="pro">Pros</span><span>${d[2]}</span><span class="con">Cons</span><span>${d[3]}</span></div>`:'');
   tipEl.hidden=false;tipEl.style.top=(b.offsetTop+b.offsetHeight+8)+'px';};const hide=()=>tipEl.hidden=true;
   box.querySelectorAll('button').forEach(b=>{b.addEventListener('mouseenter',()=>show(b));b.addEventListener('focus',()=>show(b));b.addEventListener('mouseleave',hide);b.addEventListener('blur',hide);b.addEventListener('click',hide);});})();
+/* target risk */
+let TR=null;function trSetup(){const lo=O.minvar.vol,hi=Math.max(...O.frontier.map(p=>p.vol));const r=$('tRisk');r.min=(Math.ceil(lo*200)/2).toFixed(1);r.max=(Math.floor(hi*200)/2).toFixed(1);
+  if(+r.value<+r.min||+r.value>+r.max)r.value=Math.min(+r.max,Math.max(+r.min,Math.round(O.tangency.vol*200)/2));TR=null;trPreview();}
+function trCompute(){const v=+$('tRisk').value/100;if(TR&&TR.v===v)return TR;const p=frontierAt(O.frontier,M.mu,M.S,v);const ser=portListed(H.R,p.w);const g=growth(ser);
+  const pp=port(p.w);TR={v,w:p.w,ret:p.ret,vol:p.vol,dd:g.maxDD,sharpe:pp.sharpe};return TR;}
+let trT;function trPreview(){$('tRiskL').textContent=(+$('tRisk').value).toFixed(1)+'% vol';clearTimeout(trT);trT=setTimeout(()=>{const t=trCompute();$('tRiskInfo').textContent=`Expected ${pct(t.ret)} · Sharpe ${t.sharpe.toFixed(2)} · past max drawdown −${pct(t.dd,0)}`;},120);}
+$('tRisk').addEventListener('input',trPreview);$('tRiskBtn').onclick=()=>{const t=trCompute();setW(t.w);};
 $('pRes').onclick=()=>{if(RES){setW(RES);return;}const K=40,acc=new Float64Array(N),r=rng(7),o=opts();let k=0;const btn=$('pRes'),pb=$('resProg');btn.classList.add('busy');pb.hidden=false;
   const step=()=>{const w=resampleStep(M,o,M._capA,k,r);for(let i=0;i<N;i++)acc[i]+=w[i]/K;k++;pb.firstElementChild.style.width=(k/K*100)+'%';btn.textContent=`Resampling ${k}/${K}`;if(k<K)setTimeout(step,0);else{RES=acc;btn.textContent='Resampled';btn.classList.remove('busy');pb.hidden=true;setW(RES);}};setTimeout(step,20);};
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);try{localStorage.setItem('fl3-tab',b.dataset.tab)}catch(_){}drawVisible();});
