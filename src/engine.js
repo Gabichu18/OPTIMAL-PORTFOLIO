@@ -10,6 +10,9 @@ function toBase(H,cur){if(cur==='usd'||!H.eurx)return H;const T=H.T,fx=H.eurx,ru
   const un=(x,t)=>x==null?null:(1+x)/(1+fx[t])-1,hd=(x,t)=>x==null?null:x-ru[t]+re[t];
   const pick=id=>cur==='eurh'||(cur==='eurb'&&id==='UST')?hd:un;// 'eurb': only the bond hedged
   return {...H,R:H.R.map((r,i)=>r.map(pick(H.ids[i]))),mkt:H.mkt.map(cur==='eurh'?hd:un),rfm:re.slice(),cur};}
+// drop a block of months (e.g. the 2008-09 crisis) from the estimation history
+function dropMonths(H,from,to){const keep=H.months.map((m,t)=>m<from||m>to?t:-1).filter(t=>t>=0);const pick=a=>keep.map(t=>a[t]);
+  return {...H,R:H.R.map(pick),mkt:pick(H.mkt),rfm:pick(H.rfm),months:pick(H.months),T:keep.length,dropped:[from,to]};}
 function sliceH(H,n){const a=Math.max(0,H.T-n);return {ids:H.ids,R:H.R.map(r=>r.slice(a)),mkt:H.mkt.slice(a),rfm:H.rfm.slice(a),months:H.months.slice(a),T:H.T-a,cur:H.cur};}
 function matVec(S,w){const n=w.length,o=new Float64Array(n);for(let i=0;i<n;i++){let s=0;const r=S[i];for(let j=0;j<n;j++)s+=r[j]*w[j];o[i]=s;}return o;}
 function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;}
@@ -156,4 +159,4 @@ function walkForwardStep(H,o,t0,win){const n=H.ids.length,a=t0-win;const E=[];fo
   const tan=fastTangency(M.mu,M.S,cap,o.rf,null,L).w,mv=solve(M.mu,M.S,cap,Infinity,L,null,1500),rp=riskParity(M.S,E.map(()=>true));
   const up=w=>{const f=new Float64Array(n);E.forEach((i,q)=>f[i]=w[q]);return f;};
   return {tan:up(tan),mv:up(mv),rp:up(rp),ew:up(new Float64Array(k).fill(1/k)),k};}
-if(typeof module!=='undefined')module.exports={frontierAt,toBase,alphaStats,META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};
+if(typeof module!=='undefined')module.exports={dropMonths,frontierAt,toBase,alphaStats,META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};

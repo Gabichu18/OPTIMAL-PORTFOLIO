@@ -14,6 +14,8 @@ It runs entirely in the browser: use the live link above, or download the repo a
 | Risk model | Pairwise sample correlations on each asset's own history, Ledoit-Wolf (2003) optimal shrinkage toward constant correlation, eigenvalue repair to keep the matrix positive semi-definite |
 | Portfolios | Max Sharpe (tangency), min variance, max Sortino and min downside (iterative semicovariance), risk parity (equal risk contribution), Michaud resampled, equal weight, or your own weights |
 | Target risk | Slider that picks the highest-expected-return portfolio on the efficient frontier for a chosen volatility, with its Sharpe ratio and historical max drawdown |
+| Asset pages | Click any asset (Assets tab, allocation list, tables) for a full page: growth vs S&P 500, drawdowns, calendar-year returns, rolling return and volatility, return distribution with skew and kurtosis, crisis performance, alpha and beta, its role in each portfolio and its best diversifiers. Deep link with `#TICKER-ID`, e.g. `#NVDA` |
+| 2008–09 exclusion | Button that removes Dec 2007 – Jun 2009 (NBER recession) from the model's estimation to test its influence; backtests and stress tests keep the full history |
 | Frontier | Efficient frontier, capital market line, 4,000 random portfolios |
 | Currency | Base currency switch: USD, EUR unhedged, EUR fully hedged, or EUR with only Treasuries hedged |
 | CAPM & alpha | Betas vs S&P 500 (SPY with dividends), security market line, expected Jensen's alpha, Treynor; realized alpha from a regression on S&P 500 excess returns with monthly T-bill rates, t-statistic, R², tracking error, information and appraisal ratios, cumulative alpha chart |

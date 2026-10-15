@@ -4,6 +4,31 @@
 <style>
 /*__STYLE__*/
 [hidden]{display:none!important}
+#ex08[aria-pressed=true]{background:var(--you-soft);color:var(--you);border-color:var(--you)}
+.asset-link{cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s}
+.asset-link:hover,.asset-link:focus-visible{text-decoration-color:var(--accent);color:var(--accent)}
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.acard{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2);display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.acard:hover,.acard:focus-visible{border-color:var(--accent)}
+.acard .top{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.acard .top b{font-size:.86rem}.acard .top small{font-family:var(--mono);font-size:.66rem;color:var(--faint)}
+.acard canvas{height:44px}
+.acard dl{margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;font-family:var(--mono);font-size:.68rem}
+.acard dt{color:var(--muted);font-size:.6rem;text-transform:uppercase;letter-spacing:.06em}.acard dd{margin:0}
+#apage{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#apage .wrap{gap:16px}
+.abar{position:sticky;top:0;z-index:2;background:var(--bg);display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding-block:12px;border-bottom:1px solid var(--line)}
+.abar .nav{display:flex;gap:6px;flex-wrap:wrap}
+.ahead{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;justify-content:space-between}
+.ahead h1{font-size:clamp(1.7rem,3.2vw,2.4rem)}
+.akpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.akpi>div{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.akpi .l{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.akpi .v{font-family:var(--display);font-size:1.35rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.akpi .s{font-family:var(--mono);font-size:.68rem;color:var(--faint)}
+.ag2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:1000px){.ag2{grid-template-columns:1fr}}
+body.noscroll{overflow:hidden}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{border:none;border-radius:0;background:none;color:var(--muted);padding:6px 12px}
 .seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
@@ -57,6 +82,7 @@
   </div>
   <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
     <div class="field" style="flex-direction:row;align-items:center;gap:8px"><label for="cur" style="font-size:.74rem">Base currency</label><select id="cur" style="font-family:var(--mono);font-size:.8rem;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 8px"><option value="eurb">EUR · hedge bonds only</option><option value="eur">EUR · unhedged</option><option value="eurh">EUR · fully hedged</option><option value="usd">USD</option></select></div>
+    <button id="ex08" class="ghost" aria-pressed="false" title="Remove December 2007 – June 2009 (the NBER recession) from the estimation history">Exclude 2008–09 crisis</button>
     <div class="chips" id="chips"></div>
   </div>
 </header>
@@ -84,6 +110,7 @@
 <section class="panel">
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="cmp">Compare</button>
+    <button role="tab" data-tab="assets">Assets</button>
     <button role="tab" data-tab="mc" aria-selected="true">Monte Carlo</button>
     <button role="tab" data-tab="frontier">Frontier &amp; CML</button>
     <button role="tab" data-tab="down">Downside risk</button>
@@ -94,6 +121,12 @@
     <button role="tab" data-tab="corr">Correlation</button>
     <button role="tab" data-tab="model">Model &amp; views</button>
   </nav>
+
+  <!-- ASSETS -->
+  <div data-pane="assets" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>All assets</h2><span class="kicker">Click any asset for its full analysis page. Asset names elsewhere in the tool open it too.</span></div>
+    <div class="agrid" id="agrid"></div>
+  </div>
 
   <!-- COMPARE -->
   <div data-pane="cmp" hidden style="display:flex;flex-direction:column;gap:14px">
@@ -204,13 +237,38 @@
       <div class="field"><label for="shrink">Correlation shrinkage: <b id="shrinkL"></b></label><input id="shrink" type="range" min="0" max="100"></div>
       <button id="lwBtn">Use Ledoit-Wolf optimum</button>
     </div>
-    <p class="note"><b>Black-Litterman</b> starts from equilibrium returns (CAPM: r<sub>f</sub> + β × ERP), which carry no opinion, then tilts them toward views in proportion to your confidence. The slider adds each asset's own history as a view; your views below come on top. <b>Ledoit-Wolf</b> picks the shrinkage that minimises expected estimation error, computed on the full window. Assets that listed after the window starts are put on the same footing as the rest (Stambaugh, 1997): their history is adjusted for how much better or worse the market did while they traded (<b>Window-adj.</b>), and before listing they are filled with their beta to the S&amp;P 500 plus their own residuals, so volatility and correlations include the dot-com crash and 2008.</p>
+    <p class="note"><b>Black-Litterman</b> starts from equilibrium returns (CAPM: r<sub>f</sub> + β × ERP), which carry no opinion, then tilts them toward views in proportion to your confidence. The slider adds each asset's own history as a view; your views below come on top. <b>Exclude 2008–09 crisis</b> (button at the top) removes December 2007 – June 2009 from everything the model estimates: expected returns, risk, correlations, the optimal portfolios and the Monte Carlo. Backtests, stress tests and realized alpha always use the full history, since they report what actually happened. <b>Ledoit-Wolf</b> picks the shrinkage that minimises expected estimation error, computed on the full window. Assets that listed after the window starts are put on the same footing as the rest (Stambaugh, 1997): their history is adjusted for how much better or worse the market did while they traded (<b>Window-adj.</b>), and before listing they are filled with their beta to the S&amp;P 500 plus their own residuals, so volatility and correlations include the dot-com crash and 2008.</p>
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Your views</h2><button id="addView">Add view</button></div>
     <div class="views" id="views"></div>
     <div class="scroll"><table id="aTable"></table></div>
   </div>
 </section>
 </div>
+</div>
+
+<div id="apage" hidden role="dialog" aria-modal="true" aria-labelledby="apName">
+ <div class="wrap">
+  <div class="abar"><button id="apBack">← Back to portfolio</button><div class="nav"><button id="apPrev" aria-label="Previous asset">‹ Prev</button><button id="apNext" aria-label="Next asset">Next ›</button></div></div>
+  <div class="ahead"><div><h1 id="apName"></h1><div class="sub" id="apSub"></div></div><div class="chips" id="apChips"></div></div>
+  <section class="akpi" id="apKpi"></section>
+  <section class="panel"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2>Performance</h2><span class="kicker" id="apPerfK"></span></div>
+    <div class="chart"><canvas id="apGrowth" height="360"></canvas></div><div class="legend" id="apLeg"></div>
+    <div class="chart"><canvas id="apDD" height="150"></canvas></div></section>
+  <div class="ag2">
+    <section class="panel"><h2>Calendar-year returns</h2><div class="chart"><canvas id="apYears" height="300"></canvas></div><div class="legend"><span><i style="background:var(--accent);height:8px"></i>Asset</span><span><i style="background:var(--spx);height:8px"></i>S&amp;P 500</span></div></section>
+    <section class="panel"><h2>Rolling 12-month return &amp; 3-year volatility</h2><div class="chart"><canvas id="apRoll" height="300"></canvas></div><div class="legend"><span><i style="background:var(--accent)"></i>12-month return</span><span><i style="background:var(--you)"></i>36-month volatility</span></div></section>
+  </div>
+  <div class="ag2">
+    <section class="panel"><h2>Monthly return distribution</h2><div class="chart"><canvas id="apHist" height="260"></canvas></div><p class="note" id="apHistN"></p></section>
+    <section class="panel"><h2>Crises</h2><div class="scroll"><table id="apStress"></table></div></section>
+  </div>
+  <div class="ag2">
+    <section class="panel"><h2>In the model</h2><div class="scroll"><table id="apModel"></table></div>
+      <div class="row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label for="apW" class="kicker">Your weight %</label><input id="apW" type="number" min="0" max="100" step="0.5" style="width:80px;font-family:var(--mono);background:var(--bg);color:var(--you);border:1px solid var(--line);border-radius:6px;padding:5px 6px"><span class="kicker" id="apWnote"></span></div></section>
+    <section class="panel"><h2>Correlations</h2><div class="pairs"><div><h3>Moves most with</h3><ol id="apHi"></ol></div><div><h3>Best diversifiers for it</h3><ol id="apLo"></ol></div></div></section>
+  </div>
+  <p class="note" id="apNote"></p>
+ </div>
 </div>
 
 <script>const RAW=`/*__DATA__*/`;</script>
@@ -229,15 +287,16 @@ const ORDER=A.map((a,i)=>i).sort((p,q)=>Object.keys(CLS).indexOf(A[p].cls)-Objec
 const RFX={usd:0.04057,eur:0.025,eurh:0.025,eurb:0.025};// 13-week T-bill / ECB deposit rate, 9 Oct 2026
 const CURL={usd:'USD',eur:'EUR, unhedged',eurh:'EUR, hedged',eurb:'EUR, bonds hedged'};
 const RF0=RFX.eurb;
-const S={cur:'eurb',win:361,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
-let H,M,O,D,RP,RES=null,WF=null,cloud,LW;
+const EX08=['2007-12','2009-06'];
+const S={ex08:false,cur:'eurb',win:361,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
+let HP,H,M,O,D,RP,RES=null,WF=null,cloud,LW;
 
 function opts(){return {rf:S.rf,erp:S.erp,mar:S.mar,shrink:S.shrink,mode:S.mode,trust:S.trust,tau:S.tau,views:effViews(),override:S.override,cap:S.cap,active:S.active};}
 function effViews(){const v=S.views.filter(x=>x.a&&(x.type==='abs'||x.b&&x.b!==x.a)).map(x=>({...x}));
   if(S.mode==='bl'&&S.trust>0&&M0)A.forEach((a,i)=>{if(S.active[i])v.push({a:a.id,type:'abs',q:M0.hmAdj[i],conf:S.trust,hist:true});});return v;}
 let M0=null;
 function rebuild(){
-  HF=toBase(HF0,S.cur);H=sliceH(HF,S.win);M0=buildModel(H,{...opts(),shrink:S.shrink??.3,views:[],mode:'hist'});LW=ledoitWolf({ids:H.ids,R:M0.F,T:H.T});if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);M=buildModel(H,opts());
+  HF=toBase(HF0,S.cur);HP=sliceH(HF,S.win);H=S.ex08?dropMonths(HP,EX08[0],EX08[1]):HP;M0=buildModel(H,{...opts(),shrink:S.shrink??.3,views:[],mode:'hist'});LW=ledoitWolf({ids:H.ids,R:M0.F,T:H.T});if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);M=buildModel(H,opts());
   const k=S.active.filter(Boolean).length,capE=Math.max(S.cap,1/k+1e-6),capA=Float64Array.from(A.map((a,i)=>S.active[i]?capE:0));
   O=optimize(M.mu,M.S,capA,S.rf);D=optimizeDownside(M.F,M.mu,capA,S.mar,M.marM,[O.tangency.w,O.minvar.w]);RP=riskParity(M.S,S.active);
   cloud=randomPortfolios(M.mu,M.S,S.rf,4000,11,S.active);RES=null;WF=null;M._capA=capA;
@@ -249,7 +308,7 @@ function port(w){const wn=norm(w);const key=Array.from(wn,x=>x.toFixed(5)).join(
   const st=stats(wn,M.mu,M.S);const b=dot(wn,M.beta);const ser=portSeries(M.F,wn);const rs=riskStats(ser,M.marM);const sdd=Math.sqrt(Math.max(0,dot(wn,matVec(M.SC,wn))));
   const sw=Array.from(wn).reduce((s,x,i)=>s+x*M.sd[i],0);
   const p={w:wn,ret:st.ret,vol:st.vol,beta:b,sharpe:st.vol?(st.ret-S.rf)/st.vol:0,alpha:st.ret-(S.rf+b*S.erp),var95:Math.max(0,-(st.ret-1.645*st.vol)),effN:1/wn.reduce((t,x)=>t+x*x,0),rs,sdd,dbeta:dot(wn,M.dbeta),sortino:rs.dd?(st.ret-S.mar)/rs.dd:0,divRatio:st.vol?sw/st.vol:1};
-  p.ra=alphaStats(portListed(H.R,wn),H.mkt,H.rfm);if(PC.size>200)PC.clear();PC.set(key,p);return p;}
+  p.ra=alphaStats(portListed(HP.R,wn),HP.mkt,HP.rfm);if(PC.size>200)PC.clear();PC.set(key,p);return p;}
 
 /* ---------- chart kit ---------- */
 function setup(cv,minH,ar){const dpr=window.devicePixelRatio||1;const w=cv.clientWidth||cv.parentElement.clientWidth;const base=+(cv.dataset.h||(cv.dataset.h=cv.getAttribute('height')));const h=ar?Math.round(Math.min(base*1.15,Math.max(minH||200,w*ar))):Math.max(minH||200,Math.round(base*Math.min(1,Math.max(.65,w/760))));cv.style.height=h+'px';cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,W:w,H:h};}
@@ -284,7 +343,7 @@ function hero(){const y=port(S.w),t=port(O.tangency.w),mc=window._mc;
     k(`Median in ${$('mcYears').value}y${mc&&mc.y.real?' · today\'s €':''}`,mc?eur(mc.y.bands[2][mc.y.T]):'—',mc?`<span class="${mc.y.bands[2][mc.y.T]>=mc.t.bands[2][mc.t.T]?'up':'down'}">${eur(mc.y.bands[2][mc.y.T]-mc.t.bands[2][mc.t.T])}</span> vs max-Sharpe`:'');}
 function allocList(){let h='',cur='';const t=O.tangency.w;
   ORDER.forEach(i=>{const a=A[i];if(a.cls!==cur){cur=a.cls;h+=`<div class="grp"><span><span class="dot" style="background:var(${CLS[cur][1]})"></span>${CLS[cur][0]}</span><span id="g_${cur}"></span></div>`;}
-    h+=`<div class="ar${S.active[i]?'':' off'}"><div class="nm" title="${a.name}">${a.name}<small>${a.ticker}</small></div>
+    h+=`<div class="ar${S.active[i]?'':' off'}"><div class="nm" title="Open ${a.name} analysis"><span class="asset-link" data-asset="${a.id}" tabindex="0" role="button">${a.name}</span><small>${a.ticker}</small></div>
       <input type="number" id="n${i}" data-i="${i}" min="0" max="100" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight %">
       <input type="range" id="r${i}" data-i="${i}" min="0" max="40" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight slider">
       <div class="optw"><span>max-Sh ${pct(t[i])}</span><span>E[R] ${pct(M.mu[i],0)} · σ ${pct(M.sd[i],0)}</span></div></div>`;});
@@ -357,7 +416,7 @@ function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(
   $('legDown').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--c-crypto)"></i>Max Sortino</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min downside</span><span><i style="background:var(--c-crypto)"></i>From MAR through max Sortino</span>`;
   const rows=A.map((a,i)=>({a,i,so:(M.mu[i]-S.mar)/M.risk[i].dd})).sort((p,q)=>q.so-p.so);
   $('dTable').innerHTML=`<thead><tr><th>Asset</th><th>Sortino</th><th>Downside dev.</th><th>σ</th><th>Downside β</th><th>β</th><th>VaR 95% 1m</th><th>CVaR 95% 1m</th><th>Worst month</th><th>Max DD</th><th>Losing months</th><th>Omega</th></tr></thead><tbody>`+
-    rows.map(r=>{const k=M.risk[r.i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</td><td>${r.so.toFixed(2)}</td><td>${pct(k.dd)}</td><td>${pct(M.sd[r.i])}</td><td>${M.dbeta[r.i].toFixed(2)}</td><td>${M.beta[r.i].toFixed(2)}</td><td class="down">${pct(-k.var95)}</td><td class="down">${pct(-k.cvar95)}</td><td class="down">${pct(k.worst)}</td><td class="down">${pct(-k.mdd,0)}</td><td>${pct(k.pctNeg,0)}</td><td>${isFinite(k.omega)?k.omega.toFixed(2):'∞'}</td></tr>`;}).join('')+'</tbody>';}
+    rows.map(r=>{const k=M.risk[r.i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span><span class="asset-link" data-asset="${r.a.id}" tabindex="0">${r.a.name}</span></td><td>${r.so.toFixed(2)}</td><td>${pct(k.dd)}</td><td>${pct(M.sd[r.i])}</td><td>${M.dbeta[r.i].toFixed(2)}</td><td>${M.beta[r.i].toFixed(2)}</td><td class="down">${pct(-k.var95)}</td><td class="down">${pct(-k.cvar95)}</td><td class="down">${pct(k.worst)}</td><td class="down">${pct(-k.mdd,0)}</td><td>${pct(k.pctNeg,0)}</td><td>${isFinite(k.omega)?k.omega.toFixed(2):'∞'}</td></tr>`;}).join('')+'</tbody>';}
 
 /* ---------- Risk budget ---------- */
 function drawRB(){const y=port(S.w);const rc=riskContrib(y.w,M.S);const rp=port(RP),t=port(O.tangency.w);
@@ -398,9 +457,9 @@ function drawSeries(sets,dates,note){const T=dates.length-1;const xt=[];dates.fo
   $('btNote').innerHTML=note;}
 function drawBT(){$('btIn').setAttribute('aria-pressed',btMode==='in');$('btOut').setAttribute('aria-pressed',btMode==='out');
   if(btMode==='in'){$('wfProg').hidden=true;const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--accent',O.tangency.w],['Min variance','--minv',O.minvar.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]];
-    const sets=P.map(p=>({n:p[0],c:p[1],b:growth(portListed(H.R,p[2]))}));sets.push({n:'S&P 500',c:'--spx',b:growth(H.mkt)});
-    $('btKick').textContent=`${H.months[0]} → ${H.months[H.T-1]}, today's weights, rebalanced monthly`;
-    drawSeries(sets,[prevMonth(H.months[0]),...H.months],'In-sample: the optimized weights were chosen using this same history, so their lines flatter them. Use <b>Walk-forward</b> for an honest test. Assets enter when they list. All backtests here also carry selection bias: these 35 assets were chosen in 2026, partly because they did well.');}
+    const sets=P.map(p=>({n:p[0],c:p[1],b:growth(portListed(HP.R,p[2]))}));sets.push({n:'S&P 500',c:'--spx',b:growth(HP.mkt)});
+    $('btKick').textContent=`${HP.months[0]} → ${HP.months[HP.T-1]}, today's weights, rebalanced monthly`;
+    drawSeries(sets,[prevMonth(HP.months[0]),...HP.months],'In-sample: the optimized weights were chosen using this same history, so their lines flatter them. Use <b>Walk-forward</b> for an honest test. Assets enter when they list. All backtests here also carry selection bias: these 35 assets were chosen in 2026, partly because they did well.');}
   else{if(!WF){runWF();return;}drawSeries(WF.sets,WF.dates,`Out-of-sample: every quarter from ${WF.dates[0]}, each strategy is re-estimated on the previous 5 years only (assets need 3 years of history to qualify), then held for 3 months on returns it had not seen. Expected returns for the rolling max-Sharpe use the history–CAPM blend at your confidence (${pct(S.trust,0)}), since your views are about today. <b>Yours</b> is your current weights held throughout, so it still looks ahead. Selection bias remains: the 35 assets were picked in 2026, so every strategy here benefits from knowing which companies became winners.`);$('btKick').textContent=`Rebalanced quarterly · ${WF.n} re-estimations`;}}
 function prevMonth(m){let [y,mm]=m.split('-').map(Number);mm--;if(!mm){mm=12;y--;}return y+'-'+String(mm).padStart(2,'0');}
 function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;t+=step)t0s.push(t);const W={tan:[],mv:[],rp:[],ew:[]};const ret={tan:[],mv:[],rp:[],ew:[]};const turn={tan:0,mv:0,rp:0,ew:0};let prev=null;
@@ -415,15 +474,15 @@ function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;
 
 /* ---------- Compare ---------- */
 function irrAnnual(start,monthly,T,F){const fv=i=>i===0?start+monthly*T:start*Math.pow(1+i,T)+monthly*(Math.pow(1+i,T)-1)/i;let lo=-.2,hi=.2;for(let k=0;k<100;k++){const m=(lo+hi)/2;if(fv(m)>F)hi=m;else lo=m;}return Math.pow(1+(lo+hi)/2,12)-1;}
-function yearStats(series){const by={};series.forEach((r,t)=>{const y=H.months[t].slice(0,4);(by[y]=by[y]||[]).push(r);});let worst=null,best=null;
+function yearStats(series,months){months=months||HP.months;const by={};series.forEach((r,t)=>{const y=months[t].slice(0,4);(by[y]=by[y]||[]).push(r);});let worst=null,best=null;
   for(const y in by){if(by[y].length<6)continue;const g=by[y].reduce((v,r)=>v*(1+r),1)-1;const lab=by[y].length<12?y+' YTD':y;if(!worst||g<worst.v)worst={v:g,y:lab};if(!best||g>best.v)best={v:g,y:lab};}return {worst,best};}
 function drawCompare(){const io=mcOpts();const irrR=mc=>{const i=irrAnnual(+$('mcStart').value||0,+$('mcMonthly').value||0,mc.T,mc.bands[2][mc.T]*(mc.real?mc.deflT:1));return mc.real?(1+i)/(1+mc.infl)-1:i;};const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
   const L=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Min variance','--minv',O.minvar.w],['Max Sortino','--c-crypto',D.tangency.w],['Min downside','--muted',D.minvar.w],['Risk parity','--c-bond',RP]];
   if(RES)L.push(['Resampled','--c-tech',RES]);L.push(['Equal weight','--c-def',A.map(()=>1/N)],['Cap-weighted','--c-fin',capW()]);
-  const rows=L.map(([n,c,w])=>{const p=port(w);const mc=monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const hs=portListed(H.R,p.w);const g=growth(hs);const ys=yearStats(hs);
+  const rows=L.map(([n,c,w])=>{const p=port(w);const mc=monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const hs=portListed(HP.R,p.w);const g=growth(hs);const ys=yearStats(hs);
     return {n,c,ret:p.ret,vol:p.vol,sh:p.sharpe,so:p.sortino,beta:p.beta,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrR(mc),ploss:mc.pLoss,cagr:g.cagr,worst:ys.worst,mdd:g.maxDD,alpha:p.ra.alpha};});
-  {const mu=S.rf+S.erp,vol=M.mkt.sd,mm=H.mkt.reduce((a,b)=>a+b,0)/H.T;const ser=Float64Array.from(H.mkt,x=>x-mm+mu/12);const mc=monteCarlo({method:meth,series:ser,mu,vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const g=growth(H.mkt);const rs=riskStats(H.mkt,M.marM);
-    rows.push({n:'S&P 500',c:'--spx',ret:mu,vol,sh:(mu-S.rf)/vol,so:(mu-S.mar)/rs.dd,beta:1,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrR(mc),ploss:mc.pLoss,cagr:g.cagr,worst:yearStats(H.mkt).worst,mdd:g.maxDD,alpha:0});}
+  {const mu=S.rf+S.erp,vol=M.mkt.sd,mm=H.mkt.reduce((a,b)=>a+b,0)/H.T;const ser=Float64Array.from(H.mkt,x=>x-mm+mu/12);const mc=monteCarlo({method:meth,series:ser,mu,vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const g=growth(HP.mkt);const rs=riskStats(HP.mkt,M.marM);
+    rows.push({n:'S&P 500',c:'--spx',ret:mu,vol,sh:(mu-S.rf)/vol,so:(mu-S.mar)/rs.dd,beta:1,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrR(mc),ploss:mc.pLoss,cagr:g.cagr,worst:yearStats(HP.mkt).worst,mdd:g.maxDD,alpha:0});}
   const C=[['ret','Expected return',x=>pct(x),1],['vol','Risk (volatility)',x=>pct(x),-1],['sh','Sharpe',x=>x.toFixed(2),1],['so','Sortino',x=>x.toFixed(2),1],['beta','Beta',x=>x.toFixed(2),0],
     ['fin',`Value in ${yrs}y (median)`,x=>eur(x),1],['irr','IRR',x=>pct(x),1],['bad','Bad case (5%)',x=>eur(x),1],['ploss','Chance below invested',x=>pct(x),-1],
     ['cagr','Annual return',x=>pct(x),1],['worst','Worst year',x=>x?sp(x.v)+`<small>${x.y}</small>`:'—',1,x=>x?x.v:0],['mdd','Max drawdown',x=>pct(-x),-1],['alpha','Alpha / yr',x=>sp(x),1]];
@@ -432,15 +491,15 @@ function drawCompare(){const io=mcOpts();const irrR=mc=>{const i=irrAnnual(+$('m
   const grp=k=>k<5?'cg1':k<9?'cg2':'cg3';
   $('cmpTable').innerHTML=`<thead><tr><th>Portfolio</th>${C.map((c,k)=>`<th class="${grp(k)}">${c[1]}</th>`).join('')}</tr></thead><tbody>`+
     rows.map(r=>`<tr class="${r.n==='Yours'?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.n}</td>${C.map(([k,,f])=>`<td class="${cls(k,r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('')+'</tbody>';
-  $('cmpKick').innerHTML=`<span class="gtag cg1">Expected · model</span> <span class="gtag cg2">Future · Monte Carlo, ${eur(st)} + ${eur(mo)}/mo for ${yrs}y${io.real?`, today's € (inflation ${pct(io.infl)})`:', nominal €'}</span> <span class="gtag cg3">Past · ${H.months[0].slice(0,4)}–2026 real data</span>`;}
+  $('cmpKick').innerHTML=`<span class="gtag cg1">Expected · model</span> <span class="gtag cg2">Future · Monte Carlo, ${eur(st)} + ${eur(mo)}/mo for ${yrs}y${io.real?`, today's € (inflation ${pct(io.infl)})`:', nominal €'}</span> <span class="gtag cg3">Past · ${HP.months[0].slice(0,4)}–2026 real data</span>`;}
 /* ---------- Alpha ---------- */
 function sigTxt(t){const a=Math.abs(t);return a>=2.58?'significant at 99%':a>=1.96?'significant at 95%':a>=1.65?'weak (90%)':'not significant';}
 function drawAlpha(){const P=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]].map(([n,c,w])=>({n,c,p:port(w)}));
-  $('alphaKick').textContent=`Realized vs S&P 500 · ${H.months[0]} → ${H.months[H.T-1]} · ${H.T} months`;
+  $('alphaKick').textContent=`Realized vs S&P 500 · ${HP.months[0]} → ${HP.months[HP.T-1]} · ${HP.T} months`;
   $('alphaCards').innerHTML=P.map(({n,c,p})=>{const r=p.ra;return `<div class="cc"><div class="t"><span class="dot" style="background:var(${c})"></span>${n}</div><div class="big ${r.alpha>=0?'up':'down'}">${sp(r.alpha)}<small>alpha / yr</small></div><dl>
     <dt>t-statistic</dt><dd>${r.t.toFixed(2)}</dd><dt>Verdict</dt><dd>${sigTxt(r.t)}</dd><dt>Realized β</dt><dd>${r.beta.toFixed(2)}</dd><dt>R²</dt><dd>${pct(r.r2,0)}</dd>
     <dt>Return vs S&amp;P / yr</dt><dd>${sp(r.active)}</dd><dt>Tracking error</dt><dd>${pct(r.te)}</dd><dt>Information ratio</dt><dd>${r.ir.toFixed(2)}</dd><dt>Appraisal ratio</dt><dd>${r.appraisal.toFixed(2)}</dd></dl></div>`;}).join('');
-  const cv=$('cAlpha');const {ctx,W,H:Hh}=setup(cv,220,.3);const pad={l:56,r:18,t:12,b:30};const dates=[prevMonth(H.months[0]),...H.months],T=H.T;
+  const cv=$('cAlpha');const {ctx,W,H:Hh}=setup(cv,220,.3);const pad={l:56,r:18,t:12,b:30};const dates=[prevMonth(HP.months[0]),...HP.months],T=HP.T;
   const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(T>100?2:1)===0)xt.push(i);});
   const all=P.flatMap(x=>x.p.ra.cum);const lg=Math.log;const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lg(Math.min(1,...all)*.95),lg(Math.max(...all)*1.05)],i=>dates[i].slice(0,4),v=>sp(Math.exp(v)-1,0),'','Cumulative alpha',xt);
   line(ctx,[[X(0),Y(0)],[X(T),Y(0)]],css('--faint'),1,[3,3]);HITS.alpha=[];
@@ -453,7 +512,7 @@ function drawSML(){drawAlpha();const cv=$('cSML');const {ctx,W,H:Hh}=setup(cv,30
   dotC(ctx,X(1),Y(S.rf+S.erp),5,css('--spx'));[[O.minvar.w,'--minv','Min variance'],[O.tangency.w,'--accent','Max Sharpe']].forEach(([w,c,n])=>{const p=port(w);dia(ctx,X(p.beta),Y(p.ret),8,css(c));hl.push({x:X(p.beta),y:Y(p.ret),label:`${n} · β ${p.beta.toFixed(2)} · α ${sp(p.alpha)}`});});
   const y=port(S.w);dotC(ctx,X(y.beta),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.beta),y:Y(y.ret),label:`Yours · β ${y.beta.toFixed(2)} · α ${sp(y.alpha)}`});tip(cv,'sml');
   const rows=A.map((a,i)=>({a,i,req:S.rf+b[i]*S.erp})).sort((p,q)=>(mu[q.i]-q.req)-(mu[p.i]-p.req));
-  $('alphaTable').innerHTML=`<thead><tr><th>Asset</th><th>β</th><th>CAPM required</th><th>E[R] in use</th><th>Jensen α</th><th>Treynor</th><th>Hist. CAGR</th></tr></thead><tbody>`+rows.map(r=>`<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</td><td>${b[r.i].toFixed(2)}</td><td>${pct(r.req)}</td><td>${pct(mu[r.i])}</td><td class="${mu[r.i]>=r.req?'up':'down'}">${sp(mu[r.i]-r.req)}</td><td>${Math.abs(b[r.i])>.05?pct((mu[r.i]-S.rf)/b[r.i]):'—'}</td><td>${pct(M.cagr[r.i])}</td></tr>`).join('')+'</tbody>';}
+  $('alphaTable').innerHTML=`<thead><tr><th>Asset</th><th>β</th><th>CAPM required</th><th>E[R] in use</th><th>Jensen α</th><th>Treynor</th><th>Hist. CAGR</th></tr></thead><tbody>`+rows.map(r=>`<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span><span class="asset-link" data-asset="${r.a.id}" tabindex="0">${r.a.name}</span></td><td>${b[r.i].toFixed(2)}</td><td>${pct(r.req)}</td><td>${pct(mu[r.i])}</td><td class="${mu[r.i]>=r.req?'up':'down'}">${sp(mu[r.i]-r.req)}</td><td>${Math.abs(b[r.i])>.05?pct((mu[r.i]-S.rf)/b[r.i]):'—'}</td><td>${pct(M.cagr[r.i])}</td></tr>`).join('')+'</tbody>';}
 
 /* ---------- Correlation ---------- */
 function drawCorr(){const cv=$('cCorr');const {ctx,W,H:Hh}=setup(cv,560);const lab=78,n=N;const cs=Math.min((W-lab-4)/n,(Hh-lab-4)/n);const nu=css('--panel2'),po=css('--accent'),ne=css('--bad');const hl=HITS.corr=[];ctx.font=`${Math.max(8,Math.min(10,cs*.55))}px "JetBrains Mono",monospace`;
@@ -472,20 +531,89 @@ function viewsUI(){const opt=sel=>A.map(a=>`<option value="${a.id}"${a.id===sel?
     `<p class="note">No views yet. A view is an opinion such as "Nvidia will beat Microsoft by 3% a year" or "Gold will return 6%", with a confidence. Without views, Black-Litterman uses equilibrium returns plus the history slider above.</p>`;}
 function viewEffect(v){const i=A.findIndex(a=>a.id===v.a);if(i<0)return '';if(v.type==='rel'){const j=A.findIndex(a=>a.id===v.b);return `now: ${A[i].id} − ${A[j].id} = ${sp(M.mu[i]-M.mu[j])} (prior ${sp(M.capm[i]-M.capm[j])})`;}return `${A[i].id}: prior ${pct(M.capm[i])} → ${pct(M.mu[i])}`;}
 function aTable(){$('aTable').innerHTML=`<thead><tr><th>Asset</th><th>In</th><th>Since</th><th>Hist. mean</th><th>Window-adj.</th><th>CAGR</th><th>σ</th><th>β</th><th>Equilibrium</th><th>E[R] used %</th><th>Max-Sh.</th><th>Min-var</th><th>Risk parity</th></tr></thead><tbody>`+
-  ORDER.map(i=>{const a=A[i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[a.cls][1]})"></span>${a.name}<small>${a.ticker}</small></td><td><input type="checkbox" data-act="${i}" ${S.active[i]?'checked':''} aria-label="Include ${a.name}" style="width:auto"></td>
+  ORDER.map(i=>{const a=A[i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[a.cls][1]})"></span><span class="asset-link" data-asset="${a.id}" tabindex="0">${a.name}</span><small>${a.ticker}</small></td><td><input type="checkbox" data-act="${i}" ${S.active[i]?'checked':''} aria-label="Include ${a.name}" style="width:auto"></td>
   <td>${H.months[M.first[i]]}</td><td>${pct(M.hm[i])}</td><td>${pct(M.hmAdj[i])}</td><td>${pct(M.cagr[i])}</td><td>${pct(M.sd[i])}</td><td>${M.beta[i].toFixed(2)}</td><td>${pct(M.capm[i])}</td>
   <td><input type="number" step="0.5" data-mu="${i}" value="${(M.mu[i]*100).toFixed(1)}" aria-label="Expected return ${a.name}" style="${S.override[i]!=null?'border-color:var(--you);color:var(--you)':''}"></td><td>${pct(O.tangency.w[i])}</td><td>${pct(O.minvar.w[i])}</td><td>${pct(RP[i])}</td></tr>`;}).join('')+'</tbody>';}
 const CURNOTE={usd:'All returns are in US dollars; the euros label assumes EUR/USD stays flat.',eur:'All returns are converted to euros at month-end EUR/USD, so the dollar\'s swings are included.',eurh:'All returns are hedged to euros: the dollar\'s swings are removed, at the cost (or gain) of the gap between US and euro short-term rates each month.',eurb:'Returns are in euros: stocks, gold, energy and Bitcoin unhedged, US Treasuries hedged to euros.'};
 function modelUI(){$('curNote').textContent=CURNOTE[S.cur];$('trustT').textContent=S.mode==='bl'?'Confidence in history as a view':S.mode==='blend'?'Weight on history (rest CAPM)':'History weight (fixed at 100%)';$('trust').disabled=S.mode==='hist';$('trustL').textContent=Math.round(S.trust*100)+'%';
   $('shrink').value=Math.round(S.shrink*100);$('shrinkL').textContent=Math.round(S.shrink*100)+'%';$('lwBtn').textContent=`Use Ledoit-Wolf optimum (${Math.round(LW.delta*100)}%)`;viewsUI();aTable();
-  $('chips').innerHTML=`<span class="chip">Yahoo Finance · monthly · <b>${H.months[0]} – 2026-10-09</b></span><span class="chip">Returns: <b>${{bl:'Black-Litterman',blend:'History–CAPM blend',hist:'Pure history'}[S.mode]}</b></span><span class="chip">Shrinkage <b>${Math.round(S.shrink*100)}%</b></span><span class="chip">Risk-free <b>${pct(S.rf,2)}</b></span><span class="chip">Currency: <b>${CURL[S.cur]}</b></span>`;}
+  $('chips').innerHTML=`<span class="chip">Yahoo Finance · monthly · <b>${H.months[0]} – 2026-10-09</b></span><span class="chip">Returns: <b>${{bl:'Black-Litterman',blend:'History–CAPM blend',hist:'Pure history'}[S.mode]}</b></span><span class="chip">Shrinkage <b>${Math.round(S.shrink*100)}%</b></span><span class="chip">Risk-free <b>${pct(S.rf,2)}</b></span><span class="chip">Currency: <b>${CURL[S.cur]}</b></span>${S.ex08?'<span class="chip" style="color:var(--you);border-color:var(--you)">Model excludes <b>Dec 2007 – Jun 2009</b></span>':''}`;}
 
+/* ---------- Asset page ---------- */
+let AP=null;
+function assetData(i){const r=HF.R[i];const f=r.findIndex(x=>x!=null);const a=r.slice(f),mk=HF.mkt.slice(f),rf=HF.rfm.slice(f),mo=HF.months.slice(f);
+  const g=growth(a),gm=growth(mk),rs=riskStats(a,M.marM),al=alphaStats(a,mk,rf);const n=a.length;const mean=a.reduce((p,q)=>p+q,0)/n;const rfa=rf.reduce((p,q)=>p+q,0)/n*12;
+  let pk=1,pkT=0,tr=0,trT=0,dd=0;g.v.forEach((v,t)=>{if(v>pk){pk=v;pkT=t;}const d=1-v/pk;if(d>dd){dd=d;tr=t;trT=pkT;}});let rec=null;for(let t=tr;t<g.v.length;t++)if(g.v[t]>=g.v[trT]){rec=t-tr;break;}
+  const dates=[prevMonth(mo[0]),...mo];return {i,f,a,mk,rf,mo,dates,g,gm,rs,al,n,mean,rfa,ddPeak:dates[trT],ddTrough:dates[tr],rec,pos:a.filter(x=>x>0).length/n};}
+function openAsset(id,push=true){const i=A.findIndex(a=>a.id===id);if(i<0||!M)return;AP=i;$('apage').hidden=false;document.body.classList.add('noscroll');$('apage').scrollTop=0;
+  if(push){try{history.replaceState(null,'',location.pathname+location.search+'#'+id);}catch(_){}}renderAsset();$('apBack').focus();}
+function closeAsset(){$('apage').hidden=true;document.body.classList.remove('noscroll');AP=null;try{history.replaceState(null,'',location.pathname+location.search);}catch(_){}}
+function stepAsset(d){const k=ORDER.indexOf(AP);openAsset(A[ORDER[(k+d+N)%N]].id);}
+function renderAsset(){if(AP==null)return;const i=AP,a=A[i],Q=assetData(i);const c=css(CLS[a.cls][1]);const yrs=(Q.n/12).toFixed(1);
+  $('apName').textContent=a.name;$('apSub').innerHTML=`<span class="dot" style="background:var(${CLS[a.cls][1]})"></span>${CLS[a.cls][0]} · ${a.ticker} · ${Q.dates[0]} → 2026-10-09 (${yrs} years)`;
+  $('apChips').innerHTML=`<span class="chip">Currency: <b>${CURL[S.cur]}</b></span>${CAPS[a.id]?`<span class="chip">Market cap <b>$${CAPS[a.id]>=1000?(CAPS[a.id]/1000).toFixed(2)+'T':CAPS[a.id].toFixed(0)+'B'}</b></span>`:''}${S.active[i]?'':'<span class="chip">Excluded from optimizer</span>'}`;
+  const k=(l,v,sub,cl)=>`<div><span class="l">${l}</span><span class="v ${cl||''}">${v}</span><span class="s">${sub||''}</span></div>`;
+  $('apKpi').innerHTML=k('Annual return (CAGR)',pct(Q.g.cagr),`S&P 500 ${pct(Q.gm.cagr)}`,Q.g.cagr>=Q.gm.cagr?'up':'down')+k('Total return',sp(Q.g.v[Q.n]-1,0),`S&P 500 ${sp(Q.gm.v[Q.n]-1,0)}`)+
+    k('Volatility',pct(Q.g.vol),`S&P 500 ${pct(Q.gm.vol)}`)+k('Sharpe',((Q.g.cagr-Q.rfa)/Q.g.vol).toFixed(2),`S&P 500 ${((Q.gm.cagr-Q.rfa)/Q.gm.vol).toFixed(2)}`)+
+    k('Sortino',Q.rs.dd?((Q.mean*12-S.mar)/Q.rs.dd).toFixed(2):'—',`downside dev. ${pct(Q.rs.dd)}`)+k('Max drawdown',pct(-Q.g.maxDD,0),`${Q.ddPeak} → ${Q.ddTrough}`,'down')+
+    k('Recovery',Q.rec==null?'not yet':Q.rec+' mo','from trough to old peak')+k('Beta vs S&P 500',Q.al.beta.toFixed(2),`correlation ${(Math.sign(Q.al.beta)*Math.sqrt(Math.max(0,Q.al.r2))).toFixed(2)}`)+
+    k('Alpha / yr',sp(Q.al.alpha),`t = ${Q.al.t.toFixed(1)} · ${sigTxt(Q.al.t)}`,Q.al.alpha>=0?'up':'down')+k('Best / worst month',`${sp(Q.g.best,0)} / ${sp(Q.g.worst,0)}`,`${pct(Q.pos,0)} of months positive`)+
+    k('VaR / CVaR 95% (1m)',`${pct(-Q.rs.var95,0)} / ${pct(-Q.rs.cvar95,0)}`,'historical')+k('Expected return (model)',pct(M.mu[i]),`equilibrium ${pct(M.capm[i])}`);
+  $('apPerfK').textContent=`Growth of 1 from ${Q.dates[0]}, dividends reinvested, log scale`;
+  const xt=[];Q.dates.forEach((d,t)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(Q.n>180?4:Q.n>72?2:1)===0)xt.push(t);});const yr=t=>Q.dates[t].slice(0,4);
+  {const cv=$('apGrowth');const {ctx,W,H:Hh}=setup(cv,260,.36);const pad={l:56,r:16,t:12,b:30};const all=[...Q.g.v,...Q.gm.v];const lg=Math.log;
+   const {X,Y}=axes(ctx,W,Hh,pad,[0,Q.n],[lg(Math.min(...all)*.9),lg(Math.max(...all)*1.1)],yr,v=>{const x=Math.exp(v);return (x>=10?x.toFixed(0):x.toFixed(1))+'×';},'','',xt);
+   if(S.ex08){const a0=Q.dates.indexOf(EX08[0]),b0=Q.dates.indexOf(EX08[1]);if(a0>=0&&b0>=0){ctx.fillStyle=css('--you-soft');ctx.fillRect(X(a0),pad.t,X(b0)-X(a0),Hh-pad.t-pad.b);}}
+   line(ctx,Q.gm.v.map((v,t)=>[X(t),Y(lg(v))]),css('--spx'),1.6);line(ctx,Q.g.v.map((v,t)=>[X(t),Y(lg(v))]),c,2.6);
+   HITS.apg=[];for(let t=0;t<=Q.n;t+=Math.max(1,Math.floor(Q.n/120)))HITS.apg.push({x:X(t),y:Y(lg(Q.g.v[t])),label:`${Q.dates[t]} · ${a.id} ${Q.g.v[t].toFixed(2)}× · S&P ${Q.gm.v[t].toFixed(2)}×`});tip(cv,'apg');}
+  $('apLeg').innerHTML=`<span><i style="background:var(${CLS[a.cls][1]})"></i>${a.name}</span><span><i style="background:var(--spx)"></i>S&amp;P 500 (same currency)</span>${S.ex08?'<span><i style="background:var(--you-soft);height:9px"></i>Months excluded from the model</span>':''}`;
+  {const cv=$('apDD');const g=setup(cv,120,.14);const pad={l:56,r:16,t:8,b:24};const mn=Math.min(...Q.g.ddS,...Q.gm.ddS);const ax=axes(g.ctx,g.W,g.H,pad,[0,Q.n],[mn*1.05,0],yr,v=>pct(v,0),'','Drawdown',xt);
+   line(g.ctx,Q.gm.ddS.map((v,t)=>[ax.X(t),ax.Y(v)]),css('--spx'),1.2);line(g.ctx,Q.g.ddS.map((v,t)=>[ax.X(t),ax.Y(v)]),c,2);}
+  {const by={};Q.a.forEach((x,t)=>{const y=Q.mo[t].slice(0,4);(by[y]=by[y]||{a:1,m:1,n:0});by[y].a*=1+x;by[y].m*=1+Q.mk[t];by[y].n++;});const ys=Object.keys(by).sort();
+   const cv=$('apYears');const {ctx,W,H:Hh}=setup(cv,220,.5);const pad={l:48,r:12,t:10,b:28};const vals=ys.flatMap(y=>[by[y].a-1,by[y].m-1]);const lo=Math.min(0,...vals),hi=Math.max(0,...vals);
+   const {Y}=axes(ctx,W,Hh,pad,[0,1],[lo*1.08,hi*1.08],()=>'',v=>pct(v,0),'','',[]);const gw=(W-pad.l-pad.r)/ys.length,bw=Math.max(1,gw*.38);HITS.apy=[];
+   ys.forEach((y,k)=>{const x0=pad.l+gw*k+gw*.1;[[by[y].a-1,c],[by[y].m-1,css('--spx')]].forEach(([v,col],j)=>{ctx.fillStyle=col;const ya=Y(0),yb=Y(v);ctx.fillRect(x0+j*bw,Math.min(ya,yb),bw-1,Math.max(1,Math.abs(yb-ya)));});
+     HITS.apy.push({x:x0+bw,y:Y(Math.max(by[y].a-1,by[y].m-1)),label:`${y}${by[y].n<12?` (${by[y].n} months)`:''}: ${a.id} ${sp(by[y].a-1)} · S&P ${sp(by[y].m-1)}`});
+     if(ys.length<=16||k%Math.ceil(ys.length/12)===0){ctx.fillStyle=css('--muted');ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText("'"+y.slice(2),x0+bw,Hh-pad.b+6);}});
+   line(ctx,[[pad.l,Y(0)],[W-pad.r,Y(0)]],css('--faint'),1);tip(cv,'apy');}
+  {const r12=[],v36=[];for(let t=0;t<Q.n;t++){if(t>=11){let g=1;for(let k=t-11;k<=t;k++)g*=1+Q.a[k];r12.push([t+1,g-1]);}if(t>=35){const w=Q.a.slice(t-35,t+1);const mu=w.reduce((p,q)=>p+q,0)/36;let s2=0;for(const x of w)s2+=(x-mu)**2;v36.push([t+1,Math.sqrt(s2/35*12)]);}}
+   const cv=$('apRoll');const {ctx,W,H:Hh}=setup(cv,220,.5);const pad={l:48,r:12,t:10,b:28};const all=[...r12.map(p=>p[1]),...v36.map(p=>p[1]),0];
+   if(r12.length){const {X,Y}=axes(ctx,W,Hh,pad,[0,Q.n],[Math.min(...all)*1.05,Math.max(...all)*1.05],yr,v=>pct(v,0),'','',xt);line(ctx,[[X(0),Y(0)],[X(Q.n),Y(0)]],css('--faint'),1,[3,3]);
+    line(ctx,r12.map(p=>[X(p[0]),Y(p[1])]),c,1.8);if(v36.length)line(ctx,v36.map(p=>[X(p[0]),Y(p[1])]),css('--you'),2);
+    HITS.apr=r12.filter((_,k)=>k%3===0).map(p=>({x:X(p[0]),y:Y(p[1]),label:`12 months to ${Q.dates[p[0]]}: ${sp(p[1])}`}));tip(cv,'apr');}}
+  {const cv=$('apHist');const {ctx,W,H:Hh}=setup(cv,200,.42);const pad={l:44,r:12,t:10,b:28};const s=[...Q.a].sort((p,q)=>p-q);const lo=s[0],hi=s[s.length-1],B=Math.min(40,Math.max(12,Math.round(Q.n/6))),bw=(hi-lo)/B||.01;
+   const cnt=new Array(B).fill(0);Q.a.forEach(x=>{cnt[Math.min(B-1,Math.floor((x-lo)/bw))]++;});const mx=Math.max(...cnt);
+   const {X,Y}=axes(ctx,W,Hh,pad,[lo,hi],[0,mx*1.1],v=>pct(v,0),v=>v.toFixed(0),'','Months');cnt.forEach((v,k)=>{const x0=X(lo+k*bw),x1=X(lo+(k+1)*bw);ctx.fillStyle=(lo+(k+.5)*bw)<0?css('--bad'):c;ctx.globalAlpha=.8;ctx.fillRect(x0+.5,Y(v),Math.max(1,x1-x0-1),Y(0)-Y(v));});ctx.globalAlpha=1;
+   HITS.aph=cnt.map((v,k)=>({x:X(lo+(k+.5)*bw),y:Y(v),label:`${pct(lo+k*bw)} to ${pct(lo+(k+1)*bw)}: ${v} months`}));tip(cv,'aph');
+   const mean=Q.mean,sd=Q.g.vol/Math.sqrt(12);let sk=0,ku=0;Q.a.forEach(x=>{sk+=((x-mean)/sd)**3;ku+=((x-mean)/sd)**4;});sk/=Q.n;ku=ku/Q.n-3;
+   $('apHistN').textContent=`${Q.n} months · average ${sp(mean)} · skew ${sk.toFixed(2)} (${sk<-.2?'more big down months':sk>.2?'more big up months':'roughly symmetric'}) · excess kurtosis ${ku.toFixed(1)} (${ku>1?'fat tails: extreme months more common than a normal curve predicts':'close to normal tails'})`;}
+  {const mi=m=>Q.dates.indexOf(m);const rows=SCEN.map(([n,a0,b0])=>{const ia=Q.mo.indexOf(a0),ib=Q.mo.indexOf(b0);if(ia<0||ib<0)return `<tr><td class="n">${n}</td><td>${a0}${a0!==b0?' → '+b0:''}</td><td colspan="2" style="color:var(--faint)">not yet listed</td></tr>`;
+    let g1=1,g2=1;for(let t=ia;t<=ib;t++){g1*=1+Q.a[t];g2*=1+Q.mk[t];}return `<tr><td class="n">${n}</td><td>${a0}${a0!==b0?' → '+b0:''}</td><td class="${g1>=0?'':'down'}">${sp(g1-1)}</td><td>${sp(g2-1)}</td></tr>`;});
+   $('apStress').innerHTML=`<thead><tr><th>Episode</th><th>Months</th><th>${a.id}</th><th>S&amp;P 500</th></tr></thead><tbody>${rows.join('')}</tbody>`;}
+  {const y=port(S.w);const rc=riskContrib(y.w,M.S);const cw=capW();const r=(l,v)=>`<tr><td class="n">${l}</td><td>${v}</td></tr>`;
+   $('apModel').innerHTML=`<tbody>${r('Expected return used',pct(M.mu[i]))}${r('Equilibrium (CAPM) return',pct(M.capm[i]))}${r('History, window-adjusted',pct(M.hmAdj[i]))}${r('Volatility in risk model',pct(M.sd[i]))}${r('Beta in model window',M.beta[i].toFixed(2))}
+    ${r('Weight: yours',pct(y.w[i]))}${r('Share of your portfolio risk',pct(rc[i]))}${r('Weight: max Sharpe',pct(O.tangency.w[i]))}${r('Weight: min variance',pct(O.minvar.w[i]))}${r('Weight: max Sortino',pct(D.tangency.w[i]))}${r('Weight: risk parity',pct(RP[i]))}${r('Weight: cap-weighted',pct(cw[i]))}</tbody>`;
+   $('apW').value=(S.w[i]*100).toFixed(1);$('apWnote').textContent=`= ${pct(y.w[i])} after scaling to 100%`;}
+  {const row=A.map((b,j)=>[b,M.Cs[i][j]]).filter(([b],j)=>j!==i).sort((p,q)=>q[1]-p[1]);const li=x=>`<li><span class="asset-link" data-asset="${x[0].id}" tabindex="0">${x[0].name}</span> <b>${x[1].toFixed(2)}</b></li>`;
+   $('apHi').innerHTML=row.slice(0,6).map(li).join('');$('apLo').innerHTML=row.slice(-6).reverse().map(li).join('');}
+  $('apNote').innerHTML=`Performance, crises and calendar years use the asset's full history in ${CURL[S.cur]}. Model figures and correlations use the estimation window${S.ex08?' with Dec 2007 – Jun 2009 excluded':''}. ${Q.f>0?`${a.name} has data from ${Q.dates[0]}; in the risk model, earlier months are filled from its beta to the S&amp;P 500 plus its own residuals.`:''}`;}
+function drawAssets(){$('agrid').innerHTML=ORDER.map(i=>{const a=A[i],r=HF.R[i];const f=r.findIndex(x=>x!=null);const g=growth(r.slice(f));
+  return `<button class="acard" data-asset="${a.id}"><div class="top"><b><span class="dot" style="background:var(${CLS[a.cls][1]})"></span>${a.name}</b><small>${a.ticker}</small></div><canvas data-spark="${i}" height="44"></canvas><dl><div><dt>CAGR</dt><dd>${pct(g.cagr)}</dd></div><div><dt>Vol</dt><dd>${pct(g.vol,0)}</dd></div><div><dt>Max DD</dt><dd>${pct(-g.maxDD,0)}</dd></div></dl></button>`;}).join('');
+  document.querySelectorAll('#agrid canvas').forEach(cv=>{const i=+cv.dataset.spark,r=HF.R[i];const f=r.findIndex(x=>x!=null);const v=growth(r.slice(f)).v;const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=44;cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+    const lg=v.map(Math.log),lo=Math.min(...lg),hi=Math.max(...lg);const x0=f/(HF.T)*w;line(ctx,lg.map((y,t)=>[x0+(w-x0)*t/(lg.length-1),h-3-(y-lo)/((hi-lo)||1)*(h-6)]),css(CLS[A[i].cls][1]),1.6);});}
 /* ---------- wiring ---------- */
+document.addEventListener('click',e=>{const t=e.target.closest('[data-asset]');if(t){e.preventDefault();openAsset(t.dataset.asset);}});
+document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.closest('.asset-link[data-asset]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openAsset(t.dataset.asset);}
+  if(AP!=null){if(e.key==='Escape')closeAsset();else if(e.key==='ArrowRight'&&e.target.tagName!=='INPUT')stepAsset(1);else if(e.key==='ArrowLeft'&&e.target.tagName!=='INPUT')stepAsset(-1);}});
+$('apBack').onclick=closeAsset;$('apPrev').onclick=()=>stepAsset(-1);$('apNext').onclick=()=>stepAsset(1);
+$('apW').addEventListener('change',e=>{const v=Math.max(0,Math.min(100,+e.target.value||0));S.w[AP]=v/100;allocList();onWeights();renderAsset();});
+window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id&&A.some(a=>a.id===id))openAsset(id,false);else if(AP!=null&&!id)closeAsset();});
+
 const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
-const DRAW={cmp:drawCompare,frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
+const DRAW={assets:drawAssets,cmp:drawCompare,frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
 function drawVisible(){if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
 let mcT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,(visible('mc')||visible('cmp'))?150:30);}
-let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();trSetup();allocList();modelUI();drawVisible();$('hero').classList.remove('busy');},20);}
+let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();trSetup();allocList();modelUI();drawVisible();$('hero').classList.remove('busy');if(AP!=null)renderAsset();else{const id=location.hash.slice(1);if(id&&A.some(x=>x.id===id))openAsset(id,false);}},20);}
 $('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(0,Math.min(100,+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(40,v);onWeights();});
 const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();};
 $('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
@@ -510,7 +638,7 @@ const PINFO={
 /* target risk */
 let TR=null;function trSetup(){const lo=O.minvar.vol,hi=Math.max(...O.frontier.map(p=>p.vol));const r=$('tRisk');r.min=(Math.ceil(lo*200)/2).toFixed(1);r.max=(Math.floor(hi*200)/2).toFixed(1);
   if(+r.value<+r.min||+r.value>+r.max)r.value=Math.min(+r.max,Math.max(+r.min,Math.round(O.tangency.vol*200)/2));TR=null;trPreview();}
-function trCompute(){const v=+$('tRisk').value/100;if(TR&&TR.v===v)return TR;const p=frontierAt(O.frontier,M.mu,M.S,v);const ser=portListed(H.R,p.w);const g=growth(ser);
+function trCompute(){const v=+$('tRisk').value/100;if(TR&&TR.v===v)return TR;const p=frontierAt(O.frontier,M.mu,M.S,v);const ser=portListed(HP.R,p.w);const g=growth(ser);
   const pp=port(p.w);TR={v,w:p.w,ret:p.ret,vol:p.vol,dd:g.maxDD,sharpe:pp.sharpe};return TR;}
 let trT;function trPreview(){$('tRiskL').textContent=(+$('tRisk').value).toFixed(1)+'% vol';clearTimeout(trT);trT=setTimeout(()=>{const t=trCompute();$('tRiskInfo').textContent=`Expected ${pct(t.ret)} · Sharpe ${t.sharpe.toFixed(2)} · past max drawdown −${pct(t.dd,0)}`;},120);}
 $('tRisk').addEventListener('input',trPreview);$('tRiskBtn').onclick=()=>{const t=trCompute();setW(t.w);};
@@ -526,6 +654,7 @@ $('win').addEventListener('change',e=>{S.win=+e.target.value;S.shrink=null;full(
 $('mode').addEventListener('change',e=>{S.mode=e.target.value;S.override=A.map(()=>null);full();});
 $('trust').addEventListener('input',e=>$('trustL').textContent=e.target.value+'%');$('trust').addEventListener('change',e=>{S.trust=e.target.value/100;S.override=A.map(()=>null);full();});
 $('shrink').addEventListener('input',e=>$('shrinkL').textContent=e.target.value+'%');$('shrink').addEventListener('change',e=>{S.shrink=e.target.value/100;full();});
+$('ex08').onclick=()=>{S.ex08=!S.ex08;$('ex08').setAttribute('aria-pressed',S.ex08);$('ex08').textContent=S.ex08?'2008–09 crisis excluded':'Exclude 2008–09 crisis';S.shrink=null;full();};
 $('cur').addEventListener('change',e=>{S.cur=e.target.value;S.rf=RFX[S.cur];S.mar=RFX[S.cur];$('rf').value=(S.rf*100).toFixed(2);$('mar').value=(S.mar*100).toFixed(2);S.shrink=null;full();});
 $('lwBtn').onclick=()=>{S.shrink=+LW.delta.toFixed(2);full();};
 $('addView').onclick=()=>{S.views.push({a:'NVDA',type:'rel',b:'MSFT',q:.03,conf:.5});if(S.mode!=='bl'){S.mode='bl';$('mode').value='bl';}full();};
