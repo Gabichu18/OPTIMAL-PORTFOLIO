@@ -455,8 +455,10 @@ function optimize(mu,S,cap,rf){const L=maxEig(S);const minv=solve(mu,S,cap,Infin
   const best=fastTangency(mu,S,cap,rf,front.reduce((a,b)=>b.sharpe>a.sharpe?b:a).w,L);
   const ms=stats(minv,mu,S);const mvp={w:minv,ret:ms.ret,vol:ms.vol,sharpe:(ms.ret-rf)/ms.vol};front.push(mvp,best);front.sort((p,q)=>p.vol-q.vol);
   const eff=[];let top=-Infinity;for(const p of front){if(p.ret>=top-1e-9){eff.push(p);top=Math.max(top,p.ret);}}return {tangency:best,minvar:mvp,frontier:eff};}
-function riskParity(S,active){const n=S.length;let w=Float64Array.from(S.map((r,i)=>active[i]?1/Math.sqrt(r[i]):0));let s=w.reduce((a,b)=>a+b,0);w=w.map(x=>x/s);
-  const k=active.filter(Boolean).length;for(let it=0;it<600;it++){const m=matVec(S,w);const v=dot(w,m);for(let i=0;i<n;i++)if(active[i])w[i]*=Math.sqrt((v/k)/Math.max(w[i]*m[i],1e-14));s=w.reduce((a,b)=>a+b,0);w=w.map(x=>x/s);}return w;}
+function riskParity(S,active){// equal risk contribution via cyclical coordinate descent (Griveau-Billion, Richard & Roncalli 2013); robust with negative correlations
+  const n=S.length,idx=[];for(let i=0;i<n;i++)if(active[i])idx.push(i);const b=1/idx.length;const x=new Float64Array(n);idx.forEach(i=>x[i]=1/Math.sqrt(S[i][i]));
+  for(let it=0;it<500;it++){let move=0;for(const i of idx){let s=0;for(const j of idx)if(j!==i)s+=S[i][j]*x[j];const nx=(-s+Math.sqrt(s*s+4*S[i][i]*b))/(2*S[i][i]);move=Math.max(move,Math.abs(nx-x[i])/x[i]);x[i]=nx;}if(move<1e-9)break;}
+  let sum=0;for(const i of idx)sum+=x[i];return Float64Array.from(x,v=>v/sum);}
 function riskContrib(w,S){const m=matVec(S,w);const v=dot(w,m);return Array.from(w,(x,i)=>v>0?x*m[i]/v:0);}
 // monthly series: filled matrix (no gaps)
 function portSeries(F,w,mu){const T=F[0].length,out=new Float64Array(T);F.forEach((r,i)=>{if(!w[i])return;const adj=mu?mu[i]/12-mean(r):0;for(let t=0;t<T;t++)out[t]+=w[i]*(r[t]+adj);});return out;}
