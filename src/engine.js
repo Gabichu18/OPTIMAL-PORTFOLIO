@@ -177,7 +177,7 @@ function alphaStats(p,m,rf){const n=p.length;const y=[],x=[];for(let t=0;t<n;t++
   const resVol=Math.sqrt(s2*12);return {alpha:a*12,t:a/se,beta:b,r2:sst?1-sse/sst:0,resVol,appraisal:resVol?a*12/resVol:0,active:g(p)-g(m),te,ir:te?ma*12/te:0,cum,n};}
 function rng(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 function gauss(r){let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
-function randomPortfolios(mu,S,rf,n,seed,active){const r=rng(seed),N=mu.length,out=[];for(let k=0;k<n;k++){const w=new Float64Array(N);let s=0;const sp=r()<.5;for(let i=0;i<N;i++){if(!active[i])continue;let e=-Math.log(r()+1e-12);if(sp)e=e*e*e;w[i]=e;s+=e;}for(let i=0;i<N;i++)w[i]/=s;const st=stats(w,mu,S);out.push({ret:st.ret,vol:st.vol,sharpe:(st.ret-rf)/st.vol});}return out;}
+function randomPortfolios(mu,S,rf,n,seed,active){const r=rng(seed),N=mu.length,out=[];for(let k=0;k<n;k++){const w=new Float64Array(N);let s=0;const sp=r()<.5;for(let i=0;i<N;i++){if(!active[i])continue;let e=-Math.log(r()+1e-12);if(sp)e=e*e*e;w[i]=e;s+=e;}for(let i=0;i<N;i++)w[i]/=s;const st=stats(w,mu,S);out.push({w,ret:st.ret,vol:st.vol,sharpe:(st.ret-rf)/st.vol});}return out;}
 // Michaud resampling: perturb means & covariance by bootstrap sampling error, average max-Sharpe weights
 function resampleStep(M,o,cap,k,r){const n=M.n,T=M.T,F=M.F;const pick=Array.from({length:T},()=>Math.floor(r()*T));
   const mus=F.map(row=>{let s=0;for(const t of pick)s+=row[t];return s/T;});const fm=F.map(row=>mean(row));

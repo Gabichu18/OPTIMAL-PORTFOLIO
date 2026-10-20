@@ -376,7 +376,8 @@ body.noscroll{overflow:hidden}
 
   <!-- FRONTIER -->
   <div data-pane="frontier" hidden style="display:flex;flex-direction:column;gap:14px">
-    <div class="chart"><canvas id="cFront" height="440"></canvas></div>
+    <div class="chart"><canvas id="cFront" height="440" style="cursor:crosshair"></canvas></div>
+    <p class="kicker" id="frontSel" style="margin:0;min-height:2.6em">Click the frontier, a diamond or any grey dot to make it your portfolio; click empty space to take the frontier portfolio at that volatility.</p>
     <div class="legend" id="legFront"></div>
     <div class="g2">
       <p class="note">Grey dots are 4,000 random long-only portfolios. The solid curve is the efficient frontier for your strategy and weight cap; the dashed <b>CML</b> runs from the risk-free rate through the max-Sharpe portfolio. With <b>short selling</b> on, the faint dashed curve is the long-only frontier for comparison. With <b>leverage</b> on, the frontier continues as a straight line from the <b>best portfolio to lever</b> (the line from your borrowing rate through it) up to your maximum leverage. Hover or tap points for detail.</p>
@@ -714,7 +715,7 @@ function alphaStats(p,m,rf){const n=p.length;const y=[],x=[];for(let t=0;t<n;t++
   const resVol=Math.sqrt(s2*12);return {alpha:a*12,t:a/se,beta:b,r2:sst?1-sse/sst:0,resVol,appraisal:resVol?a*12/resVol:0,active:g(p)-g(m),te,ir:te?ma*12/te:0,cum,n};}
 function rng(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 function gauss(r){let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r());}
-function randomPortfolios(mu,S,rf,n,seed,active){const r=rng(seed),N=mu.length,out=[];for(let k=0;k<n;k++){const w=new Float64Array(N);let s=0;const sp=r()<.5;for(let i=0;i<N;i++){if(!active[i])continue;let e=-Math.log(r()+1e-12);if(sp)e=e*e*e;w[i]=e;s+=e;}for(let i=0;i<N;i++)w[i]/=s;const st=stats(w,mu,S);out.push({ret:st.ret,vol:st.vol,sharpe:(st.ret-rf)/st.vol});}return out;}
+function randomPortfolios(mu,S,rf,n,seed,active){const r=rng(seed),N=mu.length,out=[];for(let k=0;k<n;k++){const w=new Float64Array(N);let s=0;const sp=r()<.5;for(let i=0;i<N;i++){if(!active[i])continue;let e=-Math.log(r()+1e-12);if(sp)e=e*e*e;w[i]=e;s+=e;}for(let i=0;i<N;i++)w[i]/=s;const st=stats(w,mu,S);out.push({w,ret:st.ret,vol:st.vol,sharpe:(st.ret-rf)/st.vol});}return out;}
 // Michaud resampling: perturb means & covariance by bootstrap sampling error, average max-Sharpe weights
 function resampleStep(M,o,cap,k,r){const n=M.n,T=M.T,F=M.F;const pick=Array.from({length:T},()=>Math.floor(r()*T));
   const mus=F.map(row=>{let s=0;for(const t of pick)s+=row[t];return s/T;});const fm=F.map(row=>mean(row));
@@ -890,6 +891,16 @@ function drawFrontier(){const cv=$('cFront');const {ctx,W,H:Hh}=setup(cv,300);co
   if(sh)line(ctx,OL.frontier.map(p=>[X(p.vol),Y(p.ret)]),css('--muted'),1.6,[3,4]);
   if(LV){const rb=S.rf+S.ls.spread,tb=LV.tb,sl=(tb.ret-rb)/tb.vol,top=LV.tb.vol*LV.Lmax;line(ctx,[[X(0),Y(rb)],[X(top),Y(rb+sl*top)]],css('--you'),1.2,[2,4]);}
   line(ctx,O.frontier.map(p=>[X(p.vol),Y(p.ret)]),css('--fg'),2.4);
+  // clickable frontier: the curve sampled every ~4 px (exact blends of neighbouring frontier portfolios)
+  const dense=[];O.frontier.forEach((a,k)=>{const b=O.frontier[k+1];if(!b){dense.push({w:a.w,...EV(a.w)});return;}const n=Math.max(2,Math.ceil(Math.hypot(X(b.vol)-X(a.vol),Y(b.ret)-Y(a.ret))/4));for(let s=0;s<n;s++){const w=blendW(a.w,b.w,s/n);dense.push({w,...EV(w)});}});
+  dense.forEach(d=>{d.x=X(d.vol);d.y=Y(d.ret);});const top=dense.reduce((a,b)=>b.ret>a.ret?b:a);
+  const marks=[{n:'Max Sharpe',w:t.w,p:t},{n:'Min variance',w:mv.w,p:mv},{n:loTag('Risk parity'),w:RP,p:rp},{n:'Max return',w:top.w,p:top}];if(sh)marks.push({n:'Max Sharpe · long-only',w:OL.tangency.w,p:OL.tangency});
+  if(LV){const tw=scaleW(LV.tb.w,LV.Lmax);marks.push({n:'Best to lever',w:LV.tb.w,p:LV.tb},{n:`Best to lever × ${LV.Lmax.toFixed(1)}`,w:tw,p:EV(tw)});}
+  marks.forEach(m=>{m.x=X(m.p.vol);m.y=Y(m.p.ret);});
+  FRX={X,Y,xd,pad,W,dense,marks,cloud:cloud.map(c=>({x:X(c.vol),y:Y(c.ret),w:c.w,ret:c.ret,vol:c.vol}))};
+  dia(ctx,top.x,top.y,7,css('--fg'));
+  dense.forEach((d,k)=>{if(k%2||marks.some(m=>(m.x-d.x)**2+(m.y-d.y)**2<144))return;hl.push({x:d.x,y:d.y,label:`Efficient frontier · ${pct(d.ret)} / σ ${pct(d.vol)} · Sharpe ${((d.ret-S.rf)/d.vol).toFixed(2)} · click to select`});});
+  hl.push({x:top.x,y:top.y,label:`Max return on the frontier · ${pct(top.ret)} / σ ${pct(top.vol)} · click to select`});
   A.forEach((a,i)=>{const x=X(M.sd[i]),yy=Y(M.mu[i]);ctx.globalAlpha=S.active[i]?1:.3;dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);ctx.globalAlpha=1;hl.push({x,y:yy,label:`${a.name} · E[R] ${pct(M.mu[i])} · σ ${pct(M.sd[i])} · Sharpe ${((M.mu[i]-S.rf)/M.sd[i]).toFixed(2)}`});});
   dotC(ctx,X(0),Y(S.rf),5,css('--accent'));hl.push({x:X(0),y:Y(S.rf),label:`T-bill ${pct(S.rf,2)}`});
   dia(ctx,X(mv.vol),Y(mv.ret),8,css('--minv'));hl.push({x:X(mv.vol),y:Y(mv.ret),label:`Min variance · ${pct(mv.ret)} / σ ${pct(mv.vol)}`});
@@ -900,10 +911,21 @@ function drawFrontier(){const cv=$('cFront');const {ctx,W,H:Hh}=setup(cv,300);co
     dia(ctx,X(tb.vol),Y(tb.ret),8,css('--you'));hl.push({x:X(tb.vol),y:Y(tb.ret),label:`Best to lever · Sharpe vs borrowing ${((tb.ret-rb)/tb.vol).toFixed(2)} · ${pct(tb.ret)} / σ ${pct(tb.vol)}`});
     dia(ctx,X(pt.vol),Y(pt.ret),6.5,css('--you'));hl.push({x:X(pt.vol),y:Y(pt.ret),label:`Best to lever × ${LV.Lmax.toFixed(1)} · ${pct(pt.ret)} / σ ${pct(pt.vol)} · Sharpe ${((pt.ret-S.rf)/pt.vol).toFixed(2)}`});}
   dotC(ctx,X(y.vol),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.vol),y:Y(y.ret),label:`Yours · Sharpe ${y.sharpe.toFixed(2)} · ${pct(y.ret)} / σ ${pct(y.vol)}${LSON()?` · net ${y.ex.net.toFixed(2)}×, short ${pct(y.ex.short,0)}`:''}`});tip(cv,'front');
-  $('legFront').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min variance</span><span><i class="dot" style="background:var(--c-bond)"></i>Risk parity</span><span><i style="background:var(--fg)"></i>Efficient frontier${LSON()?' (your strategy)':''}</span><span><i style="background:var(--accent)"></i>CML</span>`+(sh?`<span><i style="background:var(--muted)"></i>Long-only frontier</span>`:'')+(LV?`<span><i class="dot" style="background:var(--you)"></i>Best to lever (1× and ${LV.Lmax.toFixed(1)}×)</span><span><i style="background:var(--you)"></i>Borrowing line</span>`:'')+Object.values(CLS).map(c=>`<span><i class="dot" style="background:var(${c[1]})"></i>${c[0]}</span>`).join('');
+  $('legFront').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min variance</span><span><i class="dot" style="background:var(--c-bond)"></i>Risk parity</span><span><i class="dot" style="background:var(--fg)"></i>Max return</span><span><i style="background:var(--fg)"></i>Efficient frontier${LSON()?' (your strategy)':''}</span><span><i style="background:var(--accent)"></i>CML</span>`+(sh?`<span><i style="background:var(--muted)"></i>Long-only frontier</span>`:'')+(LV?`<span><i class="dot" style="background:var(--you)"></i>Best to lever (1× and ${LV.Lmax.toFixed(1)}×)</span><span><i style="background:var(--you)"></i>Borrowing line</span>`:'')+Object.values(CLS).map(c=>`<span><i class="dot" style="background:var(${c[1]})"></i>${c[0]}</span>`).join('');
   const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>E[R]</dt><dd>${pct(p.ret)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd><dt>Sharpe</dt><dd>${p.sharpe.toFixed(2)}</dd><dt>β</dt><dd>${p.beta.toFixed(2)}</dd><dt>VaR 95% 1y</dt><dd>${pct(p.var95)}</dd></dl></div>`;
   $('cmpFront').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',port(t.w))+(SHON()?card('Max Sharpe · long-only','--muted',port(OL.tangency.w)):'')+(LV?card(`Best to lever × ${LV.Lmax.toFixed(1)}`,'--c-power',port(scaleW(LV.tb.w,LV.Lmax))):'')+card('Min variance','--minv',port(mv.w))+card(loTag('Risk parity'),'--c-bond',rp);}
 
+// click on the frontier chart: the nearest marked portfolio (12 px) or frontier point (10 px) > a random portfolio (3 px) > the frontier portfolio at the clicked volatility
+let FRX=null;
+$('cFront').addEventListener('click',e=>{if(!FRX)return;const r=e.currentTarget.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,d2=p=>(p.x-x)**2+(p.y-y)**2;
+  const near=(arr,rad)=>{let b=null,bd=rad*rad;for(const p of arr){const d=d2(p);if(d<bd){bd=d;b=p;}}return b;};
+  const mk=near(FRX.marks,12),fr=near(FRX.dense,10);let pick=null,name;// closest wins; marked portfolios get a 3 px head start
+  if(mk&&(!fr||Math.sqrt(d2(mk))-3<=Math.sqrt(d2(fr)))){pick=mk;name=mk.n;}else if(fr){pick=fr;name='Frontier portfolio';}
+  if(pick);
+  else if((pick=near(FRX.cloud,3)))name='Random portfolio';
+  else{const {xd,pad,W}=FRX,v=xd[0]+(x-pad.l)/(W-pad.l-pad.r)*(xd[1]-xd[0]);pick=frontierAt(O.frontier,EV,Math.max(0,v));name=`Frontier portfolio at ${pct(Math.max(0,v))} volatility`;}
+  setW(pick.w);const y2=port(S.w);
+  $('frontSel').innerHTML=`<b>Selected: ${name}</b> · ${pct(y2.ret)} expected return · ${pct(y2.vol)} volatility · Sharpe ${y2.sharpe.toFixed(2)}${LSON()?` · net ${y2.ex.net.toFixed(2)}×${y2.ex.short>.001?`, short ${pct(y2.ex.short,0)}`:''}`:''}. Applied to your allocation and every tab.`;});
 /* ---------- Downside ---------- */
 function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(O.tangency.w),so=port(D.tangency.w),md=port(D.minvar.w);
   const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><div class="big">${p.sortino.toFixed(2)}<small>Sortino</small></div><dl>
