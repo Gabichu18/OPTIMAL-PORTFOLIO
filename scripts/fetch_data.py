@@ -31,6 +31,8 @@ Sources and splices (all returns are monthly, in USD, dividends reinvested):
 - SK Hynix starts in February 2004, after its 2003 debt restructuring;
   earlier Yahoo prices contain bad dividend records.
 - Vertiv starts in February 2020 (earlier prices are the pre-merger SPAC).
+- Airbus (AIR.PA, EUR) is converted to USD like Ferrovial; Yahoo's history starts in
+  September 2001 (EADS), and American Water Works listed in April 2008.
 - GE: Yahoo records the GE HealthCare (Jan 2023) and GE Vernova (Apr 2024)
   spin-offs as split factors, so the adjusted close assumes the spun-off
   shares were sold and reinvested in GE.
@@ -44,17 +46,17 @@ START, END = "1996-08-01", None  # END=None: up to today
 US = {
     "NVDA": "NVDA", "AMZN": "AMZN", "GOOGL": "GOOGL", "MSFT": "MSFT", "META": "META", "AAPL": "AAPL",
     "VRT": "VRT", "VST": "VST", "ETN": "ETN", "ANET": "ANET", "MU": "MU", "TSM": "TSM", "AMAT": "AMAT",
-    "CAT": "CAT", "GE": "GE", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "LMT": "LMT", "NUE": "NUE",
+    "CAT": "CAT", "GE": "GE", "AWK": "AWK", "NOC": "NOC", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "LMT": "LMT", "NUE": "NUE",
     "TM": "TM", "PFE": "PFE", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
 }
 LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local units per USD)
     "XIAOMI": ("1810.HK", "DEXHKUS", True), "SAMSUNG": ("005930.KS", "DEXKOUS", True),
     "SKHYNIX": ("000660.KS", "DEXKOUS", True), "ITX": ("ITX.MC", "DEXUSEU", False),
-    "FER": ("FER.MC", "DEXUSEU", False), "IBE": ("IBE.MC", "DEXUSEU", False),
+    "FER": ("FER.MC", "DEXUSEU", False), "IBE": ("IBE.MC", "DEXUSEU", False), "AIR": ("AIR.PA", "DEXUSEU", False),
 }
 ORDER = ["NVDA", "AMZN", "GOOGL", "MSFT", "META", "AAPL", "VRT", "VST", "ETN", "ANET", "MU", "TSM", "XIAOMI",
-         "AMAT", "SAMSUNG", "CAT", "GE", "AVGO", "CRWD", "JPM", "GS", "LMT", "NUE", "TM", "PFE", "ITX", "ASML",
-         "SKHYNIX", "GOLD", "COPX", "ENERGY", "BTC", "UST", "FER", "IBE", "COST", "SPY"]
+         "AMAT", "SAMSUNG", "CAT", "GE", "AIR", "AVGO", "CRWD", "JPM", "GS", "LMT", "NOC", "NUE", "TM", "PFE", "ITX", "ASML",
+         "SKHYNIX", "GOLD", "COPX", "ENERGY", "BTC", "UST", "FER", "IBE", "AWK", "COST", "SPY"]
 
 
 def daily(ticker: str, adjusted: bool = True) -> pd.DataFrame:
