@@ -1,6 +1,6 @@
 # OPTIMAL PORTFOLIO — Frontier Lab
 
-An interactive portfolio-construction lab for 35 assets (US and Asian tech, AI infrastructure, Spanish infrastructure and utilities, financials, defensives, commodities, Bitcoin and US Treasuries), built on 30 years of real monthly prices (October 1996 – October 2026), including the dot-com crash and the 2008 financial crisis.
+An interactive portfolio-construction lab for 36 assets (US and Asian tech, AI infrastructure, industrials including GE Aerospace, Spanish infrastructure and utilities, financials, defensives, commodities, Bitcoin and US Treasuries), built on 30 years of real monthly prices (October 1996 – October 2026), including the dot-com crash and the 2008 financial crisis.
 
 **Live app: https://gabichu18.github.io/OPTIMAL-PORTFOLIO/**
 
@@ -52,7 +52,7 @@ python scripts/build.py
 - Window: October 1996 – 9 October 2026, 361 monthly returns, all in USD with dividends reinvested. The estimation window can be cut to 20, 15, 10 or 5 years in the app.
 - US listings: Yahoo Finance adjusted closes.
 - Non-US listings (Xiaomi in HKD, Samsung and SK Hynix in KRW, Inditex, Ferrovial and Iberdrola in EUR): from October 2011, Yahoo adjusted closes converted at Yahoo month-end FX (a handful of corrupted KRW quotes removed). Before 2011, total return is rebuilt from Yahoo closes plus cash dividends, because Yahoo's adjusted close for some of these contains bad dividend factors, and converted at FRED month-end FX (DEXUSEU, DEXKOUS).
-- Ferrovial: an unadjusted 5:1 split on 27 Oct 2004 is neutralised. SK Hynix starts in February 2004, after its 2003 restructuring. Vertiv starts in February 2020 (earlier prices are the pre-merger SPAC).
+- Ferrovial: an unadjusted 5:1 split on 27 Oct 2004 is neutralised. SK Hynix starts in February 2004, after its 2003 restructuring. Vertiv starts in February 2020 (earlier prices are the pre-merger SPAC). GE's history is the former General Electric conglomerate until it became GE Aerospace in April 2024; the GE HealthCare (January 2023) and GE Vernova (April 2024) spin-offs are counted as if the shares received were reinvested in GE.
 - Stand-in series: US Treasuries use IEF from August 2002 and Vanguard's Intermediate-Term Treasury fund (VFITX) before. Global energy is the Xtrackers MSCI World Energy UCITS ETF (XDW0) from May 2016, iShares Global Energy (IXC) from December 2001 and Vanguard's energy fund (VGENX) before. Copper miners use the UCITS ETF (4COP, EUR→USD) from November 2021 and the US-listed COPX before. Gold uses the front-month future (GC=F) from September 2000. Futures roll yield is not captured.
 - Listing dates: assets enter when they start trading (Amazon 1997, TSMC ADR 1997, Nvidia 1999, Goldman Sachs 1999, Ferrovial/Iberdrola/Samsung 2000 on Yahoo, Inditex 2001, Google 2004, Broadcom 2009, Meta 2012, Bitcoin 2014, Vistra 2016, Xiaomi 2018, CrowdStrike 2019, Vertiv 2020).
 - Unequal histories: for the risk model, months before an asset listed are filled with alpha + beta × S&P 500 + one of the asset's own residuals drawn at random, so volatilities and correlations of young assets include the dot-com crash and 2008. Historical means of young assets are adjusted for how the market did while they traded (Stambaugh, 1997). Backtests and stress tests never use filled months; weights are re-scaled over the assets that were trading.
@@ -61,7 +61,7 @@ python scripts/build.py
 
 ## Caveats
 
-- **Selection bias.** The 35 assets were chosen in 2026, partly because they did well. Every backtest, including walk-forward, benefits from that hindsight.
+- **Selection bias.** The 36 assets were chosen in 2026, partly because they did well. Every backtest, including walk-forward, benefits from that hindsight.
 - **Estimation error.** Expected returns are the noisiest input. The walk-forward results show the rolling max-Sharpe optimizer losing to equal weight out of sample (DeMiguel, Garlappi & Uppal, 2009).
 - **Currency hedging is simplified.** Hedged views assume a monthly rolling forward at the short-rate gap, with no transaction costs; real hedged share classes cost a little more.
 - This is an educational and analytical tool, not investment advice.

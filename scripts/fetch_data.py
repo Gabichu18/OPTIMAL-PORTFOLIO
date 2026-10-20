@@ -31,6 +31,9 @@ Sources and splices (all returns are monthly, in USD, dividends reinvested):
 - SK Hynix starts in February 2004, after its 2003 debt restructuring;
   earlier Yahoo prices contain bad dividend records.
 - Vertiv starts in February 2020 (earlier prices are the pre-merger SPAC).
+- GE: Yahoo records the GE HealthCare (Jan 2023) and GE Vernova (Apr 2024)
+  spin-offs as split factors, so the adjusted close assumes the spun-off
+  shares were sold and reinvested in GE.
 """
 from pathlib import Path
 import numpy as np
@@ -41,7 +44,7 @@ START, END = "1996-08-01", None  # END=None: up to today
 US = {
     "NVDA": "NVDA", "AMZN": "AMZN", "GOOGL": "GOOGL", "MSFT": "MSFT", "META": "META", "AAPL": "AAPL",
     "VRT": "VRT", "VST": "VST", "ETN": "ETN", "ANET": "ANET", "MU": "MU", "TSM": "TSM", "AMAT": "AMAT",
-    "CAT": "CAT", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "LMT": "LMT", "NUE": "NUE",
+    "CAT": "CAT", "GE": "GE", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "LMT": "LMT", "NUE": "NUE",
     "TM": "TM", "PFE": "PFE", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
 }
 LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local units per USD)
@@ -50,7 +53,7 @@ LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local 
     "FER": ("FER.MC", "DEXUSEU", False), "IBE": ("IBE.MC", "DEXUSEU", False),
 }
 ORDER = ["NVDA", "AMZN", "GOOGL", "MSFT", "META", "AAPL", "VRT", "VST", "ETN", "ANET", "MU", "TSM", "XIAOMI",
-         "AMAT", "SAMSUNG", "CAT", "AVGO", "CRWD", "JPM", "GS", "LMT", "NUE", "TM", "PFE", "ITX", "ASML",
+         "AMAT", "SAMSUNG", "CAT", "GE", "AVGO", "CRWD", "JPM", "GS", "LMT", "NUE", "TM", "PFE", "ITX", "ASML",
          "SKHYNIX", "GOLD", "COPX", "ENERGY", "BTC", "UST", "FER", "IBE", "COST", "SPY"]
 
 
