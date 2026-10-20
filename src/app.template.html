@@ -147,7 +147,7 @@ body.noscroll{overflow:hidden}
   </div>
 </header>
 
-<section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 39 assets on 30 years of data…</div></div></section>
+<section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 40 assets on 30 years of data…</div></div></section>
 
 <section class="panel strat" id="strat" aria-label="Strategy: short selling and leverage">
   <div class="sthead">
@@ -315,7 +315,7 @@ body.noscroll{overflow:hidden}
     <div class="cmpgrid" id="alphaCards"></div>
     <div class="chart"><canvas id="cAlpha" height="300"></canvas></div>
     <div class="legend" id="legAlpha"></div>
-    <p class="note">Realized alpha is the intercept of a regression of each portfolio's monthly return above the T-bill on the S&amp;P 500's return above the T-bill (Jensen, 1968), using today's weights over the estimation window. It is the return the market exposure does not explain. The <b>t-statistic</b> says whether it is distinguishable from luck: above 2 is significant at 95%. The chart compounds that unexplained return month by month: a rising line is alpha being earned, a falling one is alpha being lost. Same caveats as the backtests: the weights and the 39 assets were chosen with hindsight.</p>
+    <p class="note">Realized alpha is the intercept of a regression of each portfolio's monthly return above the T-bill on the S&amp;P 500's return above the T-bill (Jensen, 1968), using today's weights over the estimation window. It is the return the market exposure does not explain. The <b>t-statistic</b> says whether it is distinguishable from luck: above 2 is significant at 95%. The chart compounds that unexplained return month by month: a rising line is alpha being earned, a falling one is alpha being lost. Same caveats as the backtests: the weights and the 40 assets were chosen with hindsight.</p>
     <h2>Expected alpha (CAPM &amp; SML)</h2>
     <div class="chart"><canvas id="cSML" height="420"></canvas></div>
     <p class="note">Betas against SPY (S&amp;P 500 with dividends), monthly, over each asset's history in the window. SML: r<sub>f</sub> + β·ERP. Dots above the line carry positive Jensen's alpha on the expected returns in use.</p>
@@ -382,12 +382,12 @@ body.noscroll{overflow:hidden}
 <div id="cpage" hidden role="dialog" aria-modal="true" aria-labelledby="cpTitle">
  <div class="wrap">
   <div class="abar"><button id="cpBack">← Back to portfolio</button><div class="nav"><div class="seg" role="group" aria-label="Currency for this page"><button id="cpUsd" aria-pressed="true">US dollars</button><button id="cpBase" aria-pressed="false">Your currency</button></div></div></div>
-  <div class="ahead"><div><h1 id="cpTitle">2008: The Global <em>Financial Crisis</em></h1><div class="cpsub">How the worst market crash since the 1930s unfolded between October 2007 and March 2009, what it did to every asset and portfolio in this lab, and what would have protected you. All figures use real monthly returns with dividends; your portfolio is analysed with today's weights and strategy.</div></div><div class="chips" id="cpChips"></div></div>
+  <div class="ahead"><div><h1 id="cpTitle">2008: The Global <em>Financial Crisis</em></h1><div class="cpsub">How the worst market crash since the 1930s unfolded between October 2007 and March 2009, what it did to every asset and portfolio in this lab, and what would have protected you. The main chart follows every trading day from 28 September 2007 to 30 September 2009; the other figures use real monthly returns with dividends. Your portfolio is analysed with today's weights and strategy.</div></div><div class="chips" id="cpChips"></div></div>
   <section class="akpi" id="cpKpi"></section>
-  <section class="panel"><div class="phead"><h2>The crash, month by month</h2><span class="kicker" id="cpGK"></span></div>
+  <section class="panel"><div class="phead"><h2>The crash, day by day</h2><span class="kicker" id="cpGK"></span></div>
     <div class="chart"><canvas id="cpGrowth" height="470"></canvas></div><div class="legend" id="cpGLeg"></div>
     <ol class="evl" id="cpEv"></ol>
-    <h3 style="margin:6px 0 0">Drawdown: distance below each line's previous high</h3>
+    <h3 style="margin:6px 0 0">Daily drawdown: distance below each line's previous high</h3>
     <div class="chart"><canvas id="cpDD" height="190"></canvas></div><p class="note" id="cpGNote"></p></section>
   <section class="panel"><h2>What happened</h2><ol class="tl" id="cpTL"></ol></section>
   <section class="panel"><div class="phead"><h2>Every asset through the crash</h2><span class="kicker" id="cpAK"></span></div>
@@ -403,7 +403,7 @@ body.noscroll{overflow:hidden}
  </div>
 </div>
 
-<script>const RAW=`/*__DATA__*/`;</script>
+<script>const RAW=`/*__DATA__*/`;const DAILY=`/*__DAILY__*/`;</script>
 <script>
 /*__ENGINE__*/
 </script>
@@ -640,8 +640,8 @@ function drawBT(){$('btIn').setAttribute('aria-pressed',btMode==='in');$('btOut'
   if(btMode==='in'){$('wfProg').hidden=true;const P=[['Yours','--you',pw(S.w)],['Max Sharpe','--accent',O.tangency.w],...(SHON()?[['Max Sharpe · long-only','--muted',OL.tangency.w]]:[]),['Min variance','--minv',O.minvar.w],[loTag('Risk parity'),'--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]];
     const sets=P.map(p=>({n:p[0],c:p[1],b:growth(histSer(p[2]))}));sets.push({n:'S&P 500',c:'--spx',b:growth(HP.mkt)});
     $('btKick').textContent=`${HP.months[0]} → ${HP.months[HP.T-1]}, today's weights, rebalanced monthly`+(LSON()?', financing and short fees charged monthly':'');
-    drawSeries(sets,[prevMonth(HP.months[0]),...HP.months],'In-sample: the optimized weights were chosen using this same history, so their lines flatter them. Use <b>Walk-forward</b> for an honest test. Assets enter when they list. All backtests here also carry selection bias: these 39 assets were chosen in 2026, partly because they did well.');}
-  else{if(!WF){runWF();return;}drawSeries(WF.sets,WF.dates,`Out-of-sample: every quarter from ${WF.dates[0]}, each strategy is re-estimated on the previous 5 years only (assets need 3 years of history to qualify), then held for 3 months on returns it had not seen. Expected returns for the rolling max-Sharpe use the history–CAPM blend at your confidence (${pct(S.trust,0)}), since your views are about today. <b>Yours</b> is your current weights held throughout, so it still looks ahead. Selection bias remains: the 39 assets were picked in 2026, so every strategy here benefits from knowing which companies became winners.`);$('btKick').textContent=`Rebalanced quarterly · ${WF.n} re-estimations`;}}
+    drawSeries(sets,[prevMonth(HP.months[0]),...HP.months],'In-sample: the optimized weights were chosen using this same history, so their lines flatter them. Use <b>Walk-forward</b> for an honest test. Assets enter when they list. All backtests here also carry selection bias: these 40 assets were chosen in 2026, partly because they did well.');}
+  else{if(!WF){runWF();return;}drawSeries(WF.sets,WF.dates,`Out-of-sample: every quarter from ${WF.dates[0]}, each strategy is re-estimated on the previous 5 years only (assets need 3 years of history to qualify), then held for 3 months on returns it had not seen. Expected returns for the rolling max-Sharpe use the history–CAPM blend at your confidence (${pct(S.trust,0)}), since your views are about today. <b>Yours</b> is your current weights held throughout, so it still looks ahead. Selection bias remains: the 40 assets were picked in 2026, so every strategy here benefits from knowing which companies became winners.`);$('btKick').textContent=`Rebalanced quarterly · ${WF.n} re-estimations`;}}
 function prevMonth(m){let [y,mm]=m.split('-').map(Number);mm--;if(!mm){mm=12;y--;}return y+'-'+String(mm).padStart(2,'0');}
 function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;t+=step)t0s.push(t);const W={tan:[],mv:[],rp:[],ew:[]};const ret={tan:[],mv:[],rp:[],ew:[]};const turn={tan:0,mv:0,rp:0,ew:0};let prev=null;
   $('wfProg').hidden=false;const bar=$('wfProg').firstElementChild;let k=0;$('btKick').textContent='Running walk-forward…';
@@ -785,9 +785,9 @@ function drawAssets(){$('agrid').innerHTML=ORDER.map(i=>{const a=A[i],r=HF.R[i];
     const lg=v.map(Math.log),lo=Math.min(...lg),hi=Math.max(...lg);const x0=f/(HF.T)*w;line(ctx,lg.map((y,t)=>[x0+(w-x0)*t/(lg.length-1),h-3-(y-lo)/((hi-lo)||1)*(h-6)]),css(CLS[A[i].cls][1]),1.6);});}
 /* ---------- 2008 crisis page ---------- */
 const CR={usd:true,os:null,osM:null,on:false};
-const CEV=[['2007-08','Credit crunch begins','BNP Paribas freezes three funds exposed to US subprime; interbank lending seizes up (9 Aug 2007)'],['2007-10','Market peak','S&P 500 record close of 1,565 on 9 Oct 2007'],['2008-03','Bear Stearns','Runs out of funding and is sold to JPMorgan with Fed support (16 Mar 2008)'],
-  ['2008-09','Lehman Brothers','Fannie Mae and Freddie Mac seized (7 Sep); Lehman bankrupt (15 Sep); AIG rescued (16 Sep)'],['2008-10','TARP','$700bn bank rescue signed (3 Oct); coordinated global rate cuts (8 Oct)'],['2008-11','QE1','The Fed starts buying mortgage bonds (25 Nov 2008)'],
-  ['2009-03','The bottom','S&P 500 closes at 677 on 9 Mar 2009, 57% below its peak; the Fed expands QE (18 Mar)'],['2009-06','Recession ends','The NBER later dates the end of the US recession to June 2009']];
+const CEV=[['2007-08','Credit crunch begins','BNP Paribas freezes three funds exposed to US subprime; interbank lending seizes up (9 Aug 2007)','2007-08-09'],['2007-10','Market peak','S&P 500 record close of 1,565 on 9 Oct 2007','2007-10-09'],['2008-03','Bear Stearns','Runs out of funding and is sold to JPMorgan with Fed support (16 Mar 2008)','2008-03-17'],
+  ['2008-09','Lehman Brothers','Fannie Mae and Freddie Mac seized (7 Sep); Lehman bankrupt (15 Sep); AIG rescued (16 Sep)','2008-09-15'],['2008-10','TARP','$700bn bank rescue signed (3 Oct); coordinated global rate cuts (8 Oct)','2008-10-03'],['2008-11','QE1','The Fed starts buying mortgage bonds (25 Nov 2008)','2008-11-25'],
+  ['2009-03','The bottom','S&P 500 closes at 677 on 9 Mar 2009, 57% below its peak; the Fed expands QE (18 Mar)','2009-03-09'],['2009-06','Recession ends','The NBER later dates the end of the US recession to June 2009','2009-06-30']];
 const CTL=[['2004 – 2006','The housing bubble','Low interest rates and loose lending standards fuel a US housing boom. Subprime mortgages are packaged into mortgage-backed securities and CDOs, many rated AAA, and sold to banks and funds worldwide. Investment banks finance them with short-term borrowing at leverage of 30 to 1 or more.'],
   ['2006 – Jul 2007','The cracks','US house prices peak in mid-2006 and start to fall. Subprime defaults rise, and two Bear Stearns hedge funds full of mortgage securities collapse in June–July 2007.'],
   ['Aug – Oct 2007','The credit crunch','BNP Paribas freezes three funds on 9 August because it can no longer value their assets. Banks stop trusting each other and interbank lending dries up; central banks pump in liquidity. Stocks still reach a record high on 9 October.'],
@@ -800,14 +800,33 @@ const crSrc=()=>CR.usd?HF0:HF;
 function crPearson(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;let sab=0,saa=0,sbb=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;sab+=x*y;saa+=x*x;sbb+=y*y;}return saa&&sbb?sab/Math.sqrt(saa*sbb):0;}
 function crLines(cv,key,dates,sets,o){const H0=+(cv.dataset.h||(cv.dataset.h=cv.getAttribute('height')));const {ctx,W,H:Hh}=setup(cv,o.minH||280,o.ar||.36);const pad={l:60,r:16,t:o.events?34:12,b:30};const T=dates.length-1;
   const f=o.log?v=>Math.log(Math.max(v,.01)):v=>v;const all=sets.flatMap(s=>s.v.map(f));let lo=Math.min(...all,o.zero!=null?f(o.zero):Infinity),hi=Math.max(...all,o.zero!=null?f(o.zero):-Infinity);const pY=(hi-lo)*.05||.01;
-  const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01'))xt.push(i);});
-  const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lo-pY,hi+pY],i=>dates[i].slice(0,4),o.yf,'',o.ylab,xt);
+  let xt=[];if(o.xt)xt=o.xt(W);else dates.forEach((d,i)=>{if(d.endsWith('-01'))xt.push(i);});
+  const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lo-pY,hi+pY],o.xf||(i=>dates[i].slice(0,4)),o.yf,'',o.ylab,xt);
   if(o.band){ctx.fillStyle=css('--bad');ctx.globalAlpha=.09;ctx.fillRect(X(o.band[0]),pad.t,X(o.band[1])-X(o.band[0]),Hh-pad.t-pad.b);ctx.globalAlpha=1;}
   if(o.zero!=null)line(ctx,[[X(0),Y(f(o.zero))],[X(T),Y(f(o.zero))]],css('--faint'),1,[3,3]);
   HITS[key]=[];
-  if(o.events)o.events.forEach((e,k)=>{const x=X(e.i);line(ctx,[[x,pad.t],[x,Hh-pad.b]],css('--muted'),1,[2,3]);dotC(ctx,x,pad.t-15,9,css('--panel'),css('--muted'));ctx.fillStyle=css('--fg');ctx.font='600 10px "IBM Plex Sans",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(k+1),x,pad.t-15);HITS[key].push({x,y:pad.t-15,label:`${k+1}. ${e.t}: ${e.d}`});});
-  sets.slice().reverse().forEach(s=>{line(ctx,s.v.map((v,i)=>[X(i),Y(f(v))]),css(s.c),s.w||1.8,s.dash);s.v.forEach((v,i)=>{if(i%2===0||i===T)HITS[key].push({x:X(i),y:Y(f(v)),label:`${s.n} · ${dates[i]} · ${o.lab(v)}`});});});
+  if(o.events)o.events.forEach((e,k)=>{const x=X(e.i);line(ctx,[[x,pad.t],[x,Hh-pad.b]],css('--muted'),1,[2,3]);dotC(ctx,x,pad.t-15,9,css('--panel'),css('--muted'));ctx.fillStyle=css('--fg');ctx.font='600 10px "IBM Plex Sans",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(e.n||k+1),x,pad.t-15);HITS[key].push({x,y:pad.t-15,label:`${e.n||k+1}. ${e.t}: ${e.d}`});});
+  sets.slice().reverse().forEach(s=>{line(ctx,s.v.map((v,i)=>[X(i),Y(f(v))]),css(s.c),s.w||1.8,s.dash);s.v.forEach((v,i)=>{if(i%(o.hitStep||2)===0||i===T)HITS[key].push({x:X(i),y:Y(f(v)),label:`${s.n} · ${dates[i]} · ${o.lab(v)}`});});});
   tip(cv,key);return {X,Y};}
+/* daily closes 28 Sep 2007 – 30 Sep 2009 (NYSE calendar) for the two-year main chart.
+   Each month of a daily path is bent so it ends exactly on that month's return in the chosen currency
+   (dividends and currency included); a month without daily prices is drawn as a smooth path. */
+let CD=null;const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function crDaily(){if(CD)return CD;const L=DAILY.trim().split('\n');const iso=L[0].split('|')[1].split(',').map(d=>`20${d.slice(0,2)}-${d.slice(2,4)}-${d.slice(4,6)}`);const px={};
+  for(const l of L.slice(1)){const [id,v]=l.split('|');px[id]=v.split(',').map(x=>x===''?null:+x);}
+  const blocks=[];for(let k=1;k<iso.length;k++){const m=iso[k].slice(0,7),b=blocks[blocks.length-1];if(b&&b.m===m)b.b=k;else blocks.push({m,a:k,b:k});}
+  const lab=iso.map(d=>`${+d.slice(8)} ${MON[+d.slice(5,7)-1]} ${d.slice(0,4)}`);return CD={iso,px,blocks,lab};}
+// rel(prev,k): value on day k relative to the previous month-end, or null when unknown → smooth path
+function crPath(s,mo,rel){const {iso,blocks}=crDaily();const v=new Float64Array(iso.length);v[0]=1;let g=1,fill=[];
+  for(const B of blocks){const r=s[mo.indexOf(B.m)],prev=B.a-1,n=B.b-prev;
+    if(r==null||g<=0){for(let k=B.a;k<=B.b;k++)v[k]=g;continue;}
+    const R=Math.max(1e-6,1+r);let u=[];for(let k=B.a;k<=B.b;k++){const x=rel(prev,k);if(x==null||!(x>0)){u=null;break;}u.push(x);}
+    if(u){const adj=Math.log(R)-Math.log(u[n-1]);for(let k=B.a;k<=B.b;k++)v[k]=g*Math.exp(Math.log(u[k-B.a])+adj*(k-prev)/n);}
+    else{fill.push(B.m);for(let k=B.a;k<=B.b;k++)v[k]=g*Math.pow(R,(k-prev)/n);}
+    g=1+r<=0?0:g*R;if(g===0)v[B.b]=0;}
+  return {v,fill};}
+function crAssetPath(H0,i){const id=i<0?'SPY':A[i].id,p=crDaily().px[id];return crPath(i<0?H0.mkt:H0.R[i],H0.months,p?(a,k)=>p[a]!=null&&p[k]!=null?p[k]/p[a]:null:()=>null);}
+function crDD(v){let m=0;return Array.from(v,x=>{m=Math.max(m,x);return m>0?x/m-1:0;});}
 function crBuild(){const H0=crSrc(),mo=H0.months,ix=m=>mo.indexOf(m);const s0=ix('2007-01'),s1=ix('2013-12'),T=s1-s0+1,E=ix('2009-12')-s0+1;
   const dates=['2006-12',...mo.slice(s0,s1+1)],dv=t=>t===0?'2006-12':mo[s0+t-1];
   // the S&P 500's own peak (2007-08) and trough (to end 2009) in this currency define the crash window
@@ -831,15 +850,30 @@ function renderCrisis(){if(!M)return;const C=crBuild(),{H0,ix,dates,dv,pk,tr,T,a
   $('cpKpi').innerHTML=k('S&amp;P 500, peak → trough',sp(spx.crash,0),`${win}, dividends included`,'down')+k('Worst month',sp(spx.worst,1),`${spx.worstM}, S&amp;P 500`,'down')+
     k('Time to recover',spx.rec!=null?`${spx.rec-spx.P} months`:'—',spx.rec!=null?`back to the ${dv(spx.P)} high in ${dv(spx.rec)}`:'')+k('US Treasuries',sp(ust.crash,0),'same months',ust.crash>=0?'up':'down')+
     k('Gold',sp(gold.crash,0),'same months',gold.crash>=0?'up':'down')+k('Your portfolio',sp(you.crash,0),you.cov<.999?`${pct(you.cov,0)} of it was trading then`:`worst fall −${pct(you.dd,0)}`,you.crash>=spx.crash?'up':'down');
-  // 1. month by month
-  const ev=CEV.map(([m,t0,d])=>({i:ix(m)-s0+.5,t:t0,d})).filter(e=>e.i>0&&e.i<T);
-  const sets=[{n:'S&P 500',c:'--spx',v:spx.v,dd:spx.ddS,w:2.2},{n:'US Treasuries',c:'--c-bond',v:ust.v,dd:ust.ddS},{n:'Gold',c:'--c-cmdty',v:gold.v,dd:gold.ddS},{n:'Max Sharpe',c:'--accent',v:ms.v,dd:ms.ddS},{n:'Yours',c:'--you',v:you.v,dd:you.ddS,w:3}];
-  $('cpGK').textContent=`Growth of 1 from ${dates[0]}, ${cur}`;
-  crLines($('cpGrowth'),'cpg',dates,sets,{events:ev,band:[pk,tr],yf:v=>sp(v-1,0),ylab:'Change since end of 2006',lab:v=>sp(v-1,1),zero:1,ar:.4,minH:320});
-  $('cpGLeg').innerHTML=sets.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}</span>`).join('')+'<span><i style="background:var(--bad);opacity:.25;height:9px"></i>Crash window</span>';
-  $('cpEv').innerHTML=CEV.map(([m,t0,d],q)=>`<li><span class="num">${q+1}</span><span><b>${t0}</b> · ${d}</span></li>`).join('');
-  crLines($('cpDD'),'cpd',dates,sets.map(s=>({...s,v:s.dd})),{band:[pk,tr],yf:v=>pct(v,0),ylab:'Drawdown',lab:v=>pct(v,1),ar:.14,minH:150});
-  $('cpGNote').innerHTML=`Month-end values, so intra-month lows were deeper: the S&amp;P 500 index itself fell 57% from its 9 Oct 2007 close to its 9 Mar 2009 close. Shaded: the crash window used throughout this page. Hover or tap the numbered circles for the events.`;
+  // 1. day by day, two years
+  {const D=crDaily(),mo=H0.months,P={},getP=i=>P[i]||(P[i]=crAssetPath(H0,i));
+   const portDay=w=>{const base=portListed(H0.R,w),fs=finSeries(base,w,H0.rfm,FIN());const held=[];w.forEach((x,i)=>{if(Math.abs(x)>1e-4)held.push(i);});
+     const path=crPath(fs,mo,(a,k)=>{const m=D.iso[k].slice(0,7),t=mo.indexOf(m);let x=1;for(const i of held){if(H0.R[i][t]==null)continue;const q=getP(i).v;if(!(q[a]>0))continue;x+=w[i]*(q[k]/q[a]-1);}return x;});
+     return {...path,held};};
+   const dS=getP(-1),dU=getP(A.findIndex(a=>a.id==='UST')),dG=getP(A.findIndex(a=>a.id==='GOLD')),dY=portDay(pw(S.w)),dM=portDay(O.tangency.w);
+   const T2=D.iso.length-1;let p2=0;const e08=D.iso.findIndex(d=>d>'2008-12-31');for(let k=0;k<e08;k++)if(dS.v[k]>dS.v[p2])p2=k;let t2=p2;for(let k=p2;k<=T2;k++)if(dS.v[k]<dS.v[t2])t2=k;
+   const at=d=>{const k=D.iso.findIndex(x=>x>=d);return k<0?-1:k;};
+   const ev=CEV.map(([m,t0,d,day],q)=>({i:day<D.iso[0]?-1:at(day),t:t0,d,n:q+1})).filter(e=>e.i>0&&e.i<T2);
+   const sets=[{n:'S&P 500',c:'--spx',v:dS.v,w:2},{n:'US Treasuries',c:'--c-bond',v:dU.v,w:1.5},{n:'Gold',c:'--c-cmdty',v:dG.v,w:1.5},{n:'Max Sharpe',c:'--accent',v:dM.v,w:1.6},{n:"Yours",c:"--you",v:dY.v,w:2.4}].map(x=>({...x,v:Array.from(x.v),dd:crDD(x.v)}));
+   const xt=W=>{const q=[];D.iso.forEach((d,k)=>{if(k&&d.slice(5,7)!==D.iso[k-1].slice(5,7)&&(W<560?['01','07']:['01','04','07','10']).includes(d.slice(5,7)))q.push(k);});return q;};
+   const xf=k=>{const d=D.iso[k];return `${MON[+d.slice(5,7)-1]} ${d.slice(2,4)}`;};
+   $('cpGK').textContent=`Growth of 1 from ${D.lab[0]}, daily, ${cur}`;
+   crLines($('cpGrowth'),'cpg',D.lab,sets,{events:ev,band:[p2,t2],yf:v=>sp(v-1,0),ylab:`Change since ${D.lab[0]}`,lab:v=>sp(v-1,1),zero:1,ar:.42,minH:340,xt,xf,hitStep:1});
+   $('cpGLeg').innerHTML=sets.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}</span>`).join('')+'<span><i style="background:var(--bad);opacity:.25;height:9px"></i>Peak → bottom</span>';
+   $('cpEv').innerHTML=CEV.map(([m,t0,d,day],q)=>`<li><span class="num">${q+1}</span><span><b>${t0}</b> · ${d}${day<D.iso[0]?' <i>(just before the chart starts)</i>':''}</span></li>`).join('');
+   crLines($('cpDD'),'cpd',D.lab,sets.map(s=>({...s,v:s.dd})),{band:[p2,t2],yf:v=>pct(v,0),ylab:'Drawdown',lab:v=>pct(v,1),ar:.16,minH:160,xt,xf,hitStep:1});
+   // which lines include smoothed (no daily prices) stretches
+   const sm=[],mn=m=>`${MON[+m.slice(5)-1]} ${m.slice(0,4)}`;const span=f=>f.length?`${mn(f[0])}${f.length>1?' – '+mn(f[f.length-1]):''}`:'';
+   const heldSm=[...new Set([...dY.held,...dM.held])].map(i=>({i,f:getP(i).fill.filter(m=>m>='2007-10')})).filter(q=>q.f.length&&H0.R[q.i].slice(mo.indexOf('2007-10'),mo.indexOf('2009-09')+1).some(x=>x!=null));
+   heldSm.forEach(q=>sm.push(`${A[q.i].name}${q.f.length<24?` (${span(q.f)})`:''}`));
+   const fall=dS.v[t2]/dS.v[p2]-1;
+   $('cpGNote').innerHTML=`Every NYSE trading day from ${D.lab[0]} to ${D.lab[T2]} (${T2+1} days), daily closes from Yahoo Finance. The S&amp;P 500 line fell <b>${pct(-fall,1)}</b> from ${D.lab[p2]} to ${D.lab[t2]} (shaded) with dividends${CR.usd?'':` and in ${cur}`}. Each month of every line is adjusted to end exactly on that month's return${CR.usd?'':' in your currency (the dollar–euro move is applied evenly within each month)'}, so the chart agrees with every other figure in the lab. Portfolios are rebalanced to their weights at each month-end, and leverage and shorts are financed as in your strategy.`+
+     (sm.length?` <br>No daily prices here for: ${sm.join(', ')}; their part of each day is drawn as a smooth path between month-ends (the monthly return stays exact).`:'')+` Hover or tap the numbered circles for the events.`;}
   // 2. what happened
   $('cpTL').innerHTML=CTL.map(([d,t0,x])=>`<li><time>${d}</time><b>${t0}</b><p>${x}</p></li>`).join('');
   // 3. every asset through the crash
@@ -938,7 +972,7 @@ const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();trSync(S.w);};
 $('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
 $('pEq').onclick=()=>setW(A.map(()=>1/N));$('pCap').onclick=()=>setW(capW());$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>{if(!LSON()){setW(norm(S.w));return;}const n=exposure(S.w).net;if(n>.01)setW(scaleW(S.w,1/n));};
 // market caps, USD bn, Yahoo Finance 9 Oct 2026 (HKD/KRW/EUR converted at that day's FX)
-const CAPS={NVDA:5536.4,AMZN:2830.7,GOOGL:4300.8,MSFT:3973.2,META:1830.8,AAPL:4913.0,VRT:93.5,VST:54.2,ETN:166.8,ANET:273.4,MU:1162.1,TSM:2351.1,XIAOMI:85.2,AMAT:402.4,SAMSUNG:1283.9,CAT:368.0,GE:325.2,AIR:172.0,AVGO:1725.9,CRWD:281.6,JPM:885.1,GS:260.7,LMT:117.6,NOC:68.5,NUE:56.8,TM:219.4,PFE:161.2,ITX:188.0,ASML:683.8,SKHYNIX:892.0,BTC:1658.9,FER:36.0,IBE:159.1,AWK:25.1,COST:419.6};
+const CAPS={NVDA:5536.4,AMZN:2830.7,GOOGL:4300.8,MSFT:3973.2,META:1830.8,AAPL:4913.0,VRT:93.5,VST:54.2,ETN:166.8,ANET:273.4,MU:1162.1,TSM:2351.1,XIAOMI:85.2,AMAT:402.4,SAMSUNG:1283.9,CAT:368.0,GE:325.2,AIR:172.0,AVGO:1725.9,CRWD:281.6,JPM:885.1,GS:260.7,LMT:117.6,NOC:68.5,NUE:56.8,TM:219.4,PFE:161.2,UNH:343.3,ITX:188.0,ASML:683.8,SKHYNIX:892.0,BTC:1658.9,FER:36.0,IBE:159.1,AWK:25.1,COST:419.6};
 function capW(){const w=Float64Array.from(A.map((a,i)=>S.active[i]?(CAPS[a.id]||0):0));return norm(w);}
 const PINFO={
  pCap:['Cap-weighted','Each stock (and Bitcoin) weighted by its market value, like the S&P 500 or MSCI World. Gold, copper miners, the energy ETF and Treasuries get zero.','The market portfolio of CAPM. Zero estimation, low turnover, what index funds hold.','Concentrated in the largest companies (Nvidia, Apple, Alphabet, Microsoft). Buys more of whatever has already risen.'],

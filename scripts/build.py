@@ -6,6 +6,7 @@ root = Path(__file__).resolve().parent.parent
 html = (root / "src/app.template.html").read_text()
 html = (html.replace("/*__STYLE__*/", (root / "src/style.css").read_text())
             .replace("/*__DATA__*/", (root / "data/monthly_returns_bp.txt").read_text().strip())
+            .replace("/*__DAILY__*/", (root / "data/daily_2007_2009.txt").read_text().strip())
             .replace("/*__ENGINE__*/", (root / "src/engine.js").read_text()))
 # standalone document wrapper (GitHub Pages serves the file as-is)
 head = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'

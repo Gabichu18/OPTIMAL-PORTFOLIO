@@ -47,7 +47,7 @@ US = {
     "NVDA": "NVDA", "AMZN": "AMZN", "GOOGL": "GOOGL", "MSFT": "MSFT", "META": "META", "AAPL": "AAPL",
     "VRT": "VRT", "VST": "VST", "ETN": "ETN", "ANET": "ANET", "MU": "MU", "TSM": "TSM", "AMAT": "AMAT",
     "CAT": "CAT", "GE": "GE", "AWK": "AWK", "NOC": "NOC", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "LMT": "LMT", "NUE": "NUE",
-    "TM": "TM", "PFE": "PFE", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
+    "TM": "TM", "PFE": "PFE", "UNH": "UNH", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
 }
 LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local units per USD)
     "XIAOMI": ("1810.HK", "DEXHKUS", True), "SAMSUNG": ("005930.KS", "DEXKOUS", True),
@@ -55,7 +55,7 @@ LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local 
     "FER": ("FER.MC", "DEXUSEU", False), "IBE": ("IBE.MC", "DEXUSEU", False), "AIR": ("AIR.PA", "DEXUSEU", False),
 }
 ORDER = ["NVDA", "AMZN", "GOOGL", "MSFT", "META", "AAPL", "VRT", "VST", "ETN", "ANET", "MU", "TSM", "XIAOMI",
-         "AMAT", "SAMSUNG", "CAT", "GE", "AIR", "AVGO", "CRWD", "JPM", "GS", "LMT", "NOC", "NUE", "TM", "PFE", "ITX", "ASML",
+         "AMAT", "SAMSUNG", "CAT", "GE", "AIR", "AVGO", "CRWD", "JPM", "GS", "LMT", "NOC", "NUE", "TM", "PFE", "UNH", "ITX", "ASML",
          "SKHYNIX", "GOLD", "COPX", "ENERGY", "BTC", "UST", "FER", "IBE", "AWK", "COST", "SPY"]
 
 
