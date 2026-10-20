@@ -1118,11 +1118,11 @@ window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id&
 const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
 const DRAW={assets:drawAssets,cmp:drawCompare,frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
 function drawVisible(){if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
-let mcT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,(visible('mc')||visible('cmp'))?150:30);}
-let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();let syn=false;if(AFTER){S.w=Float64Array.from(AFTER());AFTER=null;syn=true;}trSetup();if(syn)trSync(S.w);allocList();modelUI();drawVisible();$('hero').classList.remove('busy');if(AP!=null)renderAsset();else{const id=location.hash.slice(1);if(id&&A.some(x=>x.id===id))openAsset(id,false);}},20);}
+let mcT,tsT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,(visible('mc')||visible('cmp'))?150:30);clearTimeout(tsT);tsT=setTimeout(()=>trSync(S.w),150);}
+let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();if(AFTER){S.w=Float64Array.from(AFTER());AFTER=null;}trSetup();trSync(S.w);allocList();modelUI();drawVisible();$('hero').classList.remove('busy');if(AP!=null)renderAsset();else{const id=location.hash.slice(1);if(id&&A.some(x=>x.id===id))openAsset(id,false);}},20);}
 $('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(wMin(),Math.min(wMax(),+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(rSpan(),Math.max(rMin(),v));e.target.closest('.ar').classList.toggle('short',v<0);onWeights();});
-const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();};
-$('pTan').onclick=()=>{setW(O.tangency.w);trSync(O.tangency.w);};$('pMin').onclick=()=>{setW(O.minvar.w);trSync(O.minvar.w);};$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
+const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();trSync(S.w);};
+$('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
 $('pEq').onclick=()=>setW(A.map(()=>1/N));$('pCap').onclick=()=>setW(capW());$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>{if(!LSON()){setW(norm(S.w));return;}const n=exposure(S.w).net;if(n>.01)setW(scaleW(S.w,1/n));};
 // market caps, USD bn, Yahoo Finance 9 Oct 2026 (HKD/KRW/EUR converted at that day's FX)
 const CAPS={NVDA:5536.4,AMZN:2830.7,GOOGL:4300.8,MSFT:3973.2,META:1830.8,AAPL:4913.0,VRT:93.5,VST:54.2,ETN:166.8,ANET:273.4,MU:1162.1,TSM:2351.1,XIAOMI:85.2,AMAT:402.4,SAMSUNG:1283.9,CAT:368.0,GE:325.2,AIR:172.0,AVGO:1725.9,CRWD:281.6,JPM:885.1,GS:260.7,LMT:117.6,NOC:68.5,NUE:56.8,TM:219.4,PFE:161.2,ITX:188.0,ASML:683.8,SKHYNIX:892.0,BTC:1658.9,FER:36.0,IBE:159.1,AWK:25.1,COST:419.6};
@@ -1157,8 +1157,10 @@ function trShow(t,by){if(by==='vol')$('tRet').value=(t.ret*100).toFixed(1);else 
   const lev=t.ex.net>1.0015,where=Math.abs(d)<.0015?'the max-Sharpe point':d<0?'less risk than max Sharpe, so a lower Sharpe':lev?`levered ${t.ex.net.toFixed(2)}× with borrowed money`:'more risk than max Sharpe: higher return, lower Sharpe';
   const exs=LSON()?` · ${t.ex.short>.001?`${pct(t.ex.long,0)}/${pct(t.ex.short,0)}`:'no shorts'}`:'';
   $('tRiskInfo').textContent=`Sharpe ${t.sharpe.toFixed(2)} · past max drawdown −${pct(t.dd,0)}${t.ruin>=0?' (wiped out)':''}${exs} · ${where}`;}
-function trSync(w){const y=port(w),g=growth(histSer(y.w));const t={w:y.w,ret:y.ret,vol:y.vol,dd:g.maxDD,ruin:g.ruin,ex:y.ex,sharpe:y.sharpe};TR=null;
-  $('tRisk').value=(t.vol*100).toFixed(1);$('tRet').value=(t.ret*100).toFixed(1);trShow(t,'none');}
+function trSync(w){if(!M)return;const y=port(w),g=growth(histSer(y.w));const t={w:y.w,ret:y.ret,vol:y.vol,dd:g.maxDD,ruin:g.ruin,ex:y.ex,sharpe:y.sharpe};TR=null;
+  $('tRisk').value=(t.vol*100).toFixed(1);$('tRet').value=(t.ret*100).toFixed(1);trShow(t,'none');
+  const f=frontierAt(O.frontier,EV,t.vol),gap=f.ret-t.ret;
+  if(t.vol>0&&gap>.0005)$('tRiskInfo').textContent=`Below the efficient frontier: at ${pct(t.vol)} volatility the frontier offers ${pct(f.ret)} (${sp(gap)} a year). Sharpe ${t.sharpe.toFixed(2)} · past max drawdown −${pct(t.dd,0)}${t.ruin>=0?' (wiped out)':''}. Drag a slider to move onto the frontier.`;}
 let trT;function trInput(by){const el=by==='vol'?$('tRisk'):$('tRet');(by==='vol'?$('tRiskL'):$('tRetL')).textContent=(+el.value).toFixed(1)+'%';
   clearTimeout(trT);trT=setTimeout(()=>{const t=trCompute(by);trShow(t,by);setW(t.w);},90);}
 $('tRisk').addEventListener('input',()=>trInput('vol'));$('tRet').addEventListener('input',()=>trInput('ret'));
