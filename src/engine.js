@@ -93,6 +93,10 @@ function frontierAt(front,mu,S,target){const f=front.slice().sort((a,b)=>a.vol-b
   let k=0;while(f[k+1].vol<target)k++;const a=f[k],b=f[k+1];let lo=0,hi=1;
   for(let it=0;it<40;it++){const m=(lo+hi)/2;const w=a.w.map((x,i)=>x*(1-m)+b.w[i]*m);if(stats(w,mu,S).vol>target)hi=m;else lo=m;}
   const w=Float64Array.from(a.w,(x,i)=>x*(1-lo)+b.w[i]*lo);const s=stats(w,mu,S);return {w,ret:s.ret,vol:s.vol};}
+// lowest-volatility portfolio with the target expected return: on the efficient set return is linear along each segment between frontier points
+function frontierAtRet(front,mu,S,target){const f=front.slice().sort((a,b)=>a.ret-b.ret);if(target<=f[0].ret)return f[0];if(target>=f[f.length-1].ret)return f[f.length-1];
+  let k=0;while(f[k+1].ret<target)k++;const a=f[k],b=f[k+1],m=(target-a.ret)/((b.ret-a.ret)||1);
+  const w=Float64Array.from(a.w,(x,i)=>x*(1-m)+b.w[i]*m);const s=stats(w,mu,S);return {w,ret:s.ret,vol:s.vol};}
 function optimize(mu,S,cap,rf){const L=maxEig(S);const minv=solve(mu,S,cap,Infinity,L,null,2500);const front=[];let prev=null;
   for(let k=47;k>=0;k--){const lam=Math.exp(Math.log(.1)+k*(Math.log(600)-Math.log(.1))/47);const w=solve(mu,S,cap,lam,L,prev,500);prev=w;const s=stats(w,mu,S);front.push({w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol});}
   const best=fastTangency(mu,S,cap,rf,front.reduce((a,b)=>b.sharpe>a.sharpe?b:a).w,L);

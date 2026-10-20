@@ -100,9 +100,12 @@ body.noscroll{overflow:hidden}
   <div class="ptip" id="ptip" role="tooltip" hidden></div>
   <div class="prog" id="resProg" hidden><div></div></div>
   <div class="trisk">
-    <div class="trrow"><label for="tRisk">Target risk</label><b id="tRiskL">—</b></div>
-    <input type="range" id="tRisk" min="5" max="30" step="0.5" value="15" aria-describedby="tRiskInfo">
-    <div class="trrow"><span class="kicker" id="tRiskInfo">Best expected return on the frontier for a chosen volatility.</span><button id="tRiskBtn">Apply</button></div>
+    <div class="trrow"><span class="kicker">Efficient frontier</span><span class="kicker" id="tMaxS"></span></div>
+    <div class="trrow"><label for="tRisk">Volatility</label><b id="tRiskL">—</b></div>
+    <input type="range" id="tRisk" min="5" max="30" step="0.1" value="15" aria-describedby="tRiskInfo">
+    <div class="trrow"><label for="tRet">Expected return</label><b id="tRetL">—</b></div>
+    <input type="range" id="tRet" min="2" max="20" step="0.1" value="11" aria-describedby="tRiskInfo">
+    <div class="trrow"><span class="kicker" id="tRiskInfo">Drag either slider: the other follows and your allocation updates.</span></div>
   </div>
   <div class="mixrow"><canvas id="cDonut" height="120" style="width:120px"></canvas><div class="mixleg" id="mixLeg"></div></div>
   <div class="sumbar"><span id="sumTxt">Σ 100%</span><button id="normBtn">Scale to 100%</button></div>
@@ -638,12 +641,23 @@ const PINFO={
   tipEl.hidden=false;tipEl.style.top=(b.offsetTop+b.offsetHeight+8)+'px';};const hide=()=>tipEl.hidden=true;
   box.querySelectorAll('button').forEach(b=>{b.addEventListener('mouseenter',()=>show(b));b.addEventListener('focus',()=>show(b));b.addEventListener('mouseleave',hide);b.addEventListener('blur',hide);b.addEventListener('click',hide);});})();
 /* target risk */
-let TR=null;function trSetup(){const lo=O.minvar.vol,hi=Math.max(...O.frontier.map(p=>p.vol));const r=$('tRisk');r.min=(Math.ceil(lo*200)/2).toFixed(1);r.max=(Math.floor(hi*200)/2).toFixed(1);
-  if(+r.value<+r.min||+r.value>+r.max)r.value=Math.min(+r.max,Math.max(+r.min,Math.round(O.tangency.vol*200)/2));TR=null;trPreview();}
-function trCompute(){const v=+$('tRisk').value/100;if(TR&&TR.v===v)return TR;const p=frontierAt(O.frontier,M.mu,M.S,v);const ser=portListed(HP.R,p.w);const g=growth(ser);
-  const pp=port(p.w);TR={v,w:p.w,ret:p.ret,vol:p.vol,dd:g.maxDD,sharpe:pp.sharpe};return TR;}
-let trT;function trPreview(){$('tRiskL').textContent=(+$('tRisk').value).toFixed(1)+'% vol';clearTimeout(trT);trT=setTimeout(()=>{const t=trCompute();$('tRiskInfo').textContent=`Expected ${pct(t.ret)} · Sharpe ${t.sharpe.toFixed(2)} · past max drawdown −${pct(t.dd,0)}`;},120);}
-$('tRisk').addEventListener('input',trPreview);$('tRiskBtn').onclick=()=>{const t=trCompute();setW(t.w);};
+/* two linked sliders on the efficient frontier: pick a volatility or an expected return; the other follows and the portfolio is applied live */
+let TR=null;
+function trSetup(){const f=O.frontier,rv=$('tRisk'),rr=$('tRet');
+  rv.min=(Math.ceil(O.minvar.vol*1000)/10).toFixed(1);rv.max=(Math.floor(Math.max(...f.map(p=>p.vol))*1000)/10).toFixed(1);
+  rr.min=(Math.ceil(Math.min(...f.map(p=>p.ret))*1000)/10).toFixed(1);rr.max=(Math.floor(Math.max(...f.map(p=>p.ret))*1000)/10).toFixed(1);
+  if(+rv.value<+rv.min||+rv.value>+rv.max)rv.value=(Math.round(O.tangency.vol*1000)/10).toFixed(1);
+  $('tMaxS').textContent=`max Sharpe at ${pct(O.tangency.vol)} · ${pct(O.tangency.ret)}`;TR=null;trShow(trCompute('vol'),'vol');}
+function trCompute(by){const byVol=by==='vol',x=+(byVol?$('tRisk'):$('tRet')).value/100;if(TR&&TR.by===by&&TR.x===x)return TR;
+  const p=byVol?frontierAt(O.frontier,M.mu,M.S,x):frontierAtRet(O.frontier,M.mu,M.S,x);const g=growth(portListed(HP.R,p.w));
+  TR={by,x,w:p.w,ret:p.ret,vol:p.vol,dd:g.maxDD,sharpe:port(p.w).sharpe};return TR;}
+function trShow(t,by){if(by==='vol')$('tRet').value=(t.ret*100).toFixed(1);else $('tRisk').value=(t.vol*100).toFixed(1);
+  $('tRiskL').textContent=pct(t.vol);$('tRetL').textContent=pct(t.ret)+' / yr';const d=t.vol-O.tangency.vol;
+  const where=Math.abs(d)<.0015?'the max-Sharpe point':d<0?'less risk than max Sharpe, so a lower Sharpe':'more risk than max Sharpe: higher return, lower Sharpe';
+  $('tRiskInfo').textContent=`Sharpe ${t.sharpe.toFixed(2)} · past max drawdown −${pct(t.dd,0)} · ${where}`;}
+let trT;function trInput(by){const el=by==='vol'?$('tRisk'):$('tRet');(by==='vol'?$('tRiskL'):$('tRetL')).textContent=(+el.value).toFixed(1)+'%';
+  clearTimeout(trT);trT=setTimeout(()=>{const t=trCompute(by);trShow(t,by);setW(t.w);},90);}
+$('tRisk').addEventListener('input',()=>trInput('vol'));$('tRet').addEventListener('input',()=>trInput('ret'));
 $('pRes').onclick=()=>{if(RES){setW(RES);return;}const K=40,acc=new Float64Array(N),r=rng(7),o=opts();let k=0;const btn=$('pRes'),pb=$('resProg');btn.classList.add('busy');pb.hidden=false;
   const step=()=>{const w=resampleStep(M,o,M._capA,k,r);for(let i=0;i<N;i++)acc[i]+=w[i]/K;k++;pb.firstElementChild.style.width=(k/K*100)+'%';btn.textContent=`Resampling ${k}/${K}`;if(k<K)setTimeout(step,0);else{RES=acc;btn.textContent='Resampled';btn.classList.remove('busy');pb.hidden=true;setW(RES);}};setTimeout(step,20);};
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);try{localStorage.setItem('fl3-tab',b.dataset.tab)}catch(_){}drawVisible();});
