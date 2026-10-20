@@ -74,6 +74,47 @@ body.noscroll{overflow:hidden}
 .ptip .pc{display:grid;grid-template-columns:auto 1fr;gap:3px 8px}
 .ptip .pc span:nth-child(odd){font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;padding-top:2px}
 .ptip .pro{color:var(--good)} .ptip .con{color:var(--bad)}
+/* strategy strip: short selling & leverage */
+.strat{gap:12px}
+.sthead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.sttitle{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
+.sttag{font-family:var(--mono);font-size:.74rem;color:var(--you);background:var(--you-soft);border-radius:999px;padding:3px 10px}
+.stbody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr);gap:12px}
+@media (max-width:1100px){.stbody{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.stsum{grid-column:1/-1}}
+@media (max-width:640px){.stbody{grid-template-columns:minmax(0,1fr)}}
+.stcol{display:flex;flex-direction:column;gap:9px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);min-width:0}
+.tog{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.tog input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--you);flex:none}
+.tog span{display:flex;flex-direction:column;gap:2px}.tog b{font-size:.88rem}.tog small{font-size:.72rem;color:var(--muted)}
+.stp{display:flex;flex-direction:column;gap:8px}
+.stcol.off .stp{display:none}
+.stp input[type=range],.stsum input[type=range]{width:100%;accent-color:var(--you);margin:0}
+.stf{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.76rem}
+.stf label{color:var(--muted)}
+.stf input{width:76px;font-family:var(--mono);font-size:.8rem;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;text-align:right}
+.stp .kicker{margin:0;line-height:1.4}
+.xbar{position:relative;height:24px;border-radius:6px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
+.xbar i{position:absolute;top:0;bottom:0}
+.xbar .zero{width:2px;margin-left:-1px;background:var(--fg);z-index:2}
+.xbar .full{width:0;border-left:2px dashed var(--muted);z-index:2}
+.xs-short{background:var(--bad)}
+.xs-own{background:var(--you)}
+.xs-fund{background:repeating-linear-gradient(135deg,var(--you) 0 5px,color-mix(in srgb,var(--you) 45%,transparent) 5px 9px)}
+.xs-borrow{background:repeating-linear-gradient(45deg,var(--you) 0 3px,transparent 3px 7px)}
+.xs-cash{background:color-mix(in srgb,var(--good) 30%,transparent)}
+.xleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.68rem;color:var(--muted)}
+.xleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.xdl{margin:0;display:grid;grid-template-columns:minmax(0,auto) auto;gap:4px 14px;font-size:.76rem}
+.xdl dt{color:var(--muted)} .xdl dd{margin:0;text-align:right;font-family:var(--mono)}
+.xdl dd small{display:block;font-size:.66rem;color:var(--faint)}
+.stwarn{display:flex;flex-direction:column;gap:3px;font-size:.74rem;color:var(--bad)} .stwarn:empty{display:none}
+.stok{color:var(--good)}
+.stinfo summary{cursor:pointer;font-size:.8rem;font-weight:600;color:var(--muted);padding:2px 0}
+.stinfo summary:hover{color:var(--fg)}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px 24px;margin-top:10px}
+.stgrid p{margin:0;font-size:.8rem;color:var(--muted);line-height:1.5}.stgrid b{color:var(--fg)}
+.ar.short input[type=number]{color:var(--bad)}
+.ar.short input[type=range]{accent-color:var(--bad)}
 </style>
 
 <div class="wrap">
@@ -90,6 +131,50 @@ body.noscroll{overflow:hidden}
 </header>
 
 <section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 39 assets on 30 years of data…</div></div></section>
+
+<section class="panel strat" id="strat" aria-label="Strategy: short selling and leverage">
+  <div class="sthead">
+    <div class="sttitle"><h2>Strategy</h2><span class="sttag" id="stTag">Long only</span></div>
+    <div class="seg" role="group" aria-label="Strategy presets" id="stSeg"><button data-st="long" aria-pressed="true" title="Every weight 0 or more, 100% invested, no borrowing. Applies the max-Sharpe portfolio.">Long only</button><button data-st="130" title="Short up to 30% and use the cash for extra longs (130% long, 30% short, 100% net). Applies the long/short max-Sharpe portfolio.">130/30</button><button data-st="lev2" title="Borrow 100% of your capital and hold 200% of the best portfolio to lever.">2× leveraged</button><button data-st="both" title="130/30 with up to 1.5× leverage. Applies the best long/short portfolio to lever at 1.5×.">130/30 × 1.5</button></div>
+  </div>
+  <div class="stbody">
+    <div class="stcol" id="shortCol">
+      <label class="tog"><input type="checkbox" id="lsShort"><span><b>Short selling</b><small>Sell borrowed shares to profit if an asset falls, and use the cash for more longs</small></span></label>
+      <div class="stp">
+        <div class="trrow"><label for="lsSb">Short budget</label><b id="lsSbL"></b></div>
+        <input type="range" id="lsSb" min="5" max="100" step="5" value="30" aria-describedby="lsSbN">
+        <div class="stf"><label for="lsFee">Borrow fee % / yr</label><input type="number" id="lsFee" step="0.1" min="0" max="25" value="0.5"></div>
+        <p class="kicker" id="lsSbN"></p>
+      </div>
+    </div>
+    <div class="stcol" id="levCol">
+      <label class="tog"><input type="checkbox" id="lsLev"><span><b>Leverage</b><small>Borrow money to hold more than 100% of your capital</small></span></label>
+      <div class="stp">
+        <div class="trrow"><label for="lsL">Max leverage</label><b id="lsLL"></b></div>
+        <input type="range" id="lsL" min="1.1" max="3" step="0.1" value="2" aria-describedby="levNote">
+        <div class="stf"><label for="lsSpread">Broker spread over risk-free %</label><input type="number" id="lsSpread" step="0.1" min="0" max="10" value="1.5"></div>
+        <div class="stf"><label for="lsMM">Maintenance margin %</label><input type="number" id="lsMM" step="5" min="5" max="100" value="25"></div>
+        <p class="kicker" id="levNote"></p>
+      </div>
+    </div>
+    <div class="stcol stsum">
+      <div class="trrow"><span class="kicker">Your portfolio's exposure</span><span class="kicker" id="stLim"></span></div>
+      <div class="xbar" id="xBar" role="img"></div>
+      <div class="xleg" id="xLeg"></div>
+      <dl class="xdl" id="xDl"></dl>
+      <div id="useRow"><div class="trrow"><label for="lsUse">Leverage used (scales every position)</label><b id="lsUseL"></b></div><input type="range" id="lsUse" min="0.25" max="2" step="0.05" value="1"></div>
+      <div class="stwarn" id="stWarn" role="status"></div>
+    </div>
+  </div>
+  <details class="stinfo"><summary>How short selling and leverage work in this model</summary><div class="stgrid">
+    <p><b>Short selling.</b> You borrow shares and sell them: you gain if the price falls and lose if it rises, with no limit on the loss. The cash raised pays for extra long positions, so <b>130/30</b> means 130% of your capital long and 30% short. You stay 100% net invested but can bet against the assets the model likes least. You pay a borrow fee on the value shorted, and you owe the dividends, which the total returns used here already include.</p>
+    <p><b>Leverage.</b> You borrow at the risk-free rate plus your broker's spread to hold more than 100% of your capital. Expected return, volatility and drawdowns all scale with leverage, but the Sharpe ratio does not improve: the borrowing spread lowers it slightly. Leverage is for reaching a risk level, not for better risk-adjusted returns.</p>
+    <p><b>Why the frontier turns into a straight line.</b> With borrowing allowed, the cheapest way to take more risk is to lever one portfolio: the one with the best Sharpe ratio measured against your borrowing rate (the <b>best to lever</b> diamond on the Frontier tab), not to pile into riskier assets. Below that point no borrowing is needed; above it the frontier is that portfolio at 1× to your maximum leverage, then riskier portfolios at maximum leverage.</p>
+    <p><b>What a weight means.</b> With shorts or leverage on, weights are shares of your capital and are no longer rescaled to 100%. Negative means short. Whatever does not add up to 100% net is cash earning the risk-free rate, or money borrowed if you are above 100%. The max weight per asset applies to longs and shorts, measured on the invested portfolio before leverage: at 2× a 15% limit allows 30% of your capital.</p>
+    <p><b>Losses beyond your capital.</b> Backtests, stress tests and the Monte Carlo rebalance to the same exposure every month and charge interest and fees monthly. A month that loses more than your equity wipes the portfolio out. In reality the broker would sell you out earlier, at the margin call shown above (estimated for all positions falling together). Retail margin accounts under US Reg T allow about 2× overnight; EU retail CFDs on single stocks are capped at 5×.</p>
+    <p><b>What stays long-only.</b> Max Sortino, min downside, risk parity, resampled, equal and cap-weighted remain long-only reference portfolios. Use the <b>leverage used</b> slider to lever any of them. The rolling strategies in the walk-forward backtest are long-only too. Max Sharpe, min variance and the target sliders use your full strategy.</p>
+  </div></details>
+</section>
 
 <div class="main">
 <aside class="panel" aria-label="Allocation">
@@ -165,7 +250,7 @@ body.noscroll{overflow:hidden}
     <div class="chart"><canvas id="cFront" height="440"></canvas></div>
     <div class="legend" id="legFront"></div>
     <div class="g2">
-      <p class="note">Grey dots are 4,000 random portfolios. The curve is the efficient frontier under your weight cap; the dashed <b>CML</b> runs from the T-bill rate through the max-Sharpe portfolio. Hover or tap points for detail.</p>
+      <p class="note">Grey dots are 4,000 random long-only portfolios. The solid curve is the efficient frontier for your strategy and weight cap; the dashed <b>CML</b> runs from the risk-free rate through the max-Sharpe portfolio. With <b>short selling</b> on, the faint dashed curve is the long-only frontier for comparison. With <b>leverage</b> on, the frontier continues as a straight line from the <b>best portfolio to lever</b> (the line from your borrowing rate through it) up to your maximum leverage. Hover or tap points for detail.</p>
       <div class="cmpgrid" id="cmpFront"></div>
     </div>
   </div>
@@ -293,8 +378,9 @@ const RFX={usd:0.04057,eur:0.025,eurh:0.025,eurb:0.025};// 13-week T-bill / ECB 
 const CURL={usd:'USD',eur:'EUR, unhedged',eurh:'EUR, hedged',eurb:'EUR, bonds hedged'};
 const RF0=RFX.eurb;
 const EX08=['2007-12','2009-06'];
-const S={ex08:false,cur:'eurb',win:361,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null};
-let HP,H,M,O,D,RP,RES=null,WF=null,cloud,LW;
+const S={ex08:false,cur:'eurb',win:361,mode:'bl',trust:.25,rf:RF0,erp:.05,mar:RF0,cap:.15,tau:.05,shrink:null,views:[],override:A.map(()=>null),active:A.map(()=>true),w:null,
+  ls:{short:false,sb:.3,fee:.005,lev:false,L:2,spread:.015,mm:.25}};// strategy: short budget (share of the invested portfolio), borrow fee, max leverage, broker spread over risk-free, maintenance margin
+let HP,H,M,O,D,RP,RES=null,WF=null,cloud,LW,OL,LV,PB,AFTER=null;
 
 function opts(){return {rf:S.rf,erp:S.erp,mar:S.mar,shrink:S.shrink,mode:S.mode,trust:S.trust,tau:S.tau,views:effViews(),override:S.override,cap:S.cap,active:S.active};}
 function effViews(){const v=S.views.filter(x=>x.a&&(x.type==='abs'||x.b&&x.b!==x.a)).map(x=>({...x}));
@@ -303,17 +389,32 @@ let M0=null;
 function rebuild(){
   HF=toBase(HF0,S.cur);HP=sliceH(HF,S.win);H=S.ex08?dropMonths(HP,EX08[0],EX08[1]):HP;M0=buildModel(H,{...opts(),shrink:S.shrink??.3,views:[],mode:'hist'});LW=ledoitWolf({ids:H.ids,R:M0.F,T:H.T});if(S.shrink==null)S.shrink=+LW.delta.toFixed(2);M=buildModel(H,opts());
   const k=S.active.filter(Boolean).length,capE=Math.max(S.cap,1/k+1e-6),capA=Float64Array.from(A.map((a,i)=>S.active[i]?capE:0));
-  O=optimize(M.mu,M.S,capA,S.rf);D=optimizeDownside(M.F,M.mu,capA,S.mar,M.marM,[O.tangency.w,O.minvar.w]);RP=riskParity(M.S,S.active);
+  // long-only optimum is always kept as the reference; the strategy's base portfolio may short; leverage scales it (see engine leverFrontier)
+  const shortOn=S.ls.short&&S.ls.sb>0;PB={mu:M.mu,S:M.S,hi:capA,lo:shortOn?Float64Array.from(capA,x=>-x):new Float64Array(N),sb:shortOn?S.ls.sb:0,fee:S.ls.fee,L:maxEig(M.S),ls:shortOn};
+  OL=optimize(M.mu,M.S,capA,S.rf);const OB=shortOn?optimizeP(PB,S.rf):OL;LV=S.ls.lev?leverFrontier(OB,PB,S.rf,S.ls.spread,S.ls.L):null;
+  O={tangency:OB.tangency,minvar:OB.minvar,frontier:LV?LV.frontier:OB.frontier};
+  D=optimizeDownside(M.F,M.mu,capA,S.mar,M.marM,[OL.tangency.w,OL.minvar.w]);RP=riskParity(M.S,S.active);
   cloud=randomPortfolios(M.mu,M.S,S.rf,4000,11,S.active);RES=null;WF=null;M._capA=capA;
   if(!S.w)S.w=Float64Array.from(O.tangency.w);
 }
 function norm(w){let s=0;for(const x of w)s+=x;return s>0?Float64Array.from(w,x=>x/s):Float64Array.from(w);}
+// strategy helpers. Long only: weights are rescaled to 100% as before. With shorts or leverage: weights are literal shares of capital (negative = short, 1 - net = cash or borrowing)
+const LSON=()=>S.ls.short||S.ls.lev,SHON=()=>S.ls.short&&S.ls.sb>0;
+const FIN=()=>({rf:S.rf,spread:S.ls.spread,fee:S.ls.fee});
+function pw(w){return LSON()?Float64Array.from(w):norm(Float64Array.from(w,x=>Math.max(0,x)));}
+const volOf=w=>Math.sqrt(Math.max(0,dot(w,matVec(M.S,w))));
+const EV=w=>({ret:finRet(w,M.mu,FIN()),vol:volOf(w)});
+const scaleW=(w,k)=>Float64Array.from(w,x=>x*k);
+const histSer=(w,src)=>{src=src||HP;return finSeries(portListed(src.R,w),w,src.rfm,FIN());};// real months, financing at each month's risk-free rate
+const fwdSer=w=>finSeries(portSeries(M.F,w,M.mu),w,null,FIN());// forward-looking months for the Monte Carlo
+const loTag=n=>LSON()?n+' · long-only':n;
 const PC=new Map();
-function port(w){const wn=norm(w);const key=Array.from(wn,x=>x.toFixed(5)).join();if(PC.has(key))return PC.get(key);
-  const st=stats(wn,M.mu,M.S);const b=dot(wn,M.beta);const ser=portSeries(M.F,wn);const rs=riskStats(ser,M.marM);const sdd=Math.sqrt(Math.max(0,dot(wn,matVec(M.SC,wn))));
-  const sw=Array.from(wn).reduce((s,x,i)=>s+x*M.sd[i],0);
-  const p={w:wn,ret:st.ret,vol:st.vol,beta:b,sharpe:st.vol?(st.ret-S.rf)/st.vol:0,alpha:st.ret-(S.rf+b*S.erp),var95:Math.max(0,-(st.ret-1.645*st.vol)),effN:1/wn.reduce((t,x)=>t+x*x,0),rs,sdd,dbeta:dot(wn,M.dbeta),sortino:rs.dd?(st.ret-S.mar)/rs.dd:0,divRatio:st.vol?sw/st.vol:1};
-  p.ra=alphaStats(portListed(HP.R,wn),HP.mkt,HP.rfm);if(PC.size>200)PC.clear();PC.set(key,p);return p;}
+function port(w){const wn=pw(w);const key=Array.from(wn,x=>x.toFixed(5)).join();if(PC.has(key))return PC.get(key);
+  const fin=FIN(),ret=finRet(wn,M.mu,fin),vol=volOf(wn),ex=exposure(wn);const b=dot(wn,M.beta);const ser=finSeries(portSeries(M.F,wn),wn,H.rfm,fin);const rs=riskStats(ser,M.marM);const sdd=Math.sqrt(Math.max(0,dot(wn,matVec(M.SC,wn))));
+  const sw=Array.from(wn).reduce((s,x,i)=>s+Math.abs(x)*M.sd[i],0);let s2=0;for(const x of wn)s2+=x*x;
+  const p={w:wn,ex,ret,vol,beta:b,sharpe:vol?(ret-S.rf)/vol:0,alpha:ret-(S.rf+b*S.erp),var95:Math.max(0,-(ret-1.645*vol)),effN:s2?ex.gross*ex.gross/s2:0,rs,sdd,dbeta:dot(wn,M.dbeta),sortino:rs.dd?(ret-S.mar)/rs.dd:0,divRatio:vol?sw/vol:1,
+    fcost:Math.max(0,-ex.cash)*(S.rf+S.ls.spread)+ex.short*S.ls.fee};
+  p.ra=alphaStats(histSer(wn),HP.mkt,HP.rfm);if(PC.size>200)PC.clear();PC.set(key,p);return p;}
 
 /* ---------- chart kit ---------- */
 function setup(cv,minH,ar){const dpr=window.devicePixelRatio||1;const w=cv.clientWidth||cv.parentElement.clientWidth;const base=+(cv.dataset.h||(cv.dataset.h=cv.getAttribute('height')));const h=ar?Math.round(Math.min(base*1.15,Math.max(minH||200,w*ar))):Math.max(minH||200,Math.round(base*Math.min(1,Math.max(.65,w/760))));cv.style.height=h+'px';cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,W:w,H:h};}
@@ -346,24 +447,29 @@ function hero(){const y=port(S.w),t=port(O.tangency.w),mc=window._mc;
     k('Sortino ratio',y.sortino.toFixed(2),d(y.sortino,t.sortino,0,x=>(x>=0?'+':'')+x.toFixed(2)))+k('Beta · Jensen α',y.beta.toFixed(2)+' · '+sp(y.alpha),`CAPM requires ${pct(S.rf+y.beta*S.erp)}`)+
     k('Alpha generated / yr',`<span class="${y.ra.alpha>=0?'up':'down'}" style="color:inherit">${sp(y.ra.alpha)}</span>`,`t = ${y.ra.t.toFixed(1)} · ${sigTxt(y.ra.t)} · vs S&P since ${H.months[0].slice(0,4)}`)+
     k(`Median in ${$('mcYears').value}y${mc&&mc.y.real?' · today\'s €':''}`,mc?eur(mc.y.bands[2][mc.y.T]):'—',mc?`<span class="${mc.y.bands[2][mc.y.T]>=mc.t.bands[2][mc.t.T]?'up':'down'}">${eur(mc.y.bands[2][mc.y.T]-mc.t.bands[2][mc.t.T])}</span> vs max-Sharpe`:'');}
+// editor bounds: shorts allowed only with short selling on; slider span follows the position limit at max leverage
+const wMin=()=>LSON()&&S.ls.short?-100:0,wMax=()=>LSON()?300:100;
+const rSpan=()=>Math.max(40,Math.ceil(S.cap*(S.ls.lev?S.ls.L:1)*100/5)*5),rMin=()=>LSON()&&S.ls.short?-Math.max(20,Math.ceil(S.cap*(S.ls.lev?S.ls.L:1)*100/5)*5):0;
 function allocList(){let h='',cur='';const t=O.tangency.w;
   ORDER.forEach(i=>{const a=A[i];if(a.cls!==cur){cur=a.cls;h+=`<div class="grp"><span><span class="dot" style="background:var(${CLS[cur][1]})"></span>${CLS[cur][0]}</span><span id="g_${cur}"></span></div>`;}
-    h+=`<div class="ar${S.active[i]?'':' off'}"><div class="nm" title="Open ${a.name} analysis"><span class="asset-link" data-asset="${a.id}" tabindex="0" role="button">${a.name}</span><small>${a.ticker}</small></div>
-      <input type="number" id="n${i}" data-i="${i}" min="0" max="100" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight %">
-      <input type="range" id="r${i}" data-i="${i}" min="0" max="40" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight slider">
+    h+=`<div class="ar${S.active[i]?'':' off'}${S.w[i]<0?' short':''}"><div class="nm" title="Open ${a.name} analysis"><span class="asset-link" data-asset="${a.id}" tabindex="0" role="button">${a.name}</span><small>${a.ticker}</small></div>
+      <input type="number" id="n${i}" data-i="${i}" min="${wMin()}" max="${wMax()}" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight %">
+      <input type="range" id="r${i}" data-i="${i}" min="${rMin()}" max="${rSpan()}" step="0.5" value="${(S.w[i]*100).toFixed(1)}" aria-label="${a.name} weight slider">
       <div class="optw"><span>max-Sh ${pct(t[i])}</span><span>E[R] ${pct(M.mu[i],0)} · σ ${pct(M.sd[i],0)}</span></div></div>`;});
   $('alloc').innerHTML=h;updAlloc();}
-function updAlloc(){let s=0;for(const x of S.w)s+=x;$('sumTxt').textContent=`Σ ${(s*100).toFixed(1)}%`+(Math.abs(s-1)>.0005?' · scaled to 100% in all figures':'');
-  const wn=norm(S.w),g={};A.forEach((a,i)=>g[a.cls]=(g[a.cls]||0)+wn[i]);Object.keys(CLS).forEach(c=>{const el=$('g_'+c);if(el)el.textContent=pct(g[c]||0);});
-  $('mixLeg').innerHTML=Object.entries(g).filter(e=>e[1]>.0005).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<span><span><i style="background:var(${CLS[c][1]})"></i>${CLS[c][0]}</span><em>${pct(v,0)}</em></span>`).join('');
+function updAlloc(){const wn=pw(S.w),ex=exposure(wn);
+  if(LSON()){$('sumTxt').textContent=`Long ${pct(ex.long,0)} · Short ${pct(ex.short,0)} · Net ${pct(ex.net,0)}`+(Math.abs(ex.cash)>.0005?` · ${ex.cash<0?'borrowed':'cash'} ${pct(Math.abs(ex.cash),0)}`:'');$('normBtn').textContent='Net to 100%';}
+  else{let s=0;for(const x of S.w)s+=Math.max(0,x);$('sumTxt').textContent=`Σ ${(s*100).toFixed(1)}%`+(Math.abs(s-1)>.0005?' · scaled to 100% in all figures':'');$('normBtn').textContent='Scale to 100%';}
+  const g={},ga={};A.forEach((a,i)=>{g[a.cls]=(g[a.cls]||0)+wn[i];ga[a.cls]=(ga[a.cls]||0)+Math.abs(wn[i]);});Object.keys(CLS).forEach(c=>{const el=$('g_'+c);if(el)el.textContent=pct(g[c]||0);});
+  $('mixLeg').innerHTML=Object.entries(g).filter(e=>Math.abs(e[1])>.0005).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).map(([c,v])=>`<span><span><i style="background:var(${CLS[c][1]})"></i>${CLS[c][0]}</span><em class="${v<-.005?'down':''}">${pct(Math.abs(v)<.005?0:v,0)}</em></span>`).join('');
   const cv=$('cDonut');const dpr=window.devicePixelRatio||1;cv.width=120*dpr;cv.height=120*dpr;cv.style.height='120px';const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
-  let a0=-Math.PI/2;Object.entries(g).forEach(([c,v])=>{if(v<=0)return;ctx.beginPath();ctx.arc(60,60,54,a0,a0+v*2*Math.PI);ctx.arc(60,60,36,a0+v*2*Math.PI,a0,true);ctx.closePath();ctx.fillStyle=css(CLS[c][1]);ctx.fill();a0+=v*2*Math.PI;});
-  const y=port(S.w);ctx.fillStyle=css('--fg');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 15px "Bricolage Grotesque",sans-serif';ctx.fillText(y.effN.toFixed(1),60,56);ctx.font='9px "IBM Plex Sans",sans-serif';ctx.fillStyle=css('--muted');ctx.fillText('effective #',60,72);}
+  const gt=ex.gross||1;let a0=-Math.PI/2;Object.entries(ga).forEach(([c,v0])=>{const v=v0/gt;if(v<=0)return;ctx.beginPath();ctx.arc(60,60,54,a0,a0+v*2*Math.PI);ctx.arc(60,60,36,a0+v*2*Math.PI,a0,true);ctx.closePath();ctx.fillStyle=css(CLS[c][1]);ctx.globalAlpha=g[c]<0?.45:1;ctx.fill();ctx.globalAlpha=1;a0+=v*2*Math.PI;});
+  const y=port(S.w);ctx.fillStyle=css('--fg');ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 15px "Bricolage Grotesque",sans-serif';ctx.fillText(y.effN.toFixed(1),60,56);ctx.font='9px "IBM Plex Sans",sans-serif';ctx.fillStyle=css('--muted');ctx.fillText('effective #',60,72);stSummary();}
 
 /* ---------- Monte Carlo ---------- */
 function mcOpts(){return {infl:Math.max(0,(+$('mcInfl').value||0)/100),real:$('mcReal').value==='real'};}
 function runMC(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),paths=+$('mcPaths').value,st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
-  const y=port(S.w),t=port(O.tangency.w);const io=mcOpts();const run=p=>monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths,start:st,monthly:mo,seed:42,...io});
+  const y=port(S.w),t=port(O.tangency.w);const io=mcOpts();const run=p=>monteCarlo({method:meth,series:fwdSer(p.w),mu:p.ret,vol:p.vol,years:yrs,paths,start:st,monthly:mo,seed:42,...io});
   const ry=run(y),rt=run(t);window._mc={y:ry,t:rt};
   const cv=$('cMC');const {ctx,W,H:Hh}=setup(cv,260,.42);const pad={l:68,r:16,t:14,b:40};const top=Math.max(ry.bands[4][ry.T],rt.bands[3][rt.T]);
   const {X,Y}=axes(ctx,W,Hh,pad,[0,yrs],[0,top*1.04],v=>v+'y',v=>v>=1e6?'€'+(v/1e6).toFixed(1)+'M':'€'+Math.round(v/1000)+'k','Years from today',io.real?`Value in today's euros (inflation ${pct(io.infl)})`:'Value in future euros');
@@ -389,27 +495,34 @@ function runMC(){const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),path
   hero();}
 
 /* ---------- Frontier ---------- */
-function drawFrontier(){const cv=$('cFront');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const y=port(S.w),t=O.tangency,mv=O.minvar,rp=port(RP);
+function drawFrontier(){const cv=$('cFront');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const y=port(S.w),t=O.tangency,mv=O.minvar,rp=port(RP);const sh=S.ls.short&&S.ls.sb>0;
   const xs=[...M.sd,...O.frontier.map(p=>p.vol),y.vol],ys=[...M.mu,...O.frontier.map(p=>p.ret),S.rf,y.ret];const xd=[0,Math.max(...xs)*1.04],yd=[Math.min(0,...ys)-.01,Math.max(...ys)*1.06];
   const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>pct(v,0),v=>pct(v,0),'Volatility (σ, annual)','Expected return');const hl=HITS.front=[];
   ctx.fillStyle=css('--faint');ctx.globalAlpha=.45;for(const p of cloud)ctx.fillRect(X(p.vol)-1,Y(p.ret)-1,2,2);ctx.globalAlpha=1;
-  line(ctx,[[X(0),Y(S.rf)],[X(xd[1]),Y(S.rf+t.sharpe*xd[1])]],css('--accent'),1.6,[7,5]);line(ctx,O.frontier.map(p=>[X(p.vol),Y(p.ret)]),css('--fg'),2.4);
+  line(ctx,[[X(0),Y(S.rf)],[X(xd[1]),Y(S.rf+t.sharpe*xd[1])]],css('--accent'),1.6,[7,5]);
+  if(sh)line(ctx,OL.frontier.map(p=>[X(p.vol),Y(p.ret)]),css('--muted'),1.6,[3,4]);
+  if(LV){const rb=S.rf+S.ls.spread,tb=LV.tb,sl=(tb.ret-rb)/tb.vol,top=LV.tb.vol*LV.Lmax;line(ctx,[[X(0),Y(rb)],[X(top),Y(rb+sl*top)]],css('--you'),1.2,[2,4]);}
+  line(ctx,O.frontier.map(p=>[X(p.vol),Y(p.ret)]),css('--fg'),2.4);
   A.forEach((a,i)=>{const x=X(M.sd[i]),yy=Y(M.mu[i]);ctx.globalAlpha=S.active[i]?1:.3;dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);ctx.globalAlpha=1;hl.push({x,y:yy,label:`${a.name} · E[R] ${pct(M.mu[i])} · σ ${pct(M.sd[i])} · Sharpe ${((M.mu[i]-S.rf)/M.sd[i]).toFixed(2)}`});});
   dotC(ctx,X(0),Y(S.rf),5,css('--accent'));hl.push({x:X(0),y:Y(S.rf),label:`T-bill ${pct(S.rf,2)}`});
   dia(ctx,X(mv.vol),Y(mv.ret),8,css('--minv'));hl.push({x:X(mv.vol),y:Y(mv.ret),label:`Min variance · ${pct(mv.ret)} / σ ${pct(mv.vol)}`});
   dia(ctx,X(rp.vol),Y(rp.ret),8,css('--c-bond'));hl.push({x:X(rp.vol),y:Y(rp.ret),label:`Risk parity · Sharpe ${rp.sharpe.toFixed(2)} · ${pct(rp.ret)} / σ ${pct(rp.vol)}`});
   dia(ctx,X(t.vol),Y(t.ret),9,css('--accent'));hl.push({x:X(t.vol),y:Y(t.ret),label:`Max Sharpe ${t.sharpe.toFixed(2)} · ${pct(t.ret)} / σ ${pct(t.vol)}`});
-  dotC(ctx,X(y.vol),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.vol),y:Y(y.ret),label:`Yours · Sharpe ${y.sharpe.toFixed(2)} · ${pct(y.ret)} / σ ${pct(y.vol)}`});tip(cv,'front');
-  $('legFront').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min variance</span><span><i class="dot" style="background:var(--c-bond)"></i>Risk parity</span><span><i style="background:var(--fg)"></i>Efficient frontier</span><span><i style="background:var(--accent)"></i>CML</span>`+Object.values(CLS).map(c=>`<span><i class="dot" style="background:var(${c[1]})"></i>${c[0]}</span>`).join('');
+  if(sh){const lt=OL.tangency;dia(ctx,X(lt.vol),Y(lt.ret),6.5,css('--muted'));hl.push({x:X(lt.vol),y:Y(lt.ret),label:`Max Sharpe long-only ${lt.sharpe.toFixed(2)} · ${pct(lt.ret)} / σ ${pct(lt.vol)}`});}
+  if(LV){const rb=S.rf+S.ls.spread,tb=LV.tb,top=scaleW(tb.w,LV.Lmax),pt=EV(top);dotC(ctx,X(0),Y(rb),4.5,css('--you'));hl.push({x:X(0),y:Y(rb),label:`Borrowing rate ${pct(rb,2)} (risk-free + ${pct(S.ls.spread,2)})`});
+    dia(ctx,X(tb.vol),Y(tb.ret),8,css('--you'));hl.push({x:X(tb.vol),y:Y(tb.ret),label:`Best to lever · Sharpe vs borrowing ${((tb.ret-rb)/tb.vol).toFixed(2)} · ${pct(tb.ret)} / σ ${pct(tb.vol)}`});
+    dia(ctx,X(pt.vol),Y(pt.ret),6.5,css('--you'));hl.push({x:X(pt.vol),y:Y(pt.ret),label:`Best to lever × ${LV.Lmax.toFixed(1)} · ${pct(pt.ret)} / σ ${pct(pt.vol)} · Sharpe ${((pt.ret-S.rf)/pt.vol).toFixed(2)}`});}
+  dotC(ctx,X(y.vol),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.vol),y:Y(y.ret),label:`Yours · Sharpe ${y.sharpe.toFixed(2)} · ${pct(y.ret)} / σ ${pct(y.vol)}${LSON()?` · net ${y.ex.net.toFixed(2)}×, short ${pct(y.ex.short,0)}`:''}`});tip(cv,'front');
+  $('legFront').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min variance</span><span><i class="dot" style="background:var(--c-bond)"></i>Risk parity</span><span><i style="background:var(--fg)"></i>Efficient frontier${LSON()?' (your strategy)':''}</span><span><i style="background:var(--accent)"></i>CML</span>`+(sh?`<span><i style="background:var(--muted)"></i>Long-only frontier</span>`:'')+(LV?`<span><i class="dot" style="background:var(--you)"></i>Best to lever (1× and ${LV.Lmax.toFixed(1)}×)</span><span><i style="background:var(--you)"></i>Borrowing line</span>`:'')+Object.values(CLS).map(c=>`<span><i class="dot" style="background:var(${c[1]})"></i>${c[0]}</span>`).join('');
   const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>E[R]</dt><dd>${pct(p.ret)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd><dt>Sharpe</dt><dd>${p.sharpe.toFixed(2)}</dd><dt>β</dt><dd>${p.beta.toFixed(2)}</dd><dt>VaR 95% 1y</dt><dd>${pct(p.var95)}</dd></dl></div>`;
-  $('cmpFront').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',port(t.w))+card('Min variance','--minv',port(mv.w))+card('Risk parity','--c-bond',rp);}
+  $('cmpFront').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',port(t.w))+(SHON()?card('Max Sharpe · long-only','--muted',port(OL.tangency.w)):'')+(LV?card(`Best to lever × ${LV.Lmax.toFixed(1)}`,'--c-power',port(scaleW(LV.tb.w,LV.Lmax))):'')+card('Min variance','--minv',port(mv.w))+card(loTag('Risk parity'),'--c-bond',rp);}
 
 /* ---------- Downside ---------- */
 function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(O.tangency.w),so=port(D.tangency.w),md=port(D.minvar.w);
   const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><div class="big">${p.sortino.toFixed(2)}<small>Sortino</small></div><dl>
     <dt>Downside dev.</dt><dd>${pct(p.rs.dd)}</dd><dt>Downside β</dt><dd>${p.dbeta.toFixed(2)}</dd><dt>VaR 95% (1m)</dt><dd class="down">${pct(-p.rs.var95)}</dd><dt>CVaR 95% (1m)</dt><dd class="down">${pct(-p.rs.cvar95)}</dd>
     <dt>Max drawdown</dt><dd class="down">${pct(-p.rs.mdd)}</dd><dt>Longest underwater</dt><dd>${p.rs.maxUw} mo</dd><dt>Calmar</dt><dd>${isFinite(p.rs.calmar)?p.rs.calmar.toFixed(2):'—'}</dd><dt>Omega</dt><dd>${isFinite(p.rs.omega)?p.rs.omega.toFixed(2):'∞'}</dd><dt>Losing months</dt><dd>${pct(p.rs.pctNeg,0)}</dd></dl></div>`;
-  $('cmpDown').innerHTML=card('Yours','--you',y)+card('Max Sortino','--c-crypto',so)+card('Max Sharpe','--accent',t)+card('Min downside','--minv',md);
+  $('cmpDown').innerHTML=card('Yours','--you',y)+card(loTag('Max Sortino'),'--c-crypto',so)+card('Max Sharpe','--accent',t)+card(loTag('Min downside'),'--minv',md);
   const cv=$('cDown');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const ddA=M.risk.map(r=>r.dd);
   const xs=[...ddA,y.sdd,so.sdd],ys=[...M.mu,S.mar,y.ret];const xd=[0,Math.max(...xs)*1.05],yd=[Math.min(0,...ys)-.01,Math.max(...ys)*1.06];
   const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>pct(v,0),v=>pct(v,0),'Downside deviation below MAR (annual)','Expected return');const hl=HITS.down=[];
@@ -427,20 +540,20 @@ function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(
 function drawRB(){const y=port(S.w);const rc=riskContrib(y.w,M.S);const rp=port(RP),t=port(O.tangency.w);
   const top=(p,rcx)=>{const i=rcx.indexOf(Math.max(...rcx));return `${A[i].name} ${pct(rcx[i],0)}`;};
   const card=(n,col,p)=>{const r=riskContrib(p.w,M.S);const s3=[...r].sort((a,b)=>b-a).slice(0,3).reduce((a,b)=>a+b,0);return `<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>Diversification ratio</dt><dd>${p.divRatio.toFixed(2)}</dd><dt>Top-3 risk share</dt><dd>${pct(s3,0)}</dd><dt>Largest risk</dt><dd>${top(p,r)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd></dl></div>`;};
-  $('rbCards').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',t)+card('Risk parity','--c-bond',rp);
-  const rows=A.map((a,i)=>({a,i,w:y.w[i],r:rc[i]})).filter(r=>r.w>.0005||Math.abs(r.r)>.0005).sort((p,q)=>q.r-p.r);const mx=Math.max(...rows.map(r=>Math.max(r.w,r.r)),.01);
-  $('rbList').innerHTML=`<span class="h">Asset</span><span class="h"></span><span class="h num">Weight</span><span class="h num">Risk</span>`+rows.map(r=>`<span class="nm" style="font-weight:500"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</span><span class="bars"><i style="width:${r.w/mx*100}%;background:var(--faint)"></i><i style="width:${Math.max(0,r.r)/mx*100}%;background:var(--you)"></i></span><span class="num">${pct(r.w)}</span><span class="num ${r.r>r.w*1.25?'down':r.r<r.w*.75?'up':''}">${pct(r.r)}</span>`).join('')||'<span class="note">Add some weights on the left.</span>';}
+  $('rbCards').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',t)+card(loTag('Risk parity'),'--c-bond',rp);
+  const rows=A.map((a,i)=>({a,i,w:y.w[i],r:rc[i]})).filter(r=>Math.abs(r.w)>.0005||Math.abs(r.r)>.0005).sort((p,q)=>q.r-p.r);const mx=Math.max(...rows.map(r=>Math.max(Math.abs(r.w),Math.abs(r.r))),.01);
+  $('rbList').innerHTML=`<span class="h">Asset</span><span class="h"></span><span class="h num">Weight</span><span class="h num">Risk</span>`+rows.map(r=>`<span class="nm" style="font-weight:500"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</span><span class="bars"><i style="width:${Math.abs(r.w)/mx*100}%;background:var(${r.w<0?'--bad':'--faint'})"></i><i style="width:${Math.abs(r.r)/mx*100}%;background:var(${r.r<0?'--good':'--you'})"></i></span><span class="num ${r.w<0?'down':''}">${pct(r.w)}</span><span class="num ${Math.abs(r.r)>Math.abs(r.w)*1.25&&r.r>0?'down':r.r<Math.abs(r.w)*.75?'up':''}">${pct(r.r)}</span>`).join('')||'<span class="note">Add some weights on the left.</span>';}
 
 /* ---------- Stress tests ---------- */
 const SCEN=[['1998 LTCM & Russia crisis','1998-07','1998-09'],['Dot-com crash','2000-04','2002-09'],['2008 financial crisis','2007-11','2009-02'],['2011 euro debt crisis','2011-05','2011-09'],['2015–16 China & oil rout','2015-06','2016-02'],['Q4 2018 sell-off','2018-10','2018-12'],['COVID crash','2020-02','2020-03'],['2022 bear market','2022-01','2022-09'],['Mar 2023 bank stress','2023-03','2023-03'],['2025 tariff shock','2025-02','2025-04']];
-function drawStress(){const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Min variance','--minv',O.minvar.w],['Risk parity','--c-bond',RP]];
-  const ser=P.map(p=>portListed(HF.R,p[2]));const spy=HF.mkt;const mi=m=>HF.months.indexOf(m);
-  const cum=(s,a,b)=>{let g=1;for(let t=a;t<=b;t++)g*=1+s[t];return g-1;};const cov=(s,a,b)=>{let c=1;for(let t=a;t<=b;t++)c=Math.min(c,s.coverage[t]);return c;};
+function drawStress(){const P=[['Yours','--you',pw(S.w)],['Max Sharpe','--accent',O.tangency.w],...(SHON()?[['Max Sharpe · long-only','--muted',OL.tangency.w]]:[]),[loTag('Max Sortino'),'--c-crypto',D.tangency.w],['Min variance','--minv',O.minvar.w],[loTag('Risk parity'),'--c-bond',RP]];
+  const ser=P.map(p=>histSer(p[2],HF));const spy=HF.mkt;const mi=m=>HF.months.indexOf(m);
+  const cum=(s,a,b)=>{let g=1;for(let t=a;t<=b;t++)g*=1+Math.max(-1,s[t]);return g-1;};const cov=(s,a,b)=>{let c=1;for(let t=a;t<=b;t++)c=Math.min(c,s.coverage[t]);return c;};
   const cell=(v,c)=>{const t=Math.min(1,Math.abs(v)/.35);const bg=v<0?`color-mix(in srgb, var(--bad) ${Math.round(t*45)}%, transparent)`:`color-mix(in srgb, var(--good) ${Math.round(t*45)}%, transparent)`;return `<td style="background:${bg}">${sp(v)}${c<.8?'*':''}</td>`;};
   let h=`<thead><tr><th>Scenario</th><th>Months</th>${P.map(p=>`<th><span class="dot" style="background:var(${p[1]})"></span>${p[0]}</th>`).join('')}<th>S&amp;P 500</th></tr></thead><tbody>`;
   const res=[];SCEN.forEach(([n,a,b])=>{const ia=mi(a),ib=mi(b);const vals=ser.map(s=>cum(s,ia,ib));res.push({n,y:vals[0],t:vals[1],m:cum(spy,ia,ib)});
     h+=`<tr><td class="n">${n}</td><td>${a}${a!==b?' → '+b:''}</td>${vals.map((v,k)=>cell(v,cov(ser[k],ia,ib))).join('')}${cell(cum(spy,ia,ib),1)}</tr>`;});
-  const worst12=s=>{let w=1e9;for(let t=11;t<s.length;t++){let g=1;for(let k=t-11;k<=t;k++)g*=1+s[k];w=Math.min(w,g-1);}return w;};
+  const worst12=s=>{let w=1e9;for(let t=11;t<s.length;t++){let g=1;for(let k=t-11;k<=t;k++)g*=1+Math.max(-1,s[k]);w=Math.min(w,g-1);}return w;};
   h+=`<tr><td class="n">Worst 12 months (${HF.months[0].slice(0,4)}–2026)</td><td>rolling</td>${ser.map(s=>cell(worst12(s),1)).join('')}${cell(worst12(spy),1)}</tr></tbody>`;$('stTable').innerHTML=h;
   const cv=$('cStress');const {ctx,W,H:Hh}=setup(cv,220);const pad={l:52,r:14,t:12,b:44};const all=res.flatMap(r=>[r.y,r.t,r.m]);const yd=[Math.min(0,...all)*1.1,Math.max(.02,...all)*1.1];
   const {Y}=axes(ctx,W,Hh,pad,[0,1],yd,()=>'',v=>pct(v,0),'','',[]);const gw=(W-pad.l-pad.r)/res.length,bw=Math.min(22,gw/4);HITS.stress=[];
@@ -451,19 +564,19 @@ function drawStress(){const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--acce
 /* ---------- Backtests ---------- */
 let btMode='in';
 function drawSeries(sets,dates,note){const T=dates.length-1;const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(T>100?2:1)===0)xt.push(i);});const yr=i=>dates[i].slice(0,4);
-  const cv=$('cBT');const {ctx,W,H:Hh}=setup(cv,260);const pad={l:52,r:18,t:14,b:34};const all=sets.flatMap(s=>s.b.v);const lg=v=>Math.log(v);
+  const cv=$('cBT');const {ctx,W,H:Hh}=setup(cv,260);const pad={l:52,r:18,t:14,b:34};const all=sets.flatMap(s=>s.b.v).map(v=>Math.max(v,.01));const lg=v=>Math.log(Math.max(v,.01));
   const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lg(Math.min(...all)*.95),lg(Math.max(...all)*1.05)],i=>yr(i),v=>{const x=Math.exp(v);return (x>=10?x.toFixed(0):x.toFixed(1))+'×';},'','Growth of $1 (log scale)',xt);
   HITS.bt=[];sets.slice().reverse().forEach(s=>{line(ctx,s.b.v.map((v,i)=>[X(i),Y(lg(v))]),css(s.c),s.n.startsWith('Yours')?3:1.7);s.b.v.forEach((v,i)=>{if(i%4===0||i===T)HITS.bt.push({x:X(i),y:Y(lg(v)),label:`${s.n} · ${dates[i]} · ${v.toFixed(2)}×`});});});tip(cv,'bt');
-  $('legBT').innerHTML=sets.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}</span>`).join('');
+  $('legBT').innerHTML=sets.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}${s.b.ruin>=0?` <b class="down">· wiped out ${dates[s.b.ruin+1]}</b>`:''}</span>`).join('');
   const dv=$('cDD');const g=setup(dv,130);const pd={l:52,r:18,t:8,b:24};const mn=Math.min(...sets.flatMap(s=>s.b.ddS));const ax=axes(g.ctx,g.W,g.H,pd,[0,T],[mn*1.05,0],i=>yr(i),v=>pct(v,0),'','Drawdown',xt);
   sets.slice().reverse().forEach(s=>line(g.ctx,s.b.ddS.map((v,i)=>[ax.X(i),ax.Y(v)]),css(s.c),s.n.startsWith('Yours')?2.2:1.1));
   $('btTable').innerHTML=`<thead><tr><th>Portfolio</th><th>Total</th><th>CAGR</th><th>Volatility</th><th>Sharpe</th><th>Max drawdown</th><th>Best month</th><th>Worst month</th>${sets[0].turn!=null?'<th>Turnover / yr</th>':''}</tr></thead><tbody>`+
     sets.map(s=>`<tr><td class="n"><span class="dot" style="background:var(${s.c})"></span>${s.n}</td><td>${sp(s.b.v[T]-1,0)}</td><td>${pct(s.b.cagr)}</td><td>${pct(s.b.vol)}</td><td>${((s.b.cagr-S.rf)/s.b.vol).toFixed(2)}</td><td class="down">${pct(-s.b.maxDD)}</td><td>${sp(s.b.best)}</td><td>${sp(s.b.worst)}</td>${s.turn!=null?`<td>${s.turn==='—'?'—':pct(s.turn,0)}</td>`:''}</tr>`).join('')+'</tbody>';
   $('btNote').innerHTML=note;}
 function drawBT(){$('btIn').setAttribute('aria-pressed',btMode==='in');$('btOut').setAttribute('aria-pressed',btMode==='out');
-  if(btMode==='in'){$('wfProg').hidden=true;const P=[['Yours','--you',norm(S.w)],['Max Sharpe','--accent',O.tangency.w],['Min variance','--minv',O.minvar.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]];
-    const sets=P.map(p=>({n:p[0],c:p[1],b:growth(portListed(HP.R,p[2]))}));sets.push({n:'S&P 500',c:'--spx',b:growth(HP.mkt)});
-    $('btKick').textContent=`${HP.months[0]} → ${HP.months[HP.T-1]}, today's weights, rebalanced monthly`;
+  if(btMode==='in'){$('wfProg').hidden=true;const P=[['Yours','--you',pw(S.w)],['Max Sharpe','--accent',O.tangency.w],...(SHON()?[['Max Sharpe · long-only','--muted',OL.tangency.w]]:[]),['Min variance','--minv',O.minvar.w],[loTag('Risk parity'),'--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]];
+    const sets=P.map(p=>({n:p[0],c:p[1],b:growth(histSer(p[2]))}));sets.push({n:'S&P 500',c:'--spx',b:growth(HP.mkt)});
+    $('btKick').textContent=`${HP.months[0]} → ${HP.months[HP.T-1]}, today's weights, rebalanced monthly`+(LSON()?', financing and short fees charged monthly':'');
     drawSeries(sets,[prevMonth(HP.months[0]),...HP.months],'In-sample: the optimized weights were chosen using this same history, so their lines flatter them. Use <b>Walk-forward</b> for an honest test. Assets enter when they list. All backtests here also carry selection bias: these 39 assets were chosen in 2026, partly because they did well.');}
   else{if(!WF){runWF();return;}drawSeries(WF.sets,WF.dates,`Out-of-sample: every quarter from ${WF.dates[0]}, each strategy is re-estimated on the previous 5 years only (assets need 3 years of history to qualify), then held for 3 months on returns it had not seen. Expected returns for the rolling max-Sharpe use the history–CAPM blend at your confidence (${pct(S.trust,0)}), since your views are about today. <b>Yours</b> is your current weights held throughout, so it still looks ahead. Selection bias remains: the 39 assets were picked in 2026, so every strategy here benefits from knowing which companies became winners.`);$('btKick').textContent=`Rebalanced quarterly · ${WF.n} re-estimations`;}}
 function prevMonth(m){let [y,mm]=m.split('-').map(Number);mm--;if(!mm){mm=12;y--;}return y+'-'+String(mm).padStart(2,'0');}
@@ -473,18 +586,19 @@ function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;
     ['tan','mv','rp','ew'].forEach(s=>{if(prev)turn[s]+=r[s].reduce((a,x,i)=>a+Math.abs(x-prev[s][i]),0)/2;for(let t=t0;t<Math.min(t0+step,HF.T);t++){let s2=0,ws=0;r[s].forEach((w,i)=>{const x=HF.R[i][t];if(w>0&&x!=null){s2+=w*x;ws+=w;}});ret[s].push(ws?s2/ws:0);}});
     prev=r;k++;bar.style.width=(k/t0s.length*100)+'%';if(k<t0s.length)setTimeout(work,0);else done();};
   const done=()=>{$('wfProg').hidden=true;const a=t0s[0];const yrs=(HF.T-a)/12;const mk=(n,c,s)=>({n,c,b:growth(ret[s]),turn:turn[s]/yrs});
-    const yours=portListed(HF.R,norm(S.w)).slice(a);const spy=HF.mkt.slice(a);
-    WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:'Yours (static)',c:'--you',b:growth(yours),turn:'—'},mk('Max Sharpe (rolling)','--accent','tan'),mk('Min variance (rolling)','--minv','mv'),mk('Risk parity (rolling)','--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
+    const yours=histSer(pw(S.w),HF).slice(a);const spy=HF.mkt.slice(a);const lo=LSON()?', long-only':'';
+    WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:'Yours (static)',c:'--you',b:growth(yours),turn:'—'},mk(`Max Sharpe (rolling${lo})`,'--accent','tan'),mk(`Min variance (rolling${lo})`,'--minv','mv'),mk(`Risk parity (rolling${lo})`,'--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
     if(btMode==='out')drawBT();};setTimeout(work,20);}
 
 /* ---------- Compare ---------- */
 function irrAnnual(start,monthly,T,F){const fv=i=>i===0?start+monthly*T:start*Math.pow(1+i,T)+monthly*(Math.pow(1+i,T)-1)/i;let lo=-.2,hi=.2;for(let k=0;k<100;k++){const m=(lo+hi)/2;if(fv(m)>F)hi=m;else lo=m;}return Math.pow(1+(lo+hi)/2,12)-1;}
-function yearStats(series,months){months=months||HP.months;const by={};series.forEach((r,t)=>{const y=months[t].slice(0,4);(by[y]=by[y]||[]).push(r);});let worst=null,best=null;
+function yearStats(series,months){months=months||HP.months;const by={};series.forEach((r,t)=>{const y=months[t].slice(0,4);(by[y]=by[y]||[]).push(Math.max(-1,r));});let worst=null,best=null;
   for(const y in by){if(by[y].length<6)continue;const g=by[y].reduce((v,r)=>v*(1+r),1)-1;const lab=by[y].length<12?y+' YTD':y;if(!worst||g<worst.v)worst={v:g,y:lab};if(!best||g>best.v)best={v:g,y:lab};}return {worst,best};}
 function drawCompare(){const io=mcOpts();const irrR=mc=>{const i=irrAnnual(+$('mcStart').value||0,+$('mcMonthly').value||0,mc.T,mc.bands[2][mc.T]*(mc.real?mc.deflT:1));return mc.real?(1+i)/(1+mc.infl)-1:i;};const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
-  const L=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Min variance','--minv',O.minvar.w],['Max Sortino','--c-crypto',D.tangency.w],['Min downside','--muted',D.minvar.w],['Risk parity','--c-bond',RP]];
-  if(RES)L.push(['Resampled','--c-tech',RES]);L.push(['Equal weight','--c-def',A.map(()=>1/N)],['Cap-weighted','--c-fin',capW()]);
-  const rows=L.map(([n,c,w])=>{const p=port(w);const mc=monteCarlo({method:meth,series:portSeries(M.F,p.w,M.mu),mu:p.ret,vol:p.vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const hs=portListed(HP.R,p.w);const g=growth(hs);const ys=yearStats(hs);
+  const L=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w]];if(SHON())L.push(['Max Sharpe · long-only','--faint',OL.tangency.w]);if(LV)L.push([`Best to lever × ${LV.Lmax.toFixed(1)}`,'--c-power',scaleW(LV.tb.w,LV.Lmax)]);
+  L.push(['Min variance','--minv',O.minvar.w],[loTag('Max Sortino'),'--c-crypto',D.tangency.w],[loTag('Min downside'),'--muted',D.minvar.w],[loTag('Risk parity'),'--c-bond',RP]);
+  if(RES)L.push([loTag('Resampled'),'--c-tech',RES]);L.push(['Equal weight','--c-def',A.map(()=>1/N)],['Cap-weighted','--c-fin',capW()]);
+  const rows=L.map(([n,c,w])=>{const p=port(w);const mc=monteCarlo({method:meth,series:fwdSer(p.w),mu:p.ret,vol:p.vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const hs=histSer(p.w);const g=growth(hs);const ys=yearStats(hs);
     return {n,c,ret:p.ret,vol:p.vol,sh:p.sharpe,so:p.sortino,beta:p.beta,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrR(mc),ploss:mc.pLoss,cagr:g.cagr,worst:ys.worst,mdd:g.maxDD,alpha:p.ra.alpha};});
   {const mu=S.rf+S.erp,vol=M.mkt.sd,mm=H.mkt.reduce((a,b)=>a+b,0)/H.T;const ser=Float64Array.from(H.mkt,x=>x-mm+mu/12);const mc=monteCarlo({method:meth,series:ser,mu,vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const g=growth(HP.mkt);const rs=riskStats(HP.mkt,M.marM);
     rows.push({n:'S&P 500',c:'--spx',ret:mu,vol,sh:(mu-S.rf)/vol,so:(mu-S.mar)/rs.dd,beta:1,fin:mc.bands[2][mc.T],bad:mc.bands[0][mc.T],irr:irrR(mc),ploss:mc.pLoss,cagr:g.cagr,worst:yearStats(HP.mkt).worst,mdd:g.maxDD,alpha:0});}
@@ -597,8 +711,8 @@ function renderAsset(){if(AP==null)return;const i=AP,a=A[i],Q=assetData(i);const
    $('apStress').innerHTML=`<thead><tr><th>Episode</th><th>Months</th><th>${a.id}</th><th>S&amp;P 500</th></tr></thead><tbody>${rows.join('')}</tbody>`;}
   {const y=port(S.w);const rc=riskContrib(y.w,M.S);const cw=capW();const r=(l,v)=>`<tr><td class="n">${l}</td><td>${v}</td></tr>`;
    $('apModel').innerHTML=`<tbody>${r('Expected return used',pct(M.mu[i]))}${r('Equilibrium (CAPM) return',pct(M.capm[i]))}${r('History, window-adjusted',pct(M.hmAdj[i]))}${r('Volatility in risk model',pct(M.sd[i]))}${r('Beta in model window',M.beta[i].toFixed(2))}
-    ${r('Weight: yours',pct(y.w[i]))}${r('Share of your portfolio risk',pct(rc[i]))}${r('Weight: max Sharpe',pct(O.tangency.w[i]))}${r('Weight: min variance',pct(O.minvar.w[i]))}${r('Weight: max Sortino',pct(D.tangency.w[i]))}${r('Weight: risk parity',pct(RP[i]))}${r('Weight: cap-weighted',pct(cw[i]))}</tbody>`;
-   $('apW').value=(S.w[i]*100).toFixed(1);$('apWnote').textContent=`= ${pct(y.w[i])} after scaling to 100%`;}
+    ${r('Weight: yours',pct(y.w[i]))}${r('Share of your portfolio risk',pct(rc[i]))}${r('Weight: max Sharpe',pct(O.tangency.w[i]))}${SHON()?r('Weight: max Sharpe, long-only',pct(OL.tangency.w[i])):''}${r('Weight: min variance',pct(O.minvar.w[i]))}${r('Weight: max Sortino',pct(D.tangency.w[i]))}${r('Weight: risk parity',pct(RP[i]))}${r('Weight: cap-weighted',pct(cw[i]))}</tbody>`;
+   $('apW').min=wMin();$('apW').max=wMax();$('apW').value=(S.w[i]*100).toFixed(1);$('apWnote').textContent=LSON()?`${pct(y.w[i])} of your capital${y.w[i]<0?' · short':''}`:`= ${pct(y.w[i])} after scaling to 100%`;}
   {const row=A.map((b,j)=>[b,M.Cs[i][j]]).filter(([b],j)=>j!==i).sort((p,q)=>q[1]-p[1]);const li=x=>`<li><span class="asset-link" data-asset="${x[0].id}" tabindex="0">${x[0].name}</span> <b>${x[1].toFixed(2)}</b></li>`;
    $('apHi').innerHTML=row.slice(0,6).map(li).join('');$('apLo').innerHTML=row.slice(-6).reverse().map(li).join('');}
   $('apNote').innerHTML=`Performance, crises and calendar years use the asset's full history in ${CURL[S.cur]}. Model figures and correlations use the estimation window${S.ex08?' with Dec 2007 – Jun 2009 excluded':''}. ${Q.f>0?`${a.name} has data from ${Q.dates[0]}; in the risk model, earlier months are filled from its beta to the S&amp;P 500 plus its own residuals.`:''}`;}
@@ -611,18 +725,18 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-asset]');i
 document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.closest('.asset-link[data-asset]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openAsset(t.dataset.asset);}
   if(AP!=null){if(e.key==='Escape')closeAsset();else if(e.key==='ArrowRight'&&e.target.tagName!=='INPUT')stepAsset(1);else if(e.key==='ArrowLeft'&&e.target.tagName!=='INPUT')stepAsset(-1);}});
 $('apBack').onclick=closeAsset;$('apPrev').onclick=()=>stepAsset(-1);$('apNext').onclick=()=>stepAsset(1);
-$('apW').addEventListener('change',e=>{const v=Math.max(0,Math.min(100,+e.target.value||0));S.w[AP]=v/100;allocList();onWeights();renderAsset();});
+$('apW').addEventListener('change',e=>{const v=Math.max(wMin(),Math.min(wMax(),+e.target.value||0));S.w[AP]=v/100;allocList();onWeights();renderAsset();});
 window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id&&A.some(a=>a.id===id))openAsset(id,false);else if(AP!=null&&!id)closeAsset();});
 
 const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
 const DRAW={assets:drawAssets,cmp:drawCompare,frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
 function drawVisible(){if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
 let mcT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,(visible('mc')||visible('cmp'))?150:30);}
-let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();trSetup();allocList();modelUI();drawVisible();$('hero').classList.remove('busy');if(AP!=null)renderAsset();else{const id=location.hash.slice(1);if(id&&A.some(x=>x.id===id))openAsset(id,false);}},20);}
-$('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(0,Math.min(100,+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(40,v);onWeights();});
+let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();let syn=false;if(AFTER){S.w=Float64Array.from(AFTER());AFTER=null;syn=true;}trSetup();if(syn)trSync(S.w);allocList();modelUI();drawVisible();$('hero').classList.remove('busy');if(AP!=null)renderAsset();else{const id=location.hash.slice(1);if(id&&A.some(x=>x.id===id))openAsset(id,false);}},20);}
+$('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(wMin(),Math.min(wMax(),+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(rSpan(),Math.max(rMin(),v));e.target.closest('.ar').classList.toggle('short',v<0);onWeights();});
 const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();};
-$('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
-$('pEq').onclick=()=>setW(A.map(()=>1/N));$('pCap').onclick=()=>setW(capW());$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>setW(norm(S.w));
+$('pTan').onclick=()=>{setW(O.tangency.w);trSync(O.tangency.w);};$('pMin').onclick=()=>{setW(O.minvar.w);trSync(O.minvar.w);};$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
+$('pEq').onclick=()=>setW(A.map(()=>1/N));$('pCap').onclick=()=>setW(capW());$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>{if(!LSON()){setW(norm(S.w));return;}const n=exposure(S.w).net;if(n>.01)setW(scaleW(S.w,1/n));};
 // market caps, USD bn, Yahoo Finance 9 Oct 2026 (HKD/KRW/EUR converted at that day's FX)
 const CAPS={NVDA:5536.4,AMZN:2830.7,GOOGL:4300.8,MSFT:3973.2,META:1830.8,AAPL:4913.0,VRT:93.5,VST:54.2,ETN:166.8,ANET:273.4,MU:1162.1,TSM:2351.1,XIAOMI:85.2,AMAT:402.4,SAMSUNG:1283.9,CAT:368.0,GE:325.2,AIR:172.0,AVGO:1725.9,CRWD:281.6,JPM:885.1,GS:260.7,LMT:117.6,NOC:68.5,NUE:56.8,TM:219.4,PFE:161.2,ITX:188.0,ASML:683.8,SKHYNIX:892.0,BTC:1658.9,FER:36.0,IBE:159.1,AWK:25.1,COST:419.6};
 function capW(){const w=Float64Array.from(A.map((a,i)=>S.active[i]?(CAPS[a.id]||0):0));return norm(w);}
@@ -647,17 +761,71 @@ function trSetup(){const f=O.frontier,rv=$('tRisk'),rr=$('tRet');
   rv.min=(Math.ceil(O.minvar.vol*1000)/10).toFixed(1);rv.max=(Math.floor(Math.max(...f.map(p=>p.vol))*1000)/10).toFixed(1);
   rr.min=(Math.ceil(Math.min(...f.map(p=>p.ret))*1000)/10).toFixed(1);rr.max=(Math.floor(Math.max(...f.map(p=>p.ret))*1000)/10).toFixed(1);
   if(+rv.value<+rv.min||+rv.value>+rv.max)rv.value=(Math.round(O.tangency.vol*1000)/10).toFixed(1);
-  $('tMaxS').textContent=`max Sharpe at ${pct(O.tangency.vol)} · ${pct(O.tangency.ret)}`;TR=null;trShow(trCompute('vol'),'vol');}
+  $('tMaxS').textContent=`max Sharpe at ${pct(O.tangency.vol)} · ${pct(O.tangency.ret)}`+(LV?` · lever from ${pct(LV.tb.vol)}`:'');TR=null;trShow(trCompute('vol'),'vol');}
 function trCompute(by){const byVol=by==='vol',x=+(byVol?$('tRisk'):$('tRet')).value/100;if(TR&&TR.by===by&&TR.x===x)return TR;
-  const p=byVol?frontierAt(O.frontier,M.mu,M.S,x):frontierAtRet(O.frontier,M.mu,M.S,x);const g=growth(portListed(HP.R,p.w));
-  TR={by,x,w:p.w,ret:p.ret,vol:p.vol,dd:g.maxDD,sharpe:port(p.w).sharpe};return TR;}
-function trShow(t,by){if(by==='vol')$('tRet').value=(t.ret*100).toFixed(1);else $('tRisk').value=(t.vol*100).toFixed(1);
+  const p=byVol?frontierAt(O.frontier,EV,x):frontierAtRet(O.frontier,EV,x);const g=growth(histSer(p.w));
+  TR={by,x,w:p.w,ret:p.ret,vol:p.vol,dd:g.maxDD,ruin:g.ruin,ex:exposure(p.w),sharpe:port(p.w).sharpe};return TR;}
+function trShow(t,by){if(by==='vol')$('tRet').value=(t.ret*100).toFixed(1);else if(by==='ret')$('tRisk').value=(t.vol*100).toFixed(1);
   $('tRiskL').textContent=pct(t.vol);$('tRetL').textContent=pct(t.ret)+' / yr';const d=t.vol-O.tangency.vol;
-  const where=Math.abs(d)<.0015?'the max-Sharpe point':d<0?'less risk than max Sharpe, so a lower Sharpe':'more risk than max Sharpe: higher return, lower Sharpe';
-  $('tRiskInfo').textContent=`Sharpe ${t.sharpe.toFixed(2)} · past max drawdown −${pct(t.dd,0)} · ${where}`;}
+  const lev=t.ex.net>1.0015,where=Math.abs(d)<.0015?'the max-Sharpe point':d<0?'less risk than max Sharpe, so a lower Sharpe':lev?`levered ${t.ex.net.toFixed(2)}× with borrowed money`:'more risk than max Sharpe: higher return, lower Sharpe';
+  const exs=LSON()?` · ${t.ex.short>.001?`${pct(t.ex.long,0)}/${pct(t.ex.short,0)}`:'no shorts'}`:'';
+  $('tRiskInfo').textContent=`Sharpe ${t.sharpe.toFixed(2)} · past max drawdown −${pct(t.dd,0)}${t.ruin>=0?' (wiped out)':''}${exs} · ${where}`;}
+function trSync(w){const y=port(w),g=growth(histSer(y.w));const t={w:y.w,ret:y.ret,vol:y.vol,dd:g.maxDD,ruin:g.ruin,ex:y.ex,sharpe:y.sharpe};TR=null;
+  $('tRisk').value=(t.vol*100).toFixed(1);$('tRet').value=(t.ret*100).toFixed(1);trShow(t,'none');}
 let trT;function trInput(by){const el=by==='vol'?$('tRisk'):$('tRet');(by==='vol'?$('tRiskL'):$('tRetL')).textContent=(+el.value).toFixed(1)+'%';
   clearTimeout(trT);trT=setTimeout(()=>{const t=trCompute(by);trShow(t,by);setW(t.w);},90);}
 $('tRisk').addEventListener('input',()=>trInput('vol'));$('tRet').addEventListener('input',()=>trInput('ret'));
+/* ---------- strategy: short selling & leverage ---------- */
+const ST_PRESETS={long:{short:false,lev:false},'130':{short:true,sb:.3,lev:false},lev2:{short:false,lev:true,L:2},both:{short:true,sb:.3,lev:true,L:1.5}};
+function stKey(){const s=S.ls;if(!s.short&&!s.lev)return 'long';if(s.short&&!s.lev&&Math.abs(s.sb-.3)<1e-9)return '130';if(!s.short&&s.lev&&Math.abs(s.L-2)<1e-9)return 'lev2';if(s.short&&s.lev&&Math.abs(s.sb-.3)<1e-9&&Math.abs(s.L-1.5)<1e-9)return 'both';return null;}
+function stLabel(){const s=S.ls;if(!LSON())return 'Long only';return (s.short?`${Math.round(100+s.sb*100)}/${Math.round(s.sb*100)} long/short`:'Long')+(s.lev?` · up to ${s.L.toFixed(1)}× leverage`:'')+(stKey()?'':' · custom');}
+// change the strategy: weights are first frozen in the meaning they had (rescaled if long-only), then the model is rebuilt; after() may return new weights
+function setStrat(ch,after){S.w=pw(S.w);Object.assign(S.ls,ch);if(!LSON())S.w=pw(S.w);AFTER=after||null;full();}
+function marginCall(ex){const m=S.ls.mm,k=ex.net-m*ex.gross;if(k<=1e-9)return null;return (1-m*ex.gross)/k;}// fall of every position (longs and shorted assets alike) that brings equity down to the maintenance margin
+function stSummary(){if(!M)return;const s=S.ls,on=LSON(),y=port(S.w),ex=y.ex,key=stKey();
+  $('stTag').textContent=stLabel();document.querySelectorAll('#stSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.st===key));
+  $('lsShort').checked=s.short;$('lsLev').checked=s.lev;$('shortCol').classList.toggle('off',!s.short);$('levCol').classList.toggle('off',!s.lev);
+  $('lsSb').value=Math.round(s.sb*100);$('lsSbL').textContent=`${pct(s.sb,0)} → ${Math.round(100+s.sb*100)}/${Math.round(s.sb*100)}`;$('lsFee').value=(s.fee*100).toFixed(2).replace(/0$/,'');
+  $('lsSbN').textContent=`Up to ${pct(s.sb,0)} of the invested portfolio can be short, at most ${pct(S.cap,0)} per asset (your max weight per asset). Large stocks usually cost 0.25–0.5% a year to borrow; hard-to-borrow names 5% or more.`;
+  $('lsL').value=s.L;$('lsLL').textContent=s.L.toFixed(1)+'×';$('lsSpread').value=(s.spread*100).toFixed(2).replace(/0$/,'');$('lsMM').value=Math.round(s.mm*100);
+  $('levNote').textContent=`You pay ${pct(S.rf+s.spread,2)} a year on borrowed money (risk-free ${pct(S.rf,2)} + spread). `+(LV?`Leverage only pays above ${pct(LV.tb.vol)} volatility: below that, the unlevered frontier is better.`:'');
+  // exposure bar: shorts left of zero; longs right of zero, split into your own capital, longs paid for by short sales, and longs on borrowed money
+  const kmax=s.lev?s.L:1,smax=Math.max(ex.short,s.short?s.sb*kmax:0),lmax=Math.max(ex.long,1,kmax*(1+(s.short?s.sb:0))),span=smax+lmax||1,z=smax/span*100,P=v=>v/span*100;
+  const own=Math.min(ex.long,1),fund=Math.min(ex.short,Math.max(0,ex.long-1)),bor=Math.max(0,ex.long-1-ex.short),cash=Math.max(0,1-ex.long);
+  const seg=(c,a,w)=>w>1e-4?`<i class="${c}" style="left:${a}%;width:${w}%"></i>`:'';
+  $('xBar').innerHTML=seg('xs-short',z-P(ex.short),P(ex.short))+seg('xs-own',z,P(own))+seg('xs-cash',z+P(own),P(cash))+seg('xs-fund',z+P(own),P(fund))+seg('xs-borrow',z+P(own+fund),P(bor))+`<i class="zero" style="left:${z}%"></i><i class="full" style="left:${z+P(1)}%" title="100% of your capital"></i>`;
+  $('xBar').setAttribute('aria-label',`Long ${pct(ex.long,0)}, short ${pct(ex.short,0)}, net ${pct(ex.net,0)} of capital`);
+  const lg=(c,t)=>`<span><i class="${c}"></i>${t}</span>`;
+  $('xLeg').innerHTML=(ex.short>1e-4?lg('xs-short',`Short ${pct(ex.short,0)}`):'')+lg('xs-own',`Long, your capital ${pct(own,0)}`)+(fund>1e-4?lg('xs-fund',`Long, paid by shorts ${pct(fund,0)}`):'')+(bor>1e-4?lg('xs-borrow',`Long, borrowed ${pct(bor,0)}`):'')+(cash>1e-4&&on?lg('xs-cash',`Cash ${pct(cash,0)}`):'')+'<span>┆ 100% of capital</span>';
+  const cap=Math.max(0,+$('mcStart').value||0),mc=marginCall(ex),hist=growth(histSer(y.w,HF));
+  const row=(k,v,sub)=>`<dt>${k}</dt><dd>${v}${sub?`<small>${sub}</small>`:''}</dd>`;
+  $('xDl').innerHTML=on?row('Net exposure',`${ex.net.toFixed(2)}×`,`gross ${pct(ex.gross,0)}`)+row(ex.cash<0?'Borrowed':'Cash',pct(Math.abs(ex.cash),0),cap?eur(Math.abs(ex.cash)*cap)+' on '+eur(cap):'')+
+      row('Financing cost / yr',pct(y.fcost,2),`interest ${pct(Math.max(0,-ex.cash)*(S.rf+s.spread),2)} · short fees ${pct(ex.short*s.fee,2)}`)+row('If the S&amp;P 500 falls 10%',sp(-.1*y.beta),`beta ${y.beta.toFixed(2)}`)+
+      row('Margin call',mc==null||mc>=.999?'none':mc<=0?'now':`after a ${pct(mc,0)} fall`,mc==null||mc>=.999?'not from all positions falling together':`maintenance margin ${pct(s.mm,0)}${ex.net>1?` · wiped out at −${pct(1/ex.net,0)}`:''}`)+
+      row(`Past ${HF.months[0].slice(0,4)}–2026`,hist.ruin>=0?`<span class="down">wiped out ${HF.months[hist.ruin]}</span>`:`max drawdown −${pct(hist.maxDD,0)}`,hist.ruin>=0?'a month lost more than your equity':`worst month ${sp(hist.worst,0)}`)
+    :row('Exposure','100% long','no borrowing, no shorts')+row('If the S&amp;P 500 falls 10%',sp(-.1*y.beta),`beta ${y.beta.toFixed(2)}`)+row(`Past ${HF.months[0].slice(0,4)}–2026`,`max drawdown −${pct(hist.maxDD,0)}`,`worst month ${sp(hist.worst,0)}`);
+  // leverage-used slider: scales every position, so it can lever (or de-lever into cash) any portfolio
+  $('useRow').hidden=!on;const um=Math.max(1,kmax);$('lsUse').max=um;$('lsUse').value=Math.min(um,Math.max(.25,ex.net));$('lsUse').disabled=ex.net<=.01;$('lsUseL').textContent=`${ex.net.toFixed(2)}×`+(ex.net>1.0005?` · borrowing ${pct(ex.net-1,0)}`:ex.net<.9995?` · ${pct(1-ex.net,0)} cash`:'');
+  // limits check for hand-made weights
+  const W=[],k=Math.max(1,ex.net),tol=5e-4;if(on){
+    if(!s.short&&ex.short>tol)W.push('Short positions, but short selling is off.');
+    if(s.short&&ex.short>s.sb*k+tol)W.push(`Shorts total ${pct(ex.short,0)}, above your short budget of ${pct(s.sb*k,0)}.`);
+    if(ex.net>(s.lev?s.L:1)+tol)W.push(s.lev?`Net exposure ${ex.net.toFixed(2)}× is above your max leverage of ${s.L.toFixed(1)}×.`:`Net exposure ${ex.net.toFixed(2)}× needs borrowing, but leverage is off.`);
+    const big=A.map((a,i)=>[a,y.w[i]]).filter(([,w])=>Math.abs(w)>S.cap*k+tol);if(big.length)W.push(`${big.slice(0,3).map(([a,w])=>`${a.name} ${pct(w,0)}`).join(', ')}${big.length>3?` and ${big.length-3} more`:''} above the ${pct(S.cap*k,0)} position limit.`);
+    if(ex.net<-tol)W.push('Net short overall: you profit only if the market falls.');}
+  $('stWarn').innerHTML=W.map(x=>`<span>⚠ ${x}</span>`).join('');$('stLim').innerHTML=on?(W.length?'':'<span class="stok">✓ within your limits</span>'):'';}
+$('stSeg').addEventListener('click',e=>{const b=e.target.closest('button[data-st]');if(!b)return;const k=b.dataset.st;
+  setStrat(ST_PRESETS[k],k==='lev2'?()=>scaleW(LV.tb.w,2):k==='both'?()=>scaleW(LV.tb.w,1.5):()=>O.tangency.w);});
+$('lsShort').addEventListener('change',e=>setStrat({short:e.target.checked}));
+$('lsLev').addEventListener('change',e=>setStrat({lev:e.target.checked}));
+$('lsSb').addEventListener('input',e=>{const v=e.target.value/100;$('lsSbL').textContent=`${pct(v,0)} → ${Math.round(100+v*100)}/${Math.round(v*100)}`;});
+$('lsSb').addEventListener('change',e=>setStrat({sb:e.target.value/100}));
+$('lsL').addEventListener('input',e=>$('lsLL').textContent=(+e.target.value).toFixed(1)+'×');
+$('lsL').addEventListener('change',e=>setStrat({L:Math.min(3,Math.max(1.1,+e.target.value))}));
+$('lsFee').addEventListener('change',e=>setStrat({fee:Math.min(.25,Math.max(0,(+e.target.value||0)/100))}));
+$('lsSpread').addEventListener('change',e=>setStrat({spread:Math.min(.1,Math.max(0,(+e.target.value||0)/100))}));
+$('lsMM').addEventListener('change',e=>{S.ls.mm=Math.min(1,Math.max(.05,(+e.target.value||25)/100));stSummary();});
+$('lsUse').addEventListener('input',e=>{const ex=exposure(S.w);if(ex.net<=.01)return;S.w=scaleW(S.w,+e.target.value/ex.net);allocList();onWeights();});
 $('pRes').onclick=()=>{if(RES){setW(RES);return;}const K=40,acc=new Float64Array(N),r=rng(7),o=opts();let k=0;const btn=$('pRes'),pb=$('resProg');btn.classList.add('busy');pb.hidden=false;
   const step=()=>{const w=resampleStep(M,o,M._capA,k,r);for(let i=0;i<N;i++)acc[i]+=w[i]/K;k++;pb.firstElementChild.style.width=(k/K*100)+'%';btn.textContent=`Resampling ${k}/${K}`;if(k<K)setTimeout(step,0);else{RES=acc;btn.textContent='Resampled';btn.classList.remove('busy');pb.hidden=true;setW(RES);}};setTimeout(step,20);};
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));document.querySelectorAll('[data-pane]').forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);try{localStorage.setItem('fl3-tab',b.dataset.tab)}catch(_){}drawVisible();});

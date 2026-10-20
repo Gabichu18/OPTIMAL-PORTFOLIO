@@ -75,7 +75,7 @@ function buildModel(H,o){
   const risk=H.R.map(r=>riskStats(r.filter(x=>x!=null),marM));
   return {n,T,hm,hmAdj,sd,sdOwn,beta,cagr,nObs,first,Cs,C,S,SC,F,capm,bl,mu,rbar,dbeta,risk,marM,mkt:{mu:mm*12,sd:Math.sqrt(vm*12)}};
 }
-function riskStats(r,marM){const T=r.length;let d2=0,gain=0,loss=0,negN=0;for(const x of r){const e=x-marM;if(e<0){d2+=e*e;loss-=e;}else gain+=e;if(x<0)negN++;}
+function riskStats(r0,marM){const r=Array.from(r0,x=>x<-1?-1:x);const T=r.length;let d2=0,gain=0,loss=0,negN=0;for(const x of r){const e=x-marM;if(e<0){d2+=e*e;loss-=e;}else gain+=e;if(x<0)negN++;}
   const s=Array.from(r).sort((a,b)=>a-b);const k=Math.max(1,Math.round(T*.05));let tail=0;for(let i=0;i<k;i++)tail+=s[i];
   let v=1,pk=1,mdd=0,uw=0,maxUw=0;for(const x of r){v*=1+x;if(v>=pk){pk=v;uw=0;}else{uw++;maxUw=Math.max(maxUw,uw);}mdd=Math.max(mdd,1-v/pk);}const cagr=Math.pow(v,12/T)-1;
   return {dd:Math.sqrt(d2/T*12),var95:-s[k-1],cvar95:-tail/k,mdd,maxUw,omega:loss>0?gain/loss:Infinity,pctNeg:negN/T,worst:s[0],cagr,calmar:mdd>0?cagr/mdd:Infinity};}
@@ -88,20 +88,65 @@ function solve(mu,S,cap,lam,L,w0,iters){const n=mu.length;const minVar=!isFinite
     const xn=project(v,cap);const tn=(1+Math.sqrt(1+4*t*t))/2;for(let i=0;i<n;i++)y[i]=xn[i]+((t-1)/tn)*(xn[i]-x[i]);x=xn;t=tn;}return x;}
 function fastTangency(mu,S,cap,rf,w0,L){L=L||maxEig(S);let best=null;const ev=ll=>{const w=solve(mu,S,cap,Math.exp(ll),L,best?best.w:w0,350);const s=stats(w,mu,S);const r={w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol};if(!best||r.sharpe>best.sharpe)best=r;return r.sharpe;};
   let a=Math.log(.1),b=Math.log(800);for(let k=0;k<20;k++){const c=b-.618*(b-a),d=a+.618*(b-a);if(ev(c)>ev(d))b=d;else a=c;}return best;}
-// highest-expected-return portfolio with volatility <= target: blend of the two efficient-frontier points that bracket it (any blend of feasible portfolios is feasible)
-function frontierAt(front,mu,S,target){const f=front.slice().sort((a,b)=>a.vol-b.vol);if(target<=f[0].vol)return f[0];if(target>=f[f.length-1].vol)return f[f.length-1];
+// frontier lookups: ev(w) returns {ret, vol} (financing costs included), so the same code serves long-only, long/short and leveraged frontiers
+const blendW=(a,b,m)=>Float64Array.from(a,(x,i)=>x*(1-m)+b[i]*m);
+// highest-expected-return portfolio with volatility <= target: blend of the two efficient-frontier points that bracket it (any blend of feasible portfolios is feasible; volatility is convex along the blend)
+function frontierAt(front,ev,target){const f=front.slice().sort((a,b)=>a.vol-b.vol);const pack=w=>({w,...ev(w)});if(target<=f[0].vol)return pack(f[0].w);if(target>=f[f.length-1].vol)return pack(f[f.length-1].w);
   let k=0;while(f[k+1].vol<target)k++;const a=f[k],b=f[k+1];let lo=0,hi=1;
-  for(let it=0;it<40;it++){const m=(lo+hi)/2;const w=a.w.map((x,i)=>x*(1-m)+b.w[i]*m);if(stats(w,mu,S).vol>target)hi=m;else lo=m;}
-  const w=Float64Array.from(a.w,(x,i)=>x*(1-lo)+b.w[i]*lo);const s=stats(w,mu,S);return {w,ret:s.ret,vol:s.vol};}
-// lowest-volatility portfolio with the target expected return: on the efficient set return is linear along each segment between frontier points
-function frontierAtRet(front,mu,S,target){const f=front.slice().sort((a,b)=>a.ret-b.ret);if(target<=f[0].ret)return f[0];if(target>=f[f.length-1].ret)return f[f.length-1];
-  let k=0;while(f[k+1].ret<target)k++;const a=f[k],b=f[k+1],m=(target-a.ret)/((b.ret-a.ret)||1);
-  const w=Float64Array.from(a.w,(x,i)=>x*(1-m)+b.w[i]*m);const s=stats(w,mu,S);return {w,ret:s.ret,vol:s.vol};}
+  for(let it=0;it<50;it++){const m=(lo+hi)/2;if(ev(blendW(a.w,b.w,m)).vol>target)hi=m;else lo=m;}return pack(blendW(a.w,b.w,lo));}
+// lowest-volatility portfolio reaching the target expected return (return is concave along the blend, so the first crossing is unique)
+function frontierAtRet(front,ev,target){const f=front.slice().sort((a,b)=>a.ret-b.ret);const pack=w=>({w,...ev(w)});if(target<=f[0].ret)return pack(f[0].w);if(target>=f[f.length-1].ret)return pack(f[f.length-1].w);
+  let k=0;while(f[k+1].ret<target)k++;const a=f[k],b=f[k+1];let lo=0,hi=1;
+  for(let it=0;it<50;it++){const m=(lo+hi)/2;if(ev(blendW(a.w,b.w,m)).ret<target)lo=m;else hi=m;}return pack(blendW(a.w,b.w,hi));}
 function optimize(mu,S,cap,rf){const L=maxEig(S);const minv=solve(mu,S,cap,Infinity,L,null,2500);const front=[];let prev=null;
   for(let k=47;k>=0;k--){const lam=Math.exp(Math.log(.1)+k*(Math.log(600)-Math.log(.1))/47);const w=solve(mu,S,cap,lam,L,prev,500);prev=w;const s=stats(w,mu,S);front.push({w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol});}
   const best=fastTangency(mu,S,cap,rf,front.reduce((a,b)=>b.sharpe>a.sharpe?b:a).w,L);
   const ms=stats(minv,mu,S);const mvp={w:minv,ret:ms.ret,vol:ms.vol,sharpe:(ms.ret-rf)/ms.vol};front.push(mvp,best);front.sort((p,q)=>p.vol-q.vol);
   const eff=[];let top=-Infinity;for(const p of front){if(p.ret>=top-1e-9){eff.push(p);top=Math.max(top,p.ret);}}return {tangency:best,minvar:mvp,frontier:eff};}
+// ===== short selling & leverage =====
+// root of a nondecreasing function on [a,b] (Illinois regula falsi; exact in a few steps on piecewise-linear functions)
+function rootInc(f,a,b,tol){let fa=f(a),fb=f(b);if(fa>=0)return a;if(fb<=0)return b;let side=0;
+  for(let k=0;k<200;k++){let c=(a*fb-b*fa)/(fb-fa);if(!(c>a&&c<b)||k%8===7)c=(a+b)/2;const fc=f(c);if(Math.abs(fc)<=tol||b-a<1e-15)return c;
+    if(fc<0){a=c;fa=fc;if(side<0)fb/=2;side=-1;}else{b=c;fb=fc;if(side>0)fa/=2;side=1;}}return (a+b)/2;}
+// Euclidean projection onto {lo<=x<=hi, sum x = 1, total short <= sb}, with an optional proximal penalty pen x total short (the borrow fee times the step).
+// KKT: x_i = clip(soft(v_i+alpha, beta+pen), lo_i, hi_i), soft(c,b) = c (c>=0), 0 (-b<=c<0), c+b (c<-b); alpha prices the budget, beta>=0 the short limit
+function projLS(v,lo,hi,sb,pen){const n=v.length,x=new Float64Array(n);let vmax=-Infinity,vmin=Infinity,lmin=0,hmax=0;
+  for(let i=0;i<n;i++){if(v[i]>vmax)vmax=v[i];if(v[i]<vmin)vmin=v[i];if(lo[i]<lmin)lmin=lo[i];if(hi[i]>hmax)hmax=hi[i];}
+  let sh=0;const fill=(al,be)=>{let s=0;sh=0;for(let i=0;i<n;i++){let c=v[i]+al;c=c>=0?c:c>=-be?0:c+be;c=c<lo[i]?lo[i]:c>hi[i]?hi[i]:c;x[i]=c;s+=c;if(c<0)sh-=c;}return s;};
+  const alphaFor=be=>rootInc(al=>fill(al,be)-1,lmin-vmax-be-1,hmax-vmin+1,1e-13);
+  let al=alphaFor(pen);fill(al,pen);if(sh<=sb+1e-12)return x;
+  const be=rootInc(b=>{fill(alphaFor(b),b);return sb-sh;},pen,pen+(vmax-vmin)+hmax+2,1e-13);fill(alphaFor(be),be);return x;}
+// proximal accelerated gradient for max mu.x - fee*shorts - lam/2 x'Sx (lam = Infinity: min variance) over the long/short set
+function solveLS(P,lam,w0,iters){const {mu,S,lo,hi,sb,fee}=P,n=mu.length,minVar=!isFinite(lam),step=1/(minVar?2*P.L:lam*P.L),pen=minVar?0:step*fee;
+  let x=projLS(w0?Float64Array.from(w0):new Float64Array(n).fill(1/n),lo,hi,sb,0),y=Float64Array.from(x),t=1;const v=new Float64Array(n);
+  for(let k=0;k<iters;k++){const Sy=matVec(S,y);for(let i=0;i<n;i++)v[i]=y[i]+step*(minVar?-2*Sy[i]:(mu[i]-lam*Sy[i]));
+    const xn=projLS(v,lo,hi,sb,pen);const tn=(1+Math.sqrt(1+4*t*t))/2;for(let i=0;i<n;i++)y[i]=xn[i]+((t-1)/tn)*(xn[i]-x[i]);x=xn;t=tn;}return x;}
+// problem P = {mu, S, lo, hi, sb, fee, L, ls}: ls false -> the original long-only solver
+function solveP(P,lam,w0,iters){return P.ls?solveLS(P,lam,w0,iters):solve(P.mu,P.S,P.hi,lam,P.L,w0,iters);}
+function statsP(P,x){let r=dot(x,P.mu);for(let i=0;i<x.length;i++)if(x[i]<0)r+=P.fee*x[i];return {ret:r,vol:Math.sqrt(Math.max(dot(x,matVec(P.S,x)),0))};}
+// max (ret - rf)/vol by golden-section search over risk aversion (one new solve per step)
+function tangencyP(P,rf,w0){let best=null;const it=P.ls?300:350;const ev=ll=>{const w=solveP(P,Math.exp(ll),best?best.w:w0,it);const s=statsP(P,w);const r={w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol};if(!best||r.sharpe>best.sharpe)best=r;return r.sharpe;};
+  let a=Math.log(.1),b=Math.log(800);const g=.6180339887;let c=b-g*(b-a),d=a+g*(b-a),fc=ev(c),fd=ev(d);
+  for(let k=0;k<22;k++){if(fc>fd){b=d;d=c;fd=fc;c=b-g*(b-a);fc=ev(c);}else{a=c;c=d;fc=fd;d=a+g*(b-a);fd=ev(d);}}return best;}
+function optimizeP(P,rf){if(!P.ls)return optimize(P.mu,P.S,P.hi,rf);const minv=solveP(P,Infinity,null,1500);const front=[];let prev=null;const K=32;
+  for(let k=K-1;k>=0;k--){const lam=Math.exp(Math.log(.1)+k*(Math.log(600)-Math.log(.1))/(K-1));const w=solveP(P,lam,prev,300);prev=w;const s=statsP(P,w);front.push({w,ret:s.ret,vol:s.vol,sharpe:(s.ret-rf)/s.vol});}
+  const best=tangencyP(P,rf,front.reduce((a,b)=>b.sharpe>a.sharpe?b:a).w);
+  const ms=statsP(P,minv);const mvp={w:minv,ret:ms.ret,vol:ms.vol,sharpe:(ms.ret-rf)/ms.vol};front.push(mvp,best);front.sort((p,q)=>p.vol-q.vol);
+  const eff=[];let top=-Infinity;for(const p of front){if(p.ret>=top-1e-9){eff.push(p);top=Math.max(top,p.ret);}}return {tangency:best,minvar:mvp,frontier:eff};}
+// expected return with financing: weights are shares of capital; cash = 1 - sum(w) earns rf, or costs rf + spread when negative (borrowed); shorts pay the borrow fee
+function finRet(w,mu,fin){let s=0,net=0,sh=0;for(let i=0;i<w.length;i++){s+=w[i]*mu[i];net+=w[i];if(w[i]<0)sh-=w[i];}const c=1-net;return s+c*(c>=0?fin.rf:fin.rf+fin.spread)-fin.fee*sh;}
+function exposure(w){let L=0,Sh=0;for(const x of w){if(x>0)L+=x;else Sh-=x;}return {long:L,short:Sh,gross:L+Sh,net:L-Sh,cash:1-(L-Sh)};}
+// monthly series with financing: base[t] = sum w_i r_i,t; cash leg at the monthly risk-free rate (rfm[t], or fin.rf/12 when rfm is null), plus the spread on borrowed money; short fees monthly
+function finSeries(base,w,rfm,fin){const e=exposure(w);if(Math.abs(e.cash)<1e-12&&e.short<1e-12)return base;const T=base.length,out=new Float64Array(T);
+  for(let t=0;t<T;t++){const r=rfm?rfm[t]:fin.rf/12;out[t]=base[t]+e.cash*(r+(e.cash<0?fin.spread/12:0))-fin.fee/12*e.short;}if(base.coverage)out.coverage=base.coverage;return out;}
+// leverage: hold k x a fully invested portfolio (1 <= k <= Lmax), borrowing k-1 at rf + spread.
+// Above the best portfolio to lever (max Sharpe measured against the borrowing rate) the efficient set is that portfolio levered along a straight line, then riskier frontier portfolios at maximum leverage.
+function leverFrontier(Ob,P,rf,spread,Lmax){const tb=tangencyP(P,rf+spread,Ob.tangency.w);const fin={rf,spread,fee:P.fee};
+  const pt=w=>{const v=Math.sqrt(Math.max(dot(w,matVec(P.S,w)),0)),r=finRet(w,P.mu,fin);return {w,ret:r,vol:v,sharpe:(r-rf)/v};};const sc=(w,k)=>Float64Array.from(w,x=>x*k);
+  const pts=Ob.frontier.filter(p=>p.vol<tb.vol-1e-9).map(p=>pt(p.w));pts.push(pt(tb.w));
+  if(Lmax>1+1e-9){pts.push(pt(sc(tb.w,Lmax)));Ob.frontier.filter(p=>p.vol>tb.vol+1e-9).forEach(p=>pts.push(pt(sc(p.w,Lmax))));}else Ob.frontier.filter(p=>p.vol>tb.vol+1e-9).forEach(p=>pts.push(pt(p.w)));
+  pts.sort((a,b)=>a.vol-b.vol);const eff=[];let top=-Infinity;for(const p of pts){if(p.ret>=top-1e-9){eff.push(p);top=Math.max(top,p.ret);}}
+  return {tb:{...tb,...pt(tb.w)},frontier:eff,Lmax};}
 function riskParity(S,active){// equal risk contribution via cyclical coordinate descent (Griveau-Billion, Richard & Roncalli 2013); robust with negative correlations
   const n=S.length,idx=[];for(let i=0;i<n;i++)if(active[i])idx.push(i);const b=1/idx.length;const x=new Float64Array(n);idx.forEach(i=>x[i]=1/Math.sqrt(S[i][i]));
   for(let it=0;it<500;it++){let move=0;for(const i of idx){let s=0;for(const j of idx)if(j!==i)s+=S[i][j]*x[j];const nx=(-s+Math.sqrt(s*s+4*S[i][i]*b))/(2*S[i][i]);move=Math.max(move,Math.abs(nx-x[i])/x[i]);x[i]=nx;}if(move<1e-9)break;}
@@ -110,7 +155,10 @@ function riskContrib(w,S){const m=matVec(S,w);const v=dot(w,m);return Array.from
 // monthly series: filled matrix (no gaps)
 function portSeries(F,w,mu){const T=F[0].length,out=new Float64Array(T);F.forEach((r,i)=>{if(!w[i])return;const adj=mu?mu[i]/12-mean(r):0;for(let t=0;t<T;t++)out[t]+=w[i]*(r[t]+adj);});return out;}
 // monthly series on real listings only: weights re-scaled across assets that traded that month
-function portListed(R,w){const T=R[0].length,out=new Float64Array(T),cov=new Float64Array(T);for(let t=0;t<T;t++){let s=0,ws=0;R.forEach((r,i)=>{if(w[i]>0&&r[t]!=null){s+=w[i]*r[t];ws+=w[i];}});out[t]=ws>0?s/ws:0;cov[t]=ws;}out.coverage=cov;return out;}
+// shorts: each book (long, short) is re-scaled to its intended size across the assets that traded that month
+function portListed(R,w){const T=R[0].length,n=w.length,out=new Float64Array(T),cov=new Float64Array(T);let gl=0,gs=0;for(const x of w){if(x>0)gl+=x;else gs-=x;}
+  for(let t=0;t<T;t++){let sl=0,al=0,ss=0,as=0;for(let i=0;i<n;i++){const x=w[i];if(!x)continue;const r=R[i][t];if(r==null)continue;if(x>0){sl+=x*r;al+=x;}else{ss+=x*r;as-=x;}}
+    out[t]=(al>0?sl*gl/al:0)+(as>0?ss*gs/as:0);cov[t]=(gl+gs)>0?(al+as)/(gl+gs):0;}out.coverage=cov;return out;}
 function exactSC(F,w,marM){const n=F.length,T=F[0].length,p=portSeries(F,w),SC=[];for(let i=0;i<n;i++)SC.push(new Float64Array(n));
   for(let t=0;t<T;t++){if(p[t]>=marM)continue;for(let i=0;i<n;i++){const a=F[i][t]-marM;const row=SC[i];for(let j=i;j<n;j++)row[j]+=a*(F[j][t]-marM);}}
   for(let i=0;i<n;i++){for(let j=i;j<n;j++){SC[i][j]=SC[i][j]/T*12;SC[j][i]=SC[i][j];}SC[i][i]+=1e-6;}return SC;}
@@ -153,8 +201,9 @@ function monteCarlo(o){const r=rng(o.seed),T=Math.round(o.years*12),P=o.paths;co
   const so=a=>Float64Array.from(a).sort();const fs=so(fin),as=so(ann),ds=so(dd),ys=so(y1);const q=(a,x)=>a[Math.min(a.length-1,Math.floor(x*a.length))];const k5=Math.max(1,Math.floor(P*.05));let tl=0;for(let i=0;i<k5;i++)tl+=ys[i];
   const samples=[];for(let p=0;p<Math.min(24,P);p++)samples.push(vals.subarray(p*(T+1),(p+1)*(T+1)));
   return {T,bands,invested,real:!!o.real,infl:pi,deflT:defl(T),ann:as,pLoss:fs.filter(x=>x<invested).length/P,pDouble:fs.filter(x=>x>=2*invested).length/P,annMed:q(as,.5),ann5:q(as,.05),ann95:q(as,.95),ddMed:q(ds,.5),dd95:q(ds,.95),var1y:-ys[k5-1],cvar1y:-tl/k5,pDown1y:ys.filter(x=>x<0).length/P,samples};}
-function growth(series){const v=[1];for(const r of series)v.push(v[v.length-1]*(1+r));let pk=1;const ddS=v.map(x=>{pk=Math.max(pk,x);return x/pk-1;});const T=series.length,m=mean(series);let s=0;for(const r of series)s+=(r-m)**2;
-  return {v,ddS,cagr:Math.pow(v[T],12/T)-1,vol:Math.sqrt(s/(T-1)*12),maxDD:-Math.min(...ddS),best:Math.max(...series),worst:Math.min(...series)};}
+function growth(s0){const series=Array.from(s0,x=>x<-1?-1:x);const v=[1];let ruin=-1;for(let t=0;t<series.length;t++){const nv=v[t]*(1+series[t]);if(nv<=0&&ruin<0)ruin=t;v.push(ruin>=0?0:nv);}
+  let pk=1;const ddS=v.map(x=>{pk=Math.max(pk,x);return x/pk-1;});const T=series.length,live=ruin>=0?series.slice(0,ruin+1):series,m=mean(live);let s=0;for(const r of live)s+=(r-m)**2;
+  return {v,ddS,ruin,cagr:Math.pow(v[T],12/T)-1,vol:live.length>1?Math.sqrt(s/(live.length-1)*12):0,maxDD:-Math.min(...ddS),best:Math.max(...live),worst:Math.min(...live)};}
 // walk-forward: re-estimate on trailing window every `step` months, hold out-of-sample
 function walkForwardStep(H,o,t0,win){const n=H.ids.length,a=t0-win;const E=[];for(let i=0;i<n;i++){let c=0;for(let t=a;t<t0;t++)if(H.R[i][t]!=null)c++;if(c>=36&&H.R[i][t0-1]!=null&&o.active[i])E.push(i);}
   const sub={ids:E.map(i=>H.ids[i]),R:E.map(i=>H.R[i].slice(a,t0)),mkt:H.mkt.slice(a,t0),T:win};const k=E.length;
@@ -163,4 +212,4 @@ function walkForwardStep(H,o,t0,win){const n=H.ids.length,a=t0-win;const E=[];fo
   const tan=fastTangency(M.mu,M.S,cap,o.rf,null,L).w,mv=solve(M.mu,M.S,cap,Infinity,L,null,1500),rp=riskParity(M.S,E.map(()=>true));
   const up=w=>{const f=new Float64Array(n);E.forEach((i,q)=>f[i]=w[q]);return f;};
   return {tan:up(tan),mv:up(mv),rp:up(rp),ew:up(new Float64Array(k).fill(1/k)),k};}
-if(typeof module!=='undefined')module.exports={dropMonths,frontierAt,toBase,alphaStats,META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};
+if(typeof module!=='undefined')module.exports={projLS,solveLS,solveP,statsP,tangencyP,optimizeP,finRet,finSeries,exposure,leverFrontier,frontierAtRet,solve,project,maxEig,dropMonths,frontierAt,toBase,alphaStats,META,parseData,sliceH,buildModel,ledoitWolf,blackLitterman,optimize,fastTangency,riskParity,riskContrib,portSeries,portListed,optimizeDownside,riskStats,randomPortfolios,resampleStep,monteCarlo,growth,walkForwardStep,stats,dot,matVec,rng};
