@@ -57,26 +57,37 @@ for l in lines[1:]:
     p = l.split("|")
     if len(p) > 2:
         monthly[p[0]] = {months[int(p[1]) + k]: (int(x) / 1e4 if x else None) for k, x in enumerate(p[2].split(","))}
-monthly["SPY"] = monthly.get("SPY")
-report = []
+# listings priced in euros: compare with the monthly return converted from dollars to euros
+EUR_LISTED = {"ITX", "IBE", "FER", "AIR"}
+KRW_LISTED = {"SAMSUNG", "SKHYNIX"}   # no won series in the data file: not checked
+fx = monthly.get("EURX5", {})
+fx = {k: (v * 1e4 / 1e5 if v is not None else None) for k, v in fx.items()}  # EURX5 is stored in 1e-5 units
+TOL = float(sys.argv[1] if len(sys.argv) > 1 else .04)
+dropped = {}
 for sid, px in series.items():
     worst, bad = 0.0, []
     for ym in sorted({d[:4] for d in dates if d > START}):
         idx = [i for i, d in enumerate(dates) if d[:4] == ym]
         prev = idx[0] - 1
-        if prev < 0 or px[prev] is None or px[idx[-1]] is None:
+        if prev < 0 or px[prev] is None or any(px[i] is None for i in idx):
             continue
         r_d = px[idx[-1]] / px[prev] - 1
         r_m = monthly.get(sid, {}).get(ym)
-        if r_m is None:
+        if r_m is None or sid in KRW_LISTED:
             continue
+        if sid in EUR_LISTED:
+            r_m = (1 + r_m) / (1 + fx[ym]) - 1
         diff = r_d - r_m
         worst = max(worst, abs(diff))
-        if abs(diff) > float(sys.argv[1] if len(sys.argv) > 1 else .02):
+        if abs(diff) > TOL:
+            # the daily path disagrees with the monthly data (a bad print in the daily source):
+            # blank the month except its last close, so the app draws a smooth path for it
             bad.append(f"{ym}: daily {r_d:+.3f} vs monthly {r_m:+.3f}")
-    missing = sum(1 for d, v in zip(dates, px) if v is None and d >= (min(k for k, v2 in zip(dates, px) if v2 is not None) if any(px) else END))
-    report.append((sid, worst, bad))
+            for i in idx[:-1]:
+                px[i] = None
+            dropped.setdefault(sid, []).append(ym)
     print(f"{sid:8s} worst monthly gap {worst * 100:5.2f}%  {'; '.join(bad[:4])}")
+print("months blanked:", dropped)
 
 out = [f"DATES|{','.join(dates)}"] + [f"{sid}|{','.join('' if v is None else f'{v:g}' for v in px)}" for sid, px in series.items()]
 (root / "data/daily_2007_2009.txt").write_text("\n".join(out) + "\n")

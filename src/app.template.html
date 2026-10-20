@@ -825,7 +825,7 @@ function crPath(s,mo,rel){const {iso,blocks}=crDaily();const v=new Float64Array(
     else{fill.push(B.m);for(let k=B.a;k<=B.b;k++)v[k]=g*Math.pow(R,(k-prev)/n);}
     g=1+r<=0?0:g*R;if(g===0)v[B.b]=0;}
   return {v,fill};}
-function crAssetPath(H0,i){const id=i<0?'SPY':A[i].id,p=crDaily().px[id];return crPath(i<0?H0.mkt:H0.R[i],H0.months,p?(a,k)=>p[a]!=null&&p[k]!=null?p[k]/p[a]:null:()=>null);}
+function crAssetPath(H0,i){const id=i<0?'SPY':A[i].id,p=crDaily().px[id];return crPath(i<0?H0.mkt:H0.R[i],H0.months,p?(a,k)=>{const b=p[a]!=null?p[a]:p[a+1];return b!=null&&p[k]!=null?p[k]/b:null;}:()=>null);}
 function crDD(v){let m=0;return Array.from(v,x=>{m=Math.max(m,x);return m>0?x/m-1:0;});}
 function crBuild(){const H0=crSrc(),mo=H0.months,ix=m=>mo.indexOf(m);const s0=ix('2007-01'),s1=ix('2013-12'),T=s1-s0+1,E=ix('2009-12')-s0+1;
   const dates=['2006-12',...mo.slice(s0,s1+1)],dv=t=>t===0?'2006-12':mo[s0+t-1];
@@ -873,7 +873,7 @@ function renderCrisis(){if(!M)return;const C=crBuild(),{H0,ix,dates,dv,pk,tr,T,a
    heldSm.forEach(q=>sm.push(`${A[q.i].name}${q.f.length<24?` (${span(q.f)})`:''}`));
    const fall=dS.v[t2]/dS.v[p2]-1;
    $('cpGNote').innerHTML=`Every NYSE trading day from ${D.lab[0]} to ${D.lab[T2]} (${T2+1} days), daily closes from Yahoo Finance. The S&amp;P 500 line fell <b>${pct(-fall,1)}</b> from ${D.lab[p2]} to ${D.lab[t2]} (shaded) with dividends${CR.usd?'':` and in ${cur}`}. Each month of every line is adjusted to end exactly on that month's return${CR.usd?'':' in your currency (the dollar–euro move is applied evenly within each month)'}, so the chart agrees with every other figure in the lab. Portfolios are rebalanced to their weights at each month-end, and leverage and shorts are financed as in your strategy.`+
-     (sm.length?` <br>No daily prices here for: ${sm.join(', ')}; their part of each day is drawn as a smooth path between month-ends (the monthly return stays exact).`:'')+` Hover or tap the numbered circles for the events.`;}
+     (sm.length?` <br>No reliable daily prices for: ${sm.join(', ')}; their part of each day is drawn as a smooth path between month-ends (the monthly return stays exact).`:'')+` Hover or tap the numbered circles for the events.`;}
   // 2. what happened
   $('cpTL').innerHTML=CTL.map(([d,t0,x])=>`<li><time>${d}</time><b>${t0}</b><p>${x}</p></li>`).join('');
   // 3. every asset through the crash
