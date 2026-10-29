@@ -164,6 +164,10 @@ button.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
 .ppedit{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:.8rem;color:var(--muted)}
 .ppedit select{font:inherit;font-size:.8rem;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);max-width:260px}
 @media (max-width:620px){.wrow.ed{grid-template-columns:minmax(90px,1fr) 60px 22px 54px;}.wrow.ed .wb,.wrow.ed .wg{display:none}}
+.sybtn{display:inline-flex;align-items:center;gap:6px}.sybtn i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sybtn[data-st="ok"] i{background:var(--good)}.sybtn[data-st="err"] i{background:var(--bad)}.sybtn[data-st="busy"] i{background:var(--accent);animation:sypulse 1s infinite}
+@keyframes sypulse{50%{opacity:.3}}
+.ppsync{border-color:color-mix(in srgb,var(--you) 45%,var(--line))}.systeps{margin:6px 0 10px;padding-left:20px}.systeps li{margin:4px 0}.systeps a,.ppsync a{color:var(--you)}
 .cmpt td.n a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .pprange .seg{max-width:100%;overflow-x:auto}.pprange .seg button{white-space:nowrap;flex:none}
 .pprange{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -453,8 +457,9 @@ button.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
 
 <div id="ppage" hidden role="dialog" aria-modal="true" aria-labelledby="ppTitle">
  <div class="wrap">
-  <div class="abar"><button id="ppBack">← Back to portfolio</button><div class="nav"><div class="seg" role="group" aria-label="Currency for this page"><button id="ppUsd" aria-pressed="false">US dollars</button><button id="ppBase" aria-pressed="true">Your currency</button></div><button id="ppExport" class="ghost" title="Download all saved portfolios as a file">Export</button><button id="ppImportBtn" class="ghost" title="Load portfolios from an exported file">Import</button><input type="file" id="ppImport" accept=".json,application/json" hidden></div></div>
+  <div class="abar"><button id="ppBack">← Back to portfolio</button><div class="nav"><div class="seg" role="group" aria-label="Currency for this page"><button id="ppUsd" aria-pressed="false">US dollars</button><button id="ppBase" aria-pressed="true">Your currency</button></div><button id="ppSyncBtn" class="ghost sybtn" data-st="off" aria-controls="ppSync" title="Keep your portfolios on all your devices">Sync devices</button><button id="ppExport" class="ghost" title="Download all saved portfolios as a file">Export</button><button id="ppImportBtn" class="ghost" title="Load portfolios from an exported file">Import</button><input type="file" id="ppImport" accept=".json,application/json" hidden></div></div>
   <div class="ahead"><div><h1 id="ppTitle">My <em>portfolios</em></h1><div class="cpsub">Save the portfolio you build in the lab under a name, with its weights fixed, and follow how it does: its full history, the date you saved it, and from then on its real out-of-sample record. Compare your saved portfolios side by side.</div></div></div>
+  <section class="panel ppsync" id="ppSync" hidden></section>
   <section class="panel ppsave"><div class="phead"><h2>Save the current portfolio</h2><span class="kicker">from the lab, with its strategy</span></div>
     <p class="note" id="ppNow" style="margin:0"></p>
     <div class="ppform"><input id="ppName" maxlength="60" placeholder="Name" aria-label="Portfolio name"><button id="ppSaveBtn" class="primary">Save portfolio</button><span class="kicker" id="ppMsg" role="status"></span></div>
@@ -1211,7 +1216,15 @@ const SVKEY='fl-saved-portfolios-v1';
 let SVOK=true,SVCACHE=null;
 function svLoad(){try{const x=JSON.parse(localStorage.getItem(SVKEY)||'[]');return Array.isArray(x)?x.filter(p=>p&&p.id&&p.w):[];}catch(_){SVOK=false;return [];}}
 function svCache(){return SVCACHE||(SVCACHE=svLoad());}
-function svStore(list){SVCACHE=JSON.parse(JSON.stringify(list));try{localStorage.setItem(SVKEY,JSON.stringify(list));SVOK=true;return true;}catch(_){SVOK=false;return false;}}
+const SVDEL='fl-saved-deleted-v1';
+function svDel(){try{const x=JSON.parse(localStorage.getItem(SVDEL)||'{}');return x&&typeof x==='object'?x:{};}catch(_){return {};}}
+function svDelStore(d){try{localStorage.setItem(SVDEL,JSON.stringify(d));}catch(_){}}
+// every local change stamps the portfolios it touched and records removals, so devices can be merged later
+function svStore(list,o={}){if(!o.sync){const prev=svCache(),pm=new Map(prev.map(q=>[q.id,q])),now=Date.now(),del=svDel();const bare=x=>{const y={...x};delete y.updated;return JSON.stringify(y);};
+    list.forEach(q=>{const old=pm.get(q.id);if(!old||bare(old)!==bare(q))q.updated=now;else if(old.updated)q.updated=old.updated;delete del[q.id];});
+    prev.forEach(q=>{if(!list.some(x=>x.id===q.id))del[q.id]=now;});svDelStore(del);}
+  SVCACHE=JSON.parse(JSON.stringify(list));let ok=true;try{localStorage.setItem(SVKEY,JSON.stringify(list));SVOK=true;}catch(_){SVOK=false;ok=false;}
+  if(!o.sync)syncSoon();return ok;}
 const svList=()=>JSON.parse(JSON.stringify(svCache()));
 const svGet=id=>id==='__cur'?svCurrent():svList().find(p=>p.id===id);
 const DATA_END=()=>HF0.months[HF0.months.length-1];
@@ -1239,7 +1252,7 @@ function svStats(s,rf){const g=growth(s),n=s.length;let pk=0,P=0,Tr=0,dd=0;g.v.f
   let rec=null;if(dd>0)for(let t=Tr;t<g.v.length;t++)if(g.v[t]>=g.v[P]){rec=t-Tr;break;}const rfa=rf.reduce((a,b)=>a+b,0)/Math.max(1,n)*12;
   return {g,n,dd,P,Tr,rec,sharpe:g.vol?(g.cagr-rfa)/g.vol:0,pos:s.filter(x=>x>0).length/Math.max(1,n),best:Math.max(...s),worst:Math.min(...s),wm:s.indexOf(Math.min(...s)),bm:s.indexOf(Math.max(...s))};}
 function openSaved(id,push=true){if(!M)return;if(CR.on)closeCrisis();if(AP!=null)closeAsset();SV.on=true;if(id)SV.id=id;$('ppage').hidden=false;document.body.classList.add('noscroll');$('ppage').scrollTop=0;
-  if(push){try{history.replaceState(null,'',location.pathname+location.search+'#portfolios');}catch(_){}}renderSaved();}
+  if(push){try{history.replaceState(null,'',location.pathname+location.search+'#portfolios');}catch(_){}}renderSaved();syUI();if(SY.token&&Date.now()-(SY.last||0)>5e3)sync();}
 function closeSaved(){SV.on=false;$('ppage').hidden=true;document.body.classList.remove('noscroll');try{history.replaceState(null,'',location.pathname+location.search);}catch(_){}}
 const SVC=['--you','--c-tech','--c-crypto','--c-fin','--accent','--c-cmdty','--c-bond','--c-def'];
 const svXt=(dates,W)=>{const T=dates.length-1,q=[];const step=T>240?5:T>120?2:1;dates.forEach((d,i)=>{const mm=d.slice(5,7);if(!i)return;if(T<=36?(W<560?['01','07']:['01','04','07','10']).includes(mm):mm==='01'&&(+d.slice(0,4))%step===0)q.push(i);});return q;};
@@ -1406,6 +1419,61 @@ async function svPdf(){const L0=SV.last;if(!L0)return;const btn=$('ppPdf');const
   catch(err){if($('ppMsg'))$('ppMsg').textContent='Could not create the PDF: '+err.message;}
   finally{if(btn){btn.disabled=false;btn.textContent=lbl;}}}
 function hexRgb(c){c=c.trim();if(c.startsWith('#')){const h=c.length===4?c.slice(1).split('').map(x=>x+x).join(''):c.slice(1,7);return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16));}const m=c.match(/\d+(\.\d+)?/g);return m?m.slice(0,3).map(Number):[120,120,120];}
+/* ---------- sync between devices: a private GitHub gist ---------- */
+/* The token and the gist id stay in this browser only. Each device merges its list with the gist's: for every portfolio the
+   most recent change wins, and a removal wins over any older version, so removing on one device removes everywhere. */
+const SYKEY='fl-sync-github-v1',SYFILE='mengualmar-portfolios.json';
+const SY={token:null,gist:null,login:null,busy:false,again:false,last:null,err:null,T:null,open:false};
+try{Object.assign(SY,JSON.parse(localStorage.getItem(SYKEY)||'{}'));}catch(_){}
+function sySave(){try{if(SY.token)localStorage.setItem(SYKEY,JSON.stringify({token:SY.token,gist:SY.gist,login:SY.login,last:SY.last}));else localStorage.removeItem(SYKEY);}catch(_){}}
+async function GH(path,opt={}){const r=await fetch('https://api.github.com'+path,{...opt,cache:'no-store',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+SY.token,'X-GitHub-Api-Version':'2022-11-28',...(opt.body?{'Content-Type':'application/json'}:{})}});
+  if(r.status===401)throw new Error('GitHub did not accept the token: it may have expired or been deleted. Connect again with a new one.');
+  if(r.status===403||r.status===404)throw new Error(`GitHub refused the request (${r.status}). Check that the token has the “gist” permission.`);
+  if(!r.ok)throw new Error(`GitHub error ${r.status}. Try again in a minute.`);return r.status===204?null:r.json();}
+async function syFind(){for(let pg=1;pg<=10;pg++){const L=await GH(`/gists?per_page=100&page=${pg}`);const g=L.find(x=>x.files&&x.files[SYFILE]);if(g)return g.id;if(L.length<100)break;}return null;}
+async function syRead(id){const g=await GH('/gists/'+id);const f=g.files&&g.files[SYFILE];if(!f)return {portfolios:[],deleted:{}};let t=f.content;if(f.truncated)t=await fetch(f.raw_url,{cache:'no-store'}).then(r=>r.text());
+  const j=JSON.parse(t||'{}');return {portfolios:Array.isArray(j.portfolios)?j.portfolios.filter(p=>p&&p.id&&p.w):[],deleted:j.deleted&&typeof j.deleted==='object'?j.deleted:{}};}
+function svMerge(R,L,LD){const del={...R.deleted};for(const [k,v] of Object.entries(LD))del[k]=Math.max(del[k]||0,v);
+  const by=new Map();for(const p of R.portfolios)by.set(p.id,p);for(const p of L){const q=by.get(p.id);if(!q||(p.updated||0)>=(q.updated||0))by.set(p.id,p);}
+  const order=[...L.map(p=>p.id),...R.portfolios.map(p=>p.id).filter(id=>!L.some(p=>p.id===id))];
+  const list=order.map(id=>by.get(id)).filter(p=>!(del[p.id]>=(p.updated||0)));
+  const cut=Date.now()-365*864e5;for(const k of Object.keys(del))if(del[k]<cut)delete del[k];return {list,del};}
+const syNorm=(L,D)=>JSON.stringify([L.map(p=>JSON.stringify(p)).sort(),Object.entries(D).sort()]);
+async function sync(){if(!SY.token)return;if(SY.busy){SY.again=true;return;}SY.busy=true;syUI();
+  try{if(!SY.gist)SY.gist=await syFind();const R=SY.gist?await syRead(SY.gist):{portfolios:[],deleted:{}};
+    const before=svList(),m=svMerge(R,before,svDel());
+    const localChanged=syNorm(before,{})!==syNorm(m.list,{});if(localChanged)svStore(m.list,{sync:true});svDelStore(m.del);
+    const body=JSON.stringify({app:'MengualMar Portfolio Simulation',version:2,updated:new Date().toISOString(),portfolios:m.list,deleted:m.del},null,1);
+    if(!SY.gist){const g=await GH('/gists',{method:'POST',body:JSON.stringify({description:'MengualMar Portfolio Simulation: saved portfolios (kept in sync by the app, do not edit)',public:false,files:{[SYFILE]:{content:body}}})});SY.gist=g.id;}
+    else if(syNorm(R.portfolios,R.deleted)!==syNorm(m.list,m.del))await GH('/gists/'+SY.gist,{method:'PATCH',body:JSON.stringify({files:{[SYFILE]:{content:body}}})});
+    SY.last=Date.now();SY.err=null;sySave();
+    if(localChanged){if(CURNAME&&!m.list.some(p=>p.id===CURNAME.id))CURNAME=null;else if(CURNAME){CURNAME.name=m.list.find(p=>p.id===CURNAME.id).name;}updYN();
+      const typing=document.activeElement&&$('ppage').contains(document.activeElement)&&['INPUT','SELECT'].includes(document.activeElement.tagName);if(SV.on&&!SV.rename&&!typing)renderSaved();}}
+  catch(e){SY.err=e.message||'Could not reach GitHub.';}
+  finally{SY.busy=false;syUI();if(SY.again){SY.again=false;syncSoon();}}}
+function syncSoon(){if(!SY.token)return;clearTimeout(SY.T);SY.T=setTimeout(sync,1200);}
+async function syConnect(tok){tok=(tok||'').trim();if(!tok){SY.err='Paste the token first.';syUI();return;}
+  SY.token=tok;SY.gist=null;SY.err=null;SY.busy=true;syUI();
+  try{const u=await GH('/user');SY.login=u.login;SY.busy=false;sySave();await sync();if(!SY.err){SY.open=false;$('ppMsg').textContent='Sync is on: your portfolios are now kept on GitHub.';}}
+  catch(e){SY.busy=false;SY.token=null;SY.login=null;SY.err=e.message;sySave();}syUI();}
+function syDisconnect(){SY.token=SY.gist=SY.login=SY.last=null;SY.err=null;clearTimeout(SY.T);sySave();SY.open=true;syUI();}
+const syAgo=t=>{if(!t)return 'not yet';const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?`${m} min ago`:new Date(t).toLocaleString([], {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});};
+function syUI(){const b=$('ppSyncBtn');if(!b)return;const st=!SY.token?'off':SY.busy?'busy':SY.err?'err':'ok';
+  b.dataset.st=st;b.innerHTML=`<i></i>${st==='off'?'Sync devices':st==='busy'?'Syncing…':st==='err'?'Sync problem':'Synced'}`;b.setAttribute('aria-expanded',SY.open);
+  const P=$('ppSync');P.hidden=!SY.open&&!(SY.token&&SY.err);
+  if(!SY.token){P.innerHTML=`<div class="phead"><h2>See your portfolios on every device</h2><span class="kicker">iPad, phone, another computer</span></div>
+    <p class="note">Your portfolios are stored in this browser only. Connect your GitHub account and they are also kept in a private file there (a secret gist that only you can see), so every device you connect shows the same list and every change appears on the others.</p>
+    <ol class="note systeps"><li><a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=MengualMar%20portfolios" target="_blank" rel="noopener">Open GitHub and create a token</a> (sign in if asked). The <b>gist</b> permission is already ticked: leave everything else off, choose an expiration (or <i>No expiration</i>), press <b>Generate token</b> and copy it.</li>
+    <li>Paste it here and press Connect. Do the same on each device: you can paste the same token or create one per device.</li></ol>
+    <div class="ppform"><input id="ppSyncTok" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_…" aria-label="GitHub token"><button id="ppSyncGo" class="primary">Connect</button></div>
+    ${SY.err?`<p class="note" style="color:var(--bad)">${esc(SY.err)}</p>`:''}<p class="note">The token can only read and write your gists, and it stays in this browser. Portfolios already saved here are added to the ones on GitHub; nothing is overwritten.</p>`;}
+  else P.innerHTML=`<div class="phead"><h2>Sync with GitHub</h2><span class="kicker">${SY.login?'@'+esc(SY.login):''}</span></div>
+    <p class="note">${SY.busy?'Syncing…':SY.err?`<span style="color:var(--bad)">${esc(SY.err)}</span>`:`Your portfolios are in sync. Last synced ${syAgo(SY.last)}.`} Changes are sent a second after you make them, and other devices pick them up when you open or return to the app.</p>
+    <div class="ppform"><button id="ppSyncNow">Sync now</button><button id="ppSyncOff" class="ghost">Disconnect this device</button>${SY.gist?`<a class="kicker" href="https://gist.github.com/${esc(SY.login||'')}/${esc(SY.gist)}" target="_blank" rel="noopener">View the file on GitHub</a>`:''}</div>
+    <p class="note">Disconnecting only removes the token from this browser: the portfolios stay here and on GitHub.</p>`;}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&SY.token&&Date.now()-(SY.last||0)>15e3)sync();});
+window.addEventListener('focus',()=>{if(SY.token&&Date.now()-(SY.last||0)>15e3)sync();});
+if(SY.token)setTimeout(sync,2500);
 /* ---------- events ---------- */
 function svAction(e){const t=e.target.closest('button,a[data-sv],[data-rg]');if(!t)return;
   if(t.dataset.sv){e.preventDefault();SV.id=t.dataset.sv;SV.confirm=null;SV.rename=false;renderSaved();return;}
@@ -1423,6 +1491,10 @@ function svAction(e){const t=e.target.closest('button,a[data-sv],[data-rg]');if(
   if(id==='ppDup'&&p){const L=svList();const q={...JSON.parse(JSON.stringify(p)),id:'p'+Date.now().toString(36),name:(p.name+' (copy)').slice(0,60)};L.push(q);svStore(L);SV.id=q.id;renderSaved();return;}
   if(id==='ppDel'&&p){SV.confirm=p.id;renderSaved();$('ppTabs').scrollIntoView({block:'center'});return;}
   if(id==='ppPdf'){svPdf();return;}
+  if(id==='ppSyncBtn'){SY.open=!SY.open;syUI();if(SY.open&&!SY.token)setTimeout(()=>$('ppSyncTok')&&$('ppSyncTok').focus(),0);return;}
+  if(id==='ppSyncGo'){syConnect($('ppSyncTok').value);return;}
+  if(id==='ppSyncNow'){sync();return;}
+  if(id==='ppSyncOff'){syDisconnect();return;}
   if(id==='ppNorm'){if(!LSON()){S.w=norm(Float64Array.from(S.w,x=>Math.max(0,x)));allocList();onWeights();renderSaved();}return;}
   if(id==='ppUsd'){SV.usd=true;renderSaved();return;}if(id==='ppBase'){SV.usd=false;renderSaved();return;}
   if(id==='ppLog'){SV.log=!SV.log;t.setAttribute('aria-pressed',SV.log);renderSaved();return;}
@@ -1434,7 +1506,7 @@ $('ppage').addEventListener('click',svAction);
 // editing the live portfolio's weights: applied when the field is left or Enter is pressed, so typing is not interrupted
 $('ppage').addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.wi!=null){const i=+t.dataset.wi;const v=Math.max(wMin(),Math.min(wMax(),+t.value||0));S.w[i]=v/100;allocList();onWeights();renderSaved();}
   if(t.id==='ppAdd'&&t.value!==''){const i=+t.value;S.w[i]=.05;allocList();onWeights();renderSaved();}});
-$('ppage').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='ppName'){e.preventDefault();$('ppSaveBtn').click();}if(e.key==='Enter'&&e.target.id==='ppRenameIn'){e.preventDefault();$('ppRenameOk').click();}if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.wi!=null){e.preventDefault();e.target.blur();}});
+$('ppage').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='ppSyncTok'){e.preventDefault();$('ppSyncGo').click();}if(e.key==='Enter'&&e.target.id==='ppName'){e.preventDefault();$('ppSaveBtn').click();}if(e.key==='Enter'&&e.target.id==='ppRenameIn'){e.preventDefault();$('ppRenameOk').click();}if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.wi!=null){e.preventDefault();e.target.blur();}});
 $('ppImport').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());const inc=(Array.isArray(j)?j:j.portfolios||[]).filter(p=>p&&p.id&&p.w&&p.name);const L=svList();let n=0;
   for(const p of inc){const q={ls:{short:false,sb:.3,fee:.005,lev:false,L:2,spread:.015,mm:.25},exp:{ret:0,vol:0,sharpe:0},dataEnd:DATA_END(),created:svToday(),...p};if(L.some(x=>x.id===q.id))continue;L.push(q);n++;}
   svStore(L);$('ppMsg').textContent=n?`Imported ${n} portfolio${n===1?'':'s'}.`:'Nothing new: those portfolios are already here.';updYN();renderSaved();}catch(_){$('ppMsg').textContent='That file is not a MengualMar Portfolio Simulation export.';}e.target.value='';});
