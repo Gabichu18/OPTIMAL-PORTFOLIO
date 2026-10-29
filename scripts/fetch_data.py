@@ -15,6 +15,8 @@ Sources and splices (all returns are monthly, in USD, dividends reinvested):
   closes plus cash dividends, because Yahoo's adjusted close for some of them
   contains bad dividend factors before 2011. Converted at FRED month-end FX
   (DEXUSEU, DEXKOUS, DEXHKUS), which has no gaps or corrupted quotes.
+- Gold: front-month future (GC=F) until November 2004, then the GLD ETF; the
+  future's Yahoo history is missing many month-ends after 2011.
 - US Treasuries: IEF from August 2002, Vanguard Intermediate-Term Treasury
   fund (VFITX) before that.
 - Energy: Xtrackers MSCI World Energy UCITS ETF (XDW0, EUR) from May 2016,
@@ -119,7 +121,8 @@ def main() -> None:
                                           pr(month_end(daily("VGENX")["Close"].squeeze())), "2001-12"), "2016-05")
     cop_ucits = month_end(daily("4COP.DE")["Close"].squeeze()) * eur
     R["COPX"] = splice(pr(cop_ucits), pr(month_end(daily("COPX")["Close"].squeeze())), "2021-12")
-    R["GOLD"] = pr(prices["GOLD"].interpolate(limit=3))
+    # GC=F has missing month-ends (about 27 since 2012); GLD has every month from its launch
+    R["GOLD"] = splice(pr(month_end(daily("GLD")["Close"].squeeze())), pr(prices["GOLD"].interpolate(limit=3)), "2004-12")
     R.loc[:"2020-01", "VRT"] = np.nan
     R.loc[:"2004-01", "SKHYNIX"] = np.nan
     if "2025-12" in R.index:  # Magnum Ice Cream demerger, not in Yahoo's adjusted close
