@@ -58,7 +58,7 @@ for l in lines[1:]:
     if len(p) > 2:
         monthly[p[0]] = {months[int(p[1]) + k]: (int(x) / 1e4 if x else None) for k, x in enumerate(p[2].split(","))}
 # listings priced in euros: compare with the monthly return converted from dollars to euros
-EUR_LISTED = {"ITX", "IBE", "FER", "AIR"}
+EUR_LISTED = {"ITX", "IBE", "FER", "AIR", "REP"}
 KRW_LISTED = {"SAMSUNG", "SKHYNIX"}   # no won series in the data file: not checked
 fx = monthly.get("EURX5", {})
 fx = {k: (v * 1e4 / 1e5 if v is not None else None) for k, v in fx.items()}  # EURX5 is stored in 1e-5 units

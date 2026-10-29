@@ -35,7 +35,14 @@ Sources and splices (all returns are monthly, in USD, dividends reinvested):
   September 2001 (EADS), and American Water Works listed in April 2008.
 - GE: Yahoo records the GE HealthCare (Jan 2023) and GE Vernova (Apr 2024)
   spin-offs as split factors, so the adjusted close assumes the spun-off
-  shares were sold and reinvested in GE.
+  shares were sold and reinvested in GE. Occidental's California Resources
+  spin-off (Dec 2014) is handled the same way by Yahoo.
+- Unilever (UL, the NYSE ADR): Yahoo records the 8-for-9 share consolidation
+  of 9 Dec 2025 but not the Magnum Ice Cream demerger (1 MICC per 5 Unilever
+  shares, ex 8 Dec 2025), so December 2025 adds back the spun-off value
+  ($14.92 x 0.225 per share against a $62.27 close).
+- Repsol (REP.MC, EUR) is converted to USD like Ferrovial; Yahoo's history
+  starts in January 2000.
 """
 from pathlib import Path
 import numpy as np
@@ -47,16 +54,17 @@ US = {
     "NVDA": "NVDA", "AMZN": "AMZN", "GOOGL": "GOOGL", "MSFT": "MSFT", "META": "META", "AAPL": "AAPL",
     "VRT": "VRT", "VST": "VST", "ETN": "ETN", "ANET": "ANET", "MU": "MU", "TSM": "TSM", "AMAT": "AMAT",
     "CAT": "CAT", "GE": "GE", "AWK": "AWK", "NOC": "NOC", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "LMT": "LMT", "NUE": "NUE",
-    "TM": "TM", "PFE": "PFE", "UNH": "UNH", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
+    "TM": "TM", "PFE": "PFE", "UNH": "UNH", "JNJ": "JNJ", "UL": "UL", "OXY": "OXY", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
 }
 LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local units per USD)
     "XIAOMI": ("1810.HK", "DEXHKUS", True), "SAMSUNG": ("005930.KS", "DEXKOUS", True),
     "SKHYNIX": ("000660.KS", "DEXKOUS", True), "ITX": ("ITX.MC", "DEXUSEU", False),
     "FER": ("FER.MC", "DEXUSEU", False), "IBE": ("IBE.MC", "DEXUSEU", False), "AIR": ("AIR.PA", "DEXUSEU", False),
+    "REP": ("REP.MC", "DEXUSEU", False),
 }
 ORDER = ["NVDA", "AMZN", "GOOGL", "MSFT", "META", "AAPL", "VRT", "VST", "ETN", "ANET", "MU", "TSM", "XIAOMI",
-         "AMAT", "SAMSUNG", "CAT", "GE", "AIR", "AVGO", "CRWD", "JPM", "GS", "LMT", "NOC", "NUE", "TM", "PFE", "UNH", "ITX", "ASML",
-         "SKHYNIX", "GOLD", "COPX", "ENERGY", "BTC", "UST", "FER", "IBE", "AWK", "COST", "SPY"]
+         "AMAT", "SAMSUNG", "CAT", "GE", "AIR", "AVGO", "CRWD", "JPM", "GS", "LMT", "NOC", "NUE", "TM", "PFE", "UNH", "JNJ", "UL", "ITX", "ASML",
+         "SKHYNIX", "GOLD", "COPX", "ENERGY", "OXY", "REP", "BTC", "UST", "FER", "IBE", "AWK", "COST", "SPY"]
 
 
 def daily(ticker: str, adjusted: bool = True) -> pd.DataFrame:
@@ -115,6 +123,8 @@ def main() -> None:
     R["GOLD"] = pr(prices["GOLD"].interpolate(limit=3))
     R.loc[:"2020-01", "VRT"] = np.nan
     R.loc[:"2004-01", "SKHYNIX"] = np.nan
+    if "2025-12" in R.index:  # Magnum Ice Cream demerger, not in Yahoo's adjusted close
+        R.loc["2025-12", "UL"] = (1 + R.loc["2025-12", "UL"]) * (1 + 0.2 / (8 / 9) * 14.92 / 62.27) - 1
 
     months = [str(m) for m in R.index]
     lines = [f"{months[0]}|{len(months)}"]
