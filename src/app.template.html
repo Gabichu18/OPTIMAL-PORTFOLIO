@@ -1,4 +1,4 @@
-<title>Frontier Lab</title>
+<title>MengualMar Portfolio Simulation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -149,6 +149,21 @@ button.primary{background:var(--you);color:#fff;border-color:var(--you);font-wei
 button.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
 .pnav a.on{border-color:var(--you);background:color-mix(in srgb,var(--you) 10%,var(--panel))}.pnav a.on b{color:var(--you)}
 .pnav a b{font-family:inherit;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pnav .ptab{flex:none;display:flex;align-items:stretch;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+.pnav .ptab a{border:0;background:none;min-width:0}
+.pnav .ptab.on{border-color:var(--you);background:color-mix(in srgb,var(--you) 10%,var(--panel))}.pnav .ptab.on a b{color:var(--you)}
+.pnav .ptab.live a b{color:var(--you)}.pnav .ptab.live{border-style:dashed}.pnav .ptab.live.on{border-style:solid}
+.pnav .tabx{border:0;background:none;color:var(--muted);padding:0 9px;font-size:1rem;line-height:1;border-left:1px solid var(--line);border-radius:0 9px 9px 0;cursor:pointer}
+.pnav .tabx:hover{color:#fff;background:var(--bad)}
+.pnav .ptab.confirm{border-color:var(--bad);align-items:center;gap:6px;padding:4px 6px 4px 11px;font-size:.72rem;color:var(--muted)}
+.pnav .ptab.confirm>span{display:flex;flex-direction:column;line-height:1.2}.pnav .ptab.confirm b{color:var(--bad)}
+.pnav .ptab.confirm button{padding:4px 9px;font-size:.75rem}
+.wrow.ed{grid-template-columns:minmax(110px,1.2fr) minmax(40px,1.6fr) 64px 24px 58px 76px}
+.wrow.ed input{width:64px;font:inherit;font-family:var(--mono);font-size:.78rem;padding:3px 5px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);text-align:right}
+.wrow .wx{border:0;background:none;color:var(--muted);padding:0;font-size:1rem;cursor:pointer}.wrow .wx:hover{color:var(--bad)}
+.ppedit{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:.8rem;color:var(--muted)}
+.ppedit select{font:inherit;font-size:.8rem;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);max-width:260px}
+@media (max-width:620px){.wrow.ed{grid-template-columns:minmax(90px,1fr) 60px 22px 54px;}.wrow.ed .wb,.wrow.ed .wg{display:none}}
 .cmpt td.n a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .pprange .seg{max-width:100%;overflow-x:auto}.pprange .seg button{white-space:nowrap;flex:none}
 .pprange{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -166,7 +181,7 @@ button.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
 <div class="wrap">
 <header>
   <div>
-    <h1>Frontier <em>Lab</em></h1>
+    <h1>MengualMar <em>Portfolio Simulation</em></h1>
     <div class="sub">Portfolio construction on 30 years of real monthly prices, through the dot-com crash and 2008: Black-Litterman, Ledoit-Wolf, downside risk, stress tests and out-of-sample backtests.</div>
   </div>
   <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
@@ -287,7 +302,7 @@ button.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
       <div class="field"><label for="mcPaths">Paths</label><select id="mcPaths"><option>1000</option><option selected>3000</option><option>10000</option></select></div>
     </div>
     <div class="chart"><canvas id="cMC" height="380"></canvas></div>
-    <div class="legend"><span><i style="background:var(--you);opacity:.3;height:9px"></i>Yours 5–95%</span><span><i style="background:var(--you);opacity:.55;height:9px"></i>Yours 25–75%</span><span><i style="background:var(--you)"></i>Yours median</span><span><i style="background:var(--accent)"></i>Max-Sharpe median</span><span><i style="background:var(--faint)"></i>Money invested</span></div>
+    <div class="legend"><span><i style="background:var(--you);opacity:.3;height:9px"></i><span class="ynm">Yours</span> 5–95%</span><span><i style="background:var(--you);opacity:.55;height:9px"></i><span class="ynm">Yours</span> 25–75%</span><span><i style="background:var(--you)"></i><span class="ynm">Yours</span> median</span><span><i style="background:var(--accent)"></i>Max-Sharpe median</span><span><i style="background:var(--faint)"></i>Money invested</span></div>
     <div class="stats" id="mcStats"></div>
     <h3>Distribution of annualized returns over the horizon</h3>
     <div class="chart"><canvas id="cHistA" height="220"></canvas></div>
@@ -326,7 +341,7 @@ button.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
   <div data-pane="stress" hidden style="display:flex;flex-direction:column;gap:14px">
     <div class="scroll"><table id="stTable" class="heat"></table></div>
     <div class="chart"><canvas id="cStress" height="300"></canvas></div>
-    <div class="legend"><span><i style="background:var(--you)"></i>Yours</span><span><i style="background:var(--accent)"></i>Max Sharpe</span><span><i style="background:var(--spx)"></i>S&amp;P 500</span></div>
+    <div class="legend"><span><i style="background:var(--you)"></i><span class="ynm">Yours</span></span><span><i style="background:var(--accent)"></i>Max Sharpe</span><span><i style="background:var(--spx)"></i>S&amp;P 500</span></div>
     <p class="note">What each portfolio would have done, with today's weights, through real market episodes. Assets not yet listed at the time are left out and the remaining weights rescaled; cells marked * covered less than 80% of the portfolio. Worst 12 months is the worst rolling 12-month return over the full 30 years. Click a scenario for its full deep dive: what happened, every asset, correlations, your portfolio and leverage.</p>
   </div>
 
@@ -456,7 +471,7 @@ button.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:6px 0 0">Drawdown: distance below the previous high</h3><button id="ppOthers" class="ghost" aria-pressed="false">Show my other portfolios</button></div>
      <div class="chart"><canvas id="ppDD" height="190"></canvas></div></section>
    <div class="ag2">
-    <section class="panel"><div class="phead"><h2>Allocation</h2><span class="kicker" id="ppAllocK"></span></div><div class="ppclass" id="ppClass"></div><div class="legend" id="ppClassLeg"></div><div class="walloc" id="ppAlloc"></div><p class="note" id="ppAllocN"></p></section>
+    <section class="panel"><div class="phead"><h2>Allocation</h2><span class="kicker" id="ppAllocK"></span></div><div class="ppclass" id="ppClass"></div><div class="legend" id="ppClassLeg"></div><div class="walloc" id="ppAlloc"></div><div class="ppedit" id="ppEdit" hidden><select id="ppAdd" aria-label="Add an asset"></select><button id="ppNorm" class="ghost">Scale to 100%</button><span id="ppSum"></span></div><p class="note" id="ppAllocN"></p></section>
     <section class="panel"><h2>Calendar years</h2><div class="scroll"><table id="ppYears" class="heat"></table></div></section>
    </div>
   </div>
@@ -516,6 +531,14 @@ const scaleW=(w,k)=>Float64Array.from(w,x=>x*k);
 const histSer=(w,src)=>{src=src||HP;return finSeries(portListed(src.R,w),w,src.rfm,FIN());};// real months, financing at each month's risk-free rate
 const fwdSer=w=>finSeries(portSeries(M.F,w,M.mu),w,null,FIN());// forward-looking months for the Monte Carlo
 const loTag=n=>LSON()?n+' · long-only':n;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// the current portfolio's name: a saved portfolio whose weights and strategy match the lab, else the last one loaded or saved (marked as edited), else "Yours"
+let CURNAME=null;
+const lsKey=ls=>[ls.short,ls.short?ls.sb:0,ls.lev,ls.lev?ls.L:0,ls.spread,ls.fee].join('|');
+function svMatch(p){if(!p||lsKey(p.ls)!==lsKey(S.ls))return false;const w=pw(S.w);for(let i=0;i<N;i++)if(Math.abs((p.w[A[i].id]||0)-w[i])>5e-4)return false;return true;}
+function YN(){if(!S.w)return 'Yours';try{const L=svCache();const m=(CURNAME&&svMatch(L.find(p=>p.id===CURNAME.id)))?L.find(p=>p.id===CURNAME.id):L.find(svMatch);if(m)return m.name;}catch(_){}
+  return CURNAME?CURNAME.name+' · edited':'Yours';}
+function updYN(){const n=YN();document.querySelectorAll('.ynm').forEach(e=>{e.textContent=n;});}
 const PC=new Map();
 function port(w){const wn=pw(w);const key=Array.from(wn,x=>x.toFixed(5)).join();if(PC.has(key))return PC.get(key);
   const fin=FIN(),ret=finRet(wn,M.mu,fin),vol=volOf(wn),ex=exposure(wn);const b=dot(wn,M.beta);const ser=finSeries(portSeries(M.F,wn),wn,H.rfm,fin);const rs=riskStats(ser,M.marM);const sdd=Math.sqrt(Math.max(0,dot(wn,matVec(M.SC,wn))));
@@ -630,10 +653,10 @@ function drawFrontier(){const cv=$('cFront');const {ctx,W,H:Hh}=setup(cv,300);co
   if(LV){const rb=S.rf+S.ls.spread,tb=LV.tb,top=scaleW(tb.w,LV.Lmax),pt=EV(top);dotC(ctx,X(0),Y(rb),4.5,css('--you'));hl.push({x:X(0),y:Y(rb),label:`Borrowing rate ${pct(rb,2)} (risk-free + ${pct(S.ls.spread,2)})`});
     dia(ctx,X(tb.vol),Y(tb.ret),8,css('--you'));hl.push({x:X(tb.vol),y:Y(tb.ret),label:`Best to lever · Sharpe vs borrowing ${((tb.ret-rb)/tb.vol).toFixed(2)} · ${pct(tb.ret)} / σ ${pct(tb.vol)}`});
     dia(ctx,X(pt.vol),Y(pt.ret),6.5,css('--you'));hl.push({x:X(pt.vol),y:Y(pt.ret),label:`Best to lever × ${LV.Lmax.toFixed(1)} · ${pct(pt.ret)} / σ ${pct(pt.vol)} · Sharpe ${((pt.ret-S.rf)/pt.vol).toFixed(2)}`});}
-  dotC(ctx,X(y.vol),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.vol),y:Y(y.ret),label:`Yours · Sharpe ${y.sharpe.toFixed(2)} · ${pct(y.ret)} / σ ${pct(y.vol)}${LSON()?` · net ${y.ex.net.toFixed(2)}×, short ${pct(y.ex.short,0)}`:''}`});tip(cv,'front');
-  $('legFront').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min variance</span><span><i class="dot" style="background:var(--c-bond)"></i>Risk parity</span><span><i class="dot" style="background:var(--fg)"></i>Max return</span><span><i style="background:var(--fg)"></i>Efficient frontier${LSON()?' (your strategy)':''}</span><span><i style="background:var(--accent)"></i>CML</span>`+(sh?`<span><i style="background:var(--muted)"></i>Long-only frontier</span>`:'')+(LV?`<span><i class="dot" style="background:var(--you)"></i>Best to lever (1× and ${LV.Lmax.toFixed(1)}×)</span><span><i style="background:var(--you)"></i>Borrowing line</span>`:'')+Object.values(CLS).map(c=>`<span><i class="dot" style="background:var(${c[1]})"></i>${c[0]}</span>`).join('');
+  dotC(ctx,X(y.vol),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.vol),y:Y(y.ret),label:`${YN()} · Sharpe ${y.sharpe.toFixed(2)} · ${pct(y.ret)} / σ ${pct(y.vol)}${LSON()?` · net ${y.ex.net.toFixed(2)}×, short ${pct(y.ex.short,0)}`:''}`});tip(cv,'front');
+  $('legFront').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>${esc(YN())}</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min variance</span><span><i class="dot" style="background:var(--c-bond)"></i>Risk parity</span><span><i class="dot" style="background:var(--fg)"></i>Max return</span><span><i style="background:var(--fg)"></i>Efficient frontier${LSON()?' (your strategy)':''}</span><span><i style="background:var(--accent)"></i>CML</span>`+(sh?`<span><i style="background:var(--muted)"></i>Long-only frontier</span>`:'')+(LV?`<span><i class="dot" style="background:var(--you)"></i>Best to lever (1× and ${LV.Lmax.toFixed(1)}×)</span><span><i style="background:var(--you)"></i>Borrowing line</span>`:'')+Object.values(CLS).map(c=>`<span><i class="dot" style="background:var(${c[1]})"></i>${c[0]}</span>`).join('');
   const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>E[R]</dt><dd>${pct(p.ret)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd><dt>Sharpe</dt><dd>${p.sharpe.toFixed(2)}</dd><dt>β</dt><dd>${p.beta.toFixed(2)}</dd><dt>VaR 95% 1y</dt><dd>${pct(p.var95)}</dd></dl></div>`;
-  $('cmpFront').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',port(t.w))+(SHON()?card('Max Sharpe · long-only','--muted',port(OL.tangency.w)):'')+(LV?card(`Best to lever × ${LV.Lmax.toFixed(1)}`,'--c-power',port(scaleW(LV.tb.w,LV.Lmax))):'')+card('Min variance','--minv',port(mv.w))+card(loTag('Risk parity'),'--c-bond',rp);}
+  $('cmpFront').innerHTML=card(esc(YN()),'--you',y)+card('Max Sharpe','--accent',port(t.w))+(SHON()?card('Max Sharpe · long-only','--muted',port(OL.tangency.w)):'')+(LV?card(`Best to lever × ${LV.Lmax.toFixed(1)}`,'--c-power',port(scaleW(LV.tb.w,LV.Lmax))):'')+card('Min variance','--minv',port(mv.w))+card(loTag('Risk parity'),'--c-bond',rp);}
 
 // click on the frontier chart: the nearest marked portfolio (12 px) or frontier point (10 px) > a random portfolio (3 px) > the frontier portfolio at the clicked volatility
 let FRX=null;
@@ -651,7 +674,7 @@ function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(
   const card=(n,col,p)=>`<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><div class="big">${p.sortino.toFixed(2)}<small>Sortino</small></div><dl>
     <dt>Downside dev.</dt><dd>${pct(p.rs.dd)}</dd><dt>Downside β</dt><dd>${p.dbeta.toFixed(2)}</dd><dt>VaR 95% (1m)</dt><dd class="down">${pct(-p.rs.var95)}</dd><dt>CVaR 95% (1m)</dt><dd class="down">${pct(-p.rs.cvar95)}</dd>
     <dt>Max drawdown</dt><dd class="down">${pct(-p.rs.mdd)}</dd><dt>Longest underwater</dt><dd>${p.rs.maxUw} mo</dd><dt>Calmar</dt><dd>${isFinite(p.rs.calmar)?p.rs.calmar.toFixed(2):'—'}</dd><dt>Omega</dt><dd>${isFinite(p.rs.omega)?p.rs.omega.toFixed(2):'∞'}</dd><dt>Losing months</dt><dd>${pct(p.rs.pctNeg,0)}</dd></dl></div>`;
-  $('cmpDown').innerHTML=card('Yours','--you',y)+card(loTag('Max Sortino'),'--c-crypto',so)+card('Max Sharpe','--accent',t)+card(loTag('Min downside'),'--minv',md);
+  $('cmpDown').innerHTML=card(esc(YN()),'--you',y)+card(loTag('Max Sortino'),'--c-crypto',so)+card('Max Sharpe','--accent',t)+card(loTag('Min downside'),'--minv',md);
   const cv=$('cDown');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const ddA=M.risk.map(r=>r.dd);
   const xs=[...ddA,y.sdd,so.sdd],ys=[...M.mu,S.mar,y.ret];const xd=[0,Math.max(...xs)*1.05],yd=[Math.min(0,...ys)-.01,Math.max(...ys)*1.06];
   const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>pct(v,0),v=>pct(v,0),'Downside deviation below MAR (annual)','Expected return');const hl=HITS.down=[];
@@ -659,8 +682,8 @@ function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(
   A.forEach((a,i)=>{const x=X(ddA[i]),yy=Y(M.mu[i]);ctx.globalAlpha=S.active[i]?1:.3;dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);ctx.globalAlpha=1;hl.push({x,y:yy,label:`${a.name} · E[R] ${pct(M.mu[i])} · downside ${pct(ddA[i])} (σ ${pct(M.sd[i])})`});});
   dotC(ctx,X(0),Y(S.mar),5,css('--c-crypto'));
   const pt=(p,col,n,kind)=>{const x=X(p.rs.dd),yy=Y(p.ret);kind?dotC(ctx,x,yy,7.5,css(col),css('--panel')):dia(ctx,x,yy,8.5,css(col));hl.push({x,y:yy,label:`${n} · Sortino ${p.sortino.toFixed(2)} · ${pct(p.ret)} / downside ${pct(p.rs.dd)}`});};
-  pt(md,'--minv','Min downside');pt(t,'--accent','Max Sharpe');pt(so,'--c-crypto','Max Sortino');pt(y,'--you','Yours',1);tip(cv,'down');
-  $('legDown').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>Yours</span><span><i class="dot" style="background:var(--c-crypto)"></i>Max Sortino</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min downside</span><span><i style="background:var(--c-crypto)"></i>From MAR through max Sortino</span>`;
+  pt(md,'--minv','Min downside');pt(t,'--accent','Max Sharpe');pt(so,'--c-crypto','Max Sortino');pt(y,'--you',YN(),1);tip(cv,'down');
+  $('legDown').innerHTML=`<span><i class="dot" style="background:var(--you)"></i>${esc(YN())}</span><span><i class="dot" style="background:var(--c-crypto)"></i>Max Sortino</span><span><i class="dot" style="background:var(--accent)"></i>Max Sharpe</span><span><i class="dot" style="background:var(--minv)"></i>Min downside</span><span><i style="background:var(--c-crypto)"></i>From MAR through max Sortino</span>`;
   const rows=A.map((a,i)=>({a,i,so:(M.mu[i]-S.mar)/M.risk[i].dd})).sort((p,q)=>q.so-p.so);
   $('dTable').innerHTML=`<thead><tr><th>Asset</th><th>Sortino</th><th>Downside dev.</th><th>σ</th><th>Downside β</th><th>β</th><th>VaR 95% 1m</th><th>CVaR 95% 1m</th><th>Worst month</th><th>Max DD</th><th>Losing months</th><th>Omega</th></tr></thead><tbody>`+
     rows.map(r=>{const k=M.risk[r.i];return `<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span><span class="asset-link" data-asset="${r.a.id}" tabindex="0">${r.a.name}</span></td><td>${r.so.toFixed(2)}</td><td>${pct(k.dd)}</td><td>${pct(M.sd[r.i])}</td><td>${M.dbeta[r.i].toFixed(2)}</td><td>${M.beta[r.i].toFixed(2)}</td><td class="down">${pct(-k.var95)}</td><td class="down">${pct(-k.cvar95)}</td><td class="down">${pct(k.worst)}</td><td class="down">${pct(-k.mdd,0)}</td><td>${pct(k.pctNeg,0)}</td><td>${isFinite(k.omega)?k.omega.toFixed(2):'∞'}</td></tr>`;}).join('')+'</tbody>';}
@@ -669,13 +692,13 @@ function drawDown(){$('marL').textContent=pct(S.mar,2);const y=port(S.w),t=port(
 function drawRB(){const y=port(S.w);const rc=riskContrib(y.w,M.S);const rp=port(RP),t=port(O.tangency.w);
   const top=(p,rcx)=>{const i=rcx.indexOf(Math.max(...rcx));return `${A[i].name} ${pct(rcx[i],0)}`;};
   const card=(n,col,p)=>{const r=riskContrib(p.w,M.S);const s3=[...r].sort((a,b)=>b-a).slice(0,3).reduce((a,b)=>a+b,0);return `<div class="cc"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><dl><dt>Diversification ratio</dt><dd>${p.divRatio.toFixed(2)}</dd><dt>Top-3 risk share</dt><dd>${pct(s3,0)}</dd><dt>Largest risk</dt><dd>${top(p,r)}</dd><dt>σ</dt><dd>${pct(p.vol)}</dd></dl></div>`;};
-  $('rbCards').innerHTML=card('Yours','--you',y)+card('Max Sharpe','--accent',t)+card(loTag('Risk parity'),'--c-bond',rp);
+  $('rbCards').innerHTML=card(esc(YN()),'--you',y)+card('Max Sharpe','--accent',t)+card(loTag('Risk parity'),'--c-bond',rp);
   const rows=A.map((a,i)=>({a,i,w:y.w[i],r:rc[i]})).filter(r=>Math.abs(r.w)>.0005||Math.abs(r.r)>.0005).sort((p,q)=>q.r-p.r);const mx=Math.max(...rows.map(r=>Math.max(Math.abs(r.w),Math.abs(r.r))),.01);
   $('rbList').innerHTML=`<span class="h">Asset</span><span class="h"></span><span class="h num">Weight</span><span class="h num">Risk</span>`+rows.map(r=>`<span class="nm" style="font-weight:500"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span>${r.a.name}</span><span class="bars"><i style="width:${Math.abs(r.w)/mx*100}%;background:var(${r.w<0?'--bad':'--faint'})"></i><i style="width:${Math.abs(r.r)/mx*100}%;background:var(${r.r<0?'--good':'--you'})"></i></span><span class="num ${r.w<0?'down':''}">${pct(r.w)}</span><span class="num ${Math.abs(r.r)>Math.abs(r.w)*1.25&&r.r>0?'down':r.r<Math.abs(r.w)*.75?'up':''}">${pct(r.r)}</span>`).join('')||'<span class="note">Add some weights on the left.</span>';}
 
 /* ---------- Stress tests ---------- */
 const SCEN=[['1998 LTCM & Russia crisis','1998-07','1998-09','1998'],['Dot-com crash','2000-04','2002-09','dotcom'],['2008 financial crisis','2007-11','2009-02','2008'],['2011 euro debt crisis','2011-05','2011-09','2011'],['2015–16 China & oil rout','2015-06','2016-02','2015'],['Q4 2018 sell-off','2018-10','2018-12','2018'],['COVID crash','2020-02','2020-03','covid'],['2022 bear market','2022-01','2022-09','2022'],['Mar 2023 bank stress','2023-03','2023-03','2023'],['2025 tariff shock','2025-02','2025-04','2025']];
-function drawStress(){const P=[['Yours','--you',pw(S.w)],['Max Sharpe','--accent',O.tangency.w],...(SHON()?[['Max Sharpe · long-only','--muted',OL.tangency.w]]:[]),[loTag('Max Sortino'),'--c-crypto',D.tangency.w],['Min variance','--minv',O.minvar.w],[loTag('Risk parity'),'--c-bond',RP]];
+function drawStress(){const P=[[YN(),'--you',pw(S.w)],['Max Sharpe','--accent',O.tangency.w],...(SHON()?[['Max Sharpe · long-only','--muted',OL.tangency.w]]:[]),[loTag('Max Sortino'),'--c-crypto',D.tangency.w],['Min variance','--minv',O.minvar.w],[loTag('Risk parity'),'--c-bond',RP]];
   const ser=P.map(p=>histSer(p[2],HF));const spy=HF.mkt;const mi=m=>HF.months.indexOf(m);
   const cum=(s,a,b)=>{let g=1;for(let t=a;t<=b;t++)g*=1+Math.max(-1,s[t]);return g-1;};const cov=(s,a,b)=>{let c=1;for(let t=a;t<=b;t++)c=Math.min(c,s.coverage[t]);return c;};
   const cell=(v,c)=>{const t=Math.min(1,Math.abs(v)/.35);const bg=v<0?`color-mix(in srgb, var(--bad) ${Math.round(t*45)}%, transparent)`:`color-mix(in srgb, var(--good) ${Math.round(t*45)}%, transparent)`;return `<td style="background:${bg}">${sp(v)}${c<.8?'*':''}</td>`;};
@@ -686,7 +709,7 @@ function drawStress(){const P=[['Yours','--you',pw(S.w)],['Max Sharpe','--accent
   h+=`<tr><td class="n">Worst 12 months (${HF.months[0].slice(0,4)}–2026)</td><td>rolling</td>${ser.map(s=>cell(worst12(s),1)).join('')}${cell(worst12(spy),1)}</tr></tbody>`;$('stTable').innerHTML=h;
   const cv=$('cStress');const {ctx,W,H:Hh}=setup(cv,220);const pad={l:52,r:14,t:12,b:44};const all=res.flatMap(r=>[r.y,r.t,r.m]);const yd=[Math.min(0,...all)*1.1,Math.max(.02,...all)*1.1];
   const {Y}=axes(ctx,W,Hh,pad,[0,1],yd,()=>'',v=>pct(v,0),'','',[]);const gw=(W-pad.l-pad.r)/res.length,bw=Math.min(22,gw/4);HITS.stress=[];
-  res.forEach((r,k)=>{const cx=pad.l+gw*(k+.5);[[r.y,'--you','Yours'],[r.t,'--accent','Max Sharpe'],[r.m,'--spx','S&P 500']].forEach(([v,c,n],j)=>{const x=cx+(j-1.5)*bw;ctx.fillStyle=css(c);const y0=Y(0),y1=Y(v);ctx.fillRect(x,Math.min(y0,y1),bw-2,Math.abs(y1-y0));HITS.stress.push({x:x+bw/2,y:y1,label:`${r.n} · ${n}: ${sp(v)}`});});
+  res.forEach((r,k)=>{const cx=pad.l+gw*(k+.5);[[r.y,'--you',YN()],[r.t,'--accent','Max Sharpe'],[r.m,'--spx','S&P 500']].forEach(([v,c,n],j)=>{const x=cx+(j-1.5)*bw;ctx.fillStyle=css(c);const y0=Y(0),y1=Y(v);ctx.fillRect(x,Math.min(y0,y1),bw-2,Math.abs(y1-y0));HITS.stress.push({x:x+bw/2,y:y1,label:`${r.n} · ${n}: ${sp(v)}`});});
     ctx.fillStyle=css('--muted');ctx.font='10px "IBM Plex Sans",sans-serif';ctx.textAlign='center';ctx.textBaseline='top';const words=r.n.split(' ');ctx.fillText(words.slice(0,2).join(' '),cx,Hh-pad.b+6);ctx.fillText(words.slice(2).join(' '),cx,Hh-pad.b+19);});
   line(ctx,[[pad.l,Y(0)],[W-pad.r,Y(0)]],css('--faint'),1);tip(cv,'stress');}
 
@@ -695,19 +718,19 @@ let btMode='in';
 function drawSeries(sets,dates,note){const T=dates.length-1;const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(T>100?2:1)===0)xt.push(i);});const yr=i=>dates[i].slice(0,4);
   const cv=$('cBT');const {ctx,W,H:Hh}=setup(cv,260);const pad={l:52,r:18,t:14,b:34};const all=sets.flatMap(s=>s.b.v).map(v=>Math.max(v,.01));const lg=v=>Math.log(Math.max(v,.01));
   const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lg(Math.min(...all)*.95),lg(Math.max(...all)*1.05)],i=>yr(i),v=>{const x=Math.exp(v);return (x>=10?x.toFixed(0):x.toFixed(1))+'×';},'','Growth of $1 (log scale)',xt);
-  HITS.bt=[];sets.slice().reverse().forEach(s=>{line(ctx,s.b.v.map((v,i)=>[X(i),Y(lg(v))]),css(s.c),s.n.startsWith('Yours')?3:1.7);s.b.v.forEach((v,i)=>{if(i%4===0||i===T)HITS.bt.push({x:X(i),y:Y(lg(v)),label:`${s.n} · ${dates[i]} · ${v.toFixed(2)}×`});});});tip(cv,'bt');
+  HITS.bt=[];sets.slice().reverse().forEach(s=>{line(ctx,s.b.v.map((v,i)=>[X(i),Y(lg(v))]),css(s.c),s.n.startsWith(YN())?3:1.7);s.b.v.forEach((v,i)=>{if(i%4===0||i===T)HITS.bt.push({x:X(i),y:Y(lg(v)),label:`${s.n} · ${dates[i]} · ${v.toFixed(2)}×`});});});tip(cv,'bt');
   $('legBT').innerHTML=sets.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}${s.b.ruin>=0?` <b class="down">· wiped out ${dates[s.b.ruin+1]}</b>`:''}</span>`).join('');
   const dv=$('cDD');const g=setup(dv,130);const pd={l:52,r:18,t:8,b:24};const mn=Math.min(...sets.flatMap(s=>s.b.ddS));const ax=axes(g.ctx,g.W,g.H,pd,[0,T],[mn*1.05,0],i=>yr(i),v=>pct(v,0),'','Drawdown',xt);
-  sets.slice().reverse().forEach(s=>line(g.ctx,s.b.ddS.map((v,i)=>[ax.X(i),ax.Y(v)]),css(s.c),s.n.startsWith('Yours')?2.2:1.1));
+  sets.slice().reverse().forEach(s=>line(g.ctx,s.b.ddS.map((v,i)=>[ax.X(i),ax.Y(v)]),css(s.c),s.n.startsWith(YN())?2.2:1.1));
   $('btTable').innerHTML=`<thead><tr><th>Portfolio</th><th>Total</th><th>CAGR</th><th>Volatility</th><th>Sharpe</th><th>Max drawdown</th><th>Best month</th><th>Worst month</th>${sets[0].turn!=null?'<th>Turnover / yr</th>':''}</tr></thead><tbody>`+
     sets.map(s=>`<tr><td class="n"><span class="dot" style="background:var(${s.c})"></span>${s.n}</td><td>${sp(s.b.v[T]-1,0)}</td><td>${pct(s.b.cagr)}</td><td>${pct(s.b.vol)}</td><td>${((s.b.cagr-S.rf)/s.b.vol).toFixed(2)}</td><td class="down">${pct(-s.b.maxDD)}</td><td>${sp(s.b.best)}</td><td>${sp(s.b.worst)}</td>${s.turn!=null?`<td>${s.turn==='—'?'—':pct(s.turn,0)}</td>`:''}</tr>`).join('')+'</tbody>';
   $('btNote').innerHTML=note;}
 function drawBT(){$('btIn').setAttribute('aria-pressed',btMode==='in');$('btOut').setAttribute('aria-pressed',btMode==='out');
-  if(btMode==='in'){$('wfProg').hidden=true;const P=[['Yours','--you',pw(S.w)],['Max Sharpe','--accent',O.tangency.w],...(SHON()?[['Max Sharpe · long-only','--muted',OL.tangency.w]]:[]),['Min variance','--minv',O.minvar.w],[loTag('Risk parity'),'--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]];
+  if(btMode==='in'){$('wfProg').hidden=true;const P=[[YN(),'--you',pw(S.w)],['Max Sharpe','--accent',O.tangency.w],...(SHON()?[['Max Sharpe · long-only','--muted',OL.tangency.w]]:[]),['Min variance','--minv',O.minvar.w],[loTag('Risk parity'),'--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]];
     const sets=P.map(p=>({n:p[0],c:p[1],b:growth(histSer(p[2]))}));sets.push({n:'S&P 500',c:'--spx',b:growth(HP.mkt)});
     $('btKick').textContent=`${HP.months[0]} → ${HP.months[HP.T-1]}, today's weights, rebalanced monthly`+(LSON()?', financing and short fees charged monthly':'');
     drawSeries(sets,[prevMonth(HP.months[0]),...HP.months],'In-sample: the optimized weights were chosen using this same history, so their lines flatter them. Use <b>Walk-forward</b> for an honest test. Assets enter when they list. All backtests here also carry selection bias: these 43 assets were chosen in 2026, partly because they did well.');}
-  else{if(!WF){runWF();return;}drawSeries(WF.sets,WF.dates,`Out-of-sample: every quarter from ${WF.dates[0]}, each strategy is re-estimated on the previous 5 years only (assets need 3 years of history to qualify), then held for 3 months on returns it had not seen. Expected returns for the rolling max-Sharpe use the history–CAPM blend at your confidence (${pct(S.trust,0)}), since your views are about today. <b>Yours</b> is your current weights held throughout, so it still looks ahead. Selection bias remains: the 43 assets were picked in 2026, so every strategy here benefits from knowing which companies became winners.`);$('btKick').textContent=`Rebalanced quarterly · ${WF.n} re-estimations`;}}
+  else{if(!WF){runWF();return;}drawSeries(WF.sets,WF.dates,`Out-of-sample: every quarter from ${WF.dates[0]}, each strategy is re-estimated on the previous 5 years only (assets need 3 years of history to qualify), then held for 3 months on returns it had not seen. Expected returns for the rolling max-Sharpe use the history–CAPM blend at your confidence (${pct(S.trust,0)}), since your views are about today. <b>${esc(YN())}</b> is your current weights held throughout, so it still looks ahead. Selection bias remains: the 43 assets were picked in 2026, so every strategy here benefits from knowing which companies became winners.`);$('btKick').textContent=`Rebalanced quarterly · ${WF.n} re-estimations`;}}
 function prevMonth(m){let [y,mm]=m.split('-').map(Number);mm--;if(!mm){mm=12;y--;}return y+'-'+String(mm).padStart(2,'0');}
 function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;t+=step)t0s.push(t);const W={tan:[],mv:[],rp:[],ew:[]};const ret={tan:[],mv:[],rp:[],ew:[]};const turn={tan:0,mv:0,rp:0,ew:0};let prev=null;
   $('wfProg').hidden=false;const bar=$('wfProg').firstElementChild;let k=0;$('btKick').textContent='Running walk-forward…';
@@ -716,7 +739,7 @@ function runWF(){const win=60,step=3,o=opts();const t0s=[];for(let t=win;t<HF.T;
     prev=r;k++;bar.style.width=(k/t0s.length*100)+'%';if(k<t0s.length)setTimeout(work,0);else done();};
   const done=()=>{$('wfProg').hidden=true;const a=t0s[0];const yrs=(HF.T-a)/12;const mk=(n,c,s)=>({n,c,b:growth(ret[s]),turn:turn[s]/yrs});
     const yours=histSer(pw(S.w),HF).slice(a);const spy=HF.mkt.slice(a);const lo=LSON()?', long-only':'';
-    WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:'Yours (static)',c:'--you',b:growth(yours),turn:'—'},mk(`Max Sharpe (rolling${lo})`,'--accent','tan'),mk(`Min variance (rolling${lo})`,'--minv','mv'),mk(`Risk parity (rolling${lo})`,'--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
+    WF={n:t0s.length,dates:[HF.months[a-1],...HF.months.slice(a)],sets:[{n:`${YN()} (static)`,c:'--you',b:growth(yours),turn:'—'},mk(`Max Sharpe (rolling${lo})`,'--accent','tan'),mk(`Min variance (rolling${lo})`,'--minv','mv'),mk(`Risk parity (rolling${lo})`,'--c-bond','rp'),mk('Equal weight','--c-def','ew'),{n:'S&P 500',c:'--spx',b:growth(spy),turn:'—'}]};
     if(btMode==='out')drawBT();};setTimeout(work,20);}
 
 /* ---------- Compare ---------- */
@@ -724,7 +747,7 @@ function irrAnnual(start,monthly,T,F){const fv=i=>i===0?start+monthly*T:start*Ma
 function yearStats(series,months){months=months||HP.months;const by={};series.forEach((r,t)=>{const y=months[t].slice(0,4);(by[y]=by[y]||[]).push(Math.max(-1,r));});let worst=null,best=null;
   for(const y in by){if(by[y].length<6)continue;const g=by[y].reduce((v,r)=>v*(1+r),1)-1;const lab=by[y].length<12?y+' YTD':y;if(!worst||g<worst.v)worst={v:g,y:lab};if(!best||g>best.v)best={v:g,y:lab};}return {worst,best};}
 function drawCompare(){const io=mcOpts();const irrR=mc=>{const i=irrAnnual(+$('mcStart').value||0,+$('mcMonthly').value||0,mc.T,mc.bands[2][mc.T]*(mc.real?mc.deflT:1));return mc.real?(1+i)/(1+mc.infl)-1:i;};const yrs=Math.min(40,Math.max(1,+$('mcYears').value||10)),st=Math.max(0,+$('mcStart').value||0),mo=Math.max(0,+$('mcMonthly').value||0),meth=$('mcMethod').value;
-  const L=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w]];if(SHON())L.push(['Max Sharpe · long-only','--faint',OL.tangency.w]);if(LV)L.push([`Best to lever × ${LV.Lmax.toFixed(1)}`,'--c-power',scaleW(LV.tb.w,LV.Lmax)]);
+  const L=[[YN(),'--you',S.w],['Max Sharpe','--accent',O.tangency.w]];if(SHON())L.push(['Max Sharpe · long-only','--faint',OL.tangency.w]);if(LV)L.push([`Best to lever × ${LV.Lmax.toFixed(1)}`,'--c-power',scaleW(LV.tb.w,LV.Lmax)]);
   L.push(['Min variance','--minv',O.minvar.w],[loTag('Max Sortino'),'--c-crypto',D.tangency.w],[loTag('Min downside'),'--muted',D.minvar.w],[loTag('Risk parity'),'--c-bond',RP]);
   if(RES)L.push([loTag('Resampled'),'--c-tech',RES]);L.push(['Equal weight','--c-def',A.map(()=>1/N)],['Cap-weighted','--c-fin',capW()]);
   const rows=L.map(([n,c,w])=>{const p=port(w);const mc=monteCarlo({method:meth,series:fwdSer(p.w),mu:p.ret,vol:p.vol,years:yrs,paths:2000,start:st,monthly:mo,seed:42,...io});const hs=histSer(p.w);const g=growth(hs);const ys=yearStats(hs);
@@ -738,11 +761,11 @@ function drawCompare(){const io=mcOpts();const irrR=mc=>{const i=irrAnnual(+$('m
   const cls=(k,x)=>{const e=ext[k];if(!e)return '';const v=e.val?e.val(x):x;const best=e.dir>0?e.hi:e.lo,worst=e.dir>0?e.lo:e.hi;return Math.abs(v-best)<1e-9?'b':Math.abs(v-worst)<1e-9?'w':'';};
   const grp=k=>k<5?'cg1':k<9?'cg2':'cg3';
   $('cmpTable').innerHTML=`<thead><tr><th>Portfolio</th>${C.map((c,k)=>`<th class="${grp(k)}">${c[1]}</th>`).join('')}</tr></thead><tbody>`+
-    rows.map(r=>`<tr class="${r.n==='Yours'?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.n}</td>${C.map(([k,,f])=>`<td class="${cls(k,r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('')+'</tbody>';
+    rows.map(r=>`<tr class="${r.n===YN()?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.n}</td>${C.map(([k,,f])=>`<td class="${cls(k,r[k])}">${f(r[k])}</td>`).join('')}</tr>`).join('')+'</tbody>';
   $('cmpKick').innerHTML=`<span class="gtag cg1">Expected · model</span> <span class="gtag cg2">Future · Monte Carlo, ${eur(st)} + ${eur(mo)}/mo for ${yrs}y${io.real?`, today's € (inflation ${pct(io.infl)})`:', nominal €'}</span> <span class="gtag cg3">Past · ${HP.months[0].slice(0,4)}–2026 real data</span>`;}
 /* ---------- Alpha ---------- */
 function sigTxt(t){const a=Math.abs(t);return a>=2.58?'significant at 99%':a>=1.96?'significant at 95%':a>=1.65?'weak (90%)':'not significant';}
-function drawAlpha(){const P=[['Yours','--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]].map(([n,c,w])=>({n,c,p:port(w)}));
+function drawAlpha(){const P=[[YN(),'--you',S.w],['Max Sharpe','--accent',O.tangency.w],['Max Sortino','--c-crypto',D.tangency.w],['Risk parity','--c-bond',RP],['Equal weight','--c-def',A.map(()=>1/N)]].map(([n,c,w])=>({n,c,p:port(w)}));
   $('alphaKick').textContent=`Realized vs S&P 500 · ${HP.months[0]} → ${HP.months[HP.T-1]} · ${HP.T} months`;
   $('alphaCards').innerHTML=P.map(({n,c,p})=>{const r=p.ra;return `<div class="cc"><div class="t"><span class="dot" style="background:var(${c})"></span>${n}</div><div class="big ${r.alpha>=0?'up':'down'}">${sp(r.alpha)}<small>alpha / yr</small></div><dl>
     <dt>t-statistic</dt><dd>${r.t.toFixed(2)}</dd><dt>Verdict</dt><dd>${sigTxt(r.t)}</dd><dt>Realized β</dt><dd>${r.beta.toFixed(2)}</dd><dt>R²</dt><dd>${pct(r.r2,0)}</dd>
@@ -751,14 +774,14 @@ function drawAlpha(){const P=[['Yours','--you',S.w],['Max Sharpe','--accent',O.t
   const xt=[];dates.forEach((d,i)=>{if(d.endsWith('-01')&&(+d.slice(0,4))%(T>100?2:1)===0)xt.push(i);});
   const all=P.flatMap(x=>x.p.ra.cum);const lg=Math.log;const {X,Y}=axes(ctx,W,Hh,pad,[0,T],[lg(Math.min(1,...all)*.95),lg(Math.max(...all)*1.05)],i=>dates[i].slice(0,4),v=>sp(Math.exp(v)-1,0),'','Cumulative alpha',xt);
   line(ctx,[[X(0),Y(0)],[X(T),Y(0)]],css('--faint'),1,[3,3]);HITS.alpha=[];
-  P.slice().reverse().forEach(({n,c,p})=>{line(ctx,p.ra.cum.map((v,i)=>[X(i),Y(lg(v))]),css(c),n==='Yours'?3:1.6);p.ra.cum.forEach((v,i)=>{if(i%4===0||i===T)HITS.alpha.push({x:X(i),y:Y(lg(v)),label:`${n} · ${dates[i]} · cumulative alpha ${sp(v-1,0)}`});});});tip(cv,'alpha');
+  P.slice().reverse().forEach(({n,c,p})=>{line(ctx,p.ra.cum.map((v,i)=>[X(i),Y(lg(v))]),css(c),n===YN()?3:1.6);p.ra.cum.forEach((v,i)=>{if(i%4===0||i===T)HITS.alpha.push({x:X(i),y:Y(lg(v)),label:`${n} · ${dates[i]} · cumulative alpha ${sp(v-1,0)}`});});});tip(cv,'alpha');
   $('legAlpha').innerHTML=P.map(x=>`<span><i style="background:var(${x.c})"></i>${x.n}</span>`).join('');}
 /* ---------- CAPM ---------- */
 function drawSML(){drawAlpha();const cv=$('cSML');const {ctx,W,H:Hh}=setup(cv,300);const pad={l:56,r:18,t:14,b:40};const b=M.beta,mu=M.mu;const xd=[Math.min(-.2,...b)-.05,Math.max(...b)*1.06],yd=[Math.min(0,...mu)-.01,Math.max(...mu,S.rf+xd[1]*S.erp)*1.06];
   const {X,Y}=axes(ctx,W,Hh,pad,xd,yd,v=>v.toFixed(1),v=>pct(v,0),'Beta vs S&P 500','Expected return');line(ctx,[[X(xd[0]),Y(S.rf+xd[0]*S.erp)],[X(xd[1]),Y(S.rf+xd[1]*S.erp)]],css('--fg'),2);const hl=HITS.sml=[];
   A.forEach((a,i)=>{const x=X(b[i]),yy=Y(mu[i]),req=S.rf+b[i]*S.erp;line(ctx,[[x,yy],[x,Y(req)]],mu[i]>=req?css('--good'):css('--bad'),1,[2,2]);dotC(ctx,x,yy,4.5,css(CLS[a.cls][1]));label(ctx,a.id,x,yy);hl.push({x,y:yy,label:`${a.name} · β ${b[i].toFixed(2)} · α ${sp(mu[i]-req)}`});});
   dotC(ctx,X(1),Y(S.rf+S.erp),5,css('--spx'));[[O.minvar.w,'--minv','Min variance'],[O.tangency.w,'--accent','Max Sharpe']].forEach(([w,c,n])=>{const p=port(w);dia(ctx,X(p.beta),Y(p.ret),8,css(c));hl.push({x:X(p.beta),y:Y(p.ret),label:`${n} · β ${p.beta.toFixed(2)} · α ${sp(p.alpha)}`});});
-  const y=port(S.w);dotC(ctx,X(y.beta),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.beta),y:Y(y.ret),label:`Yours · β ${y.beta.toFixed(2)} · α ${sp(y.alpha)}`});tip(cv,'sml');
+  const y=port(S.w);dotC(ctx,X(y.beta),Y(y.ret),7.5,css('--you'),css('--panel'));hl.push({x:X(y.beta),y:Y(y.ret),label:`${YN()} · β ${y.beta.toFixed(2)} · α ${sp(y.alpha)}`});tip(cv,'sml');
   const rows=A.map((a,i)=>({a,i,req:S.rf+b[i]*S.erp})).sort((p,q)=>(mu[q.i]-q.req)-(mu[p.i]-p.req));
   $('alphaTable').innerHTML=`<thead><tr><th>Asset</th><th>β</th><th>CAPM required</th><th>E[R] in use</th><th>Jensen α</th><th>Treynor</th><th>Hist. CAGR</th></tr></thead><tbody>`+rows.map(r=>`<tr><td class="n"><span class="dot" style="background:var(${CLS[r.a.cls][1]})"></span><span class="asset-link" data-asset="${r.a.id}" tabindex="0">${r.a.name}</span></td><td>${b[r.i].toFixed(2)}</td><td>${pct(r.req)}</td><td>${pct(mu[r.i])}</td><td class="${mu[r.i]>=r.req?'up':'down'}">${sp(mu[r.i]-r.req)}</td><td>${Math.abs(b[r.i])>.05?pct((mu[r.i]-S.rf)/b[r.i]):'—'}</td><td>${pct(M.cagr[r.i])}</td></tr>`).join('')+'</tbody>';}
 
@@ -1039,7 +1062,7 @@ function crBuild(c){const H0=crSrc(),mo=H0.months,ix=m=>mo.indexOf(m);const s0=i
   return {H0,mo,ix,s0,s1,T,E,dates,dv,pk,tr,cum,an,port2,pser,trades};}
 function renderCrisis(){if(!M)return;const c=crCfg(),C=crBuild(c),{H0,ix,dates,dv,pk,tr,T,an,port2,s0,mo}=C;const cur=CR.usd?'US dollars':CURL[S.cur];
   $('cpNav').innerHTML=CRISES.map(x=>`<a href="#crisis-${x.slug}" class="${x.id===c.id?'on':''}" ${x.id===c.id?'aria-current="page"':''}><b>${x.year}</b><span>${x.name}</span></a>`).join('');
-  {const nv=$('cpNav'),on=nv.querySelector('.on');if(on)nv.scrollLeft=on.offsetLeft-nv.offsetLeft-nv.clientWidth/2+on.clientWidth/2;}$('cpTitle').innerHTML=c.title;{const D=c.daily?crDaily(c.daily):null;$('cpSub').innerHTML=`${c.sub} ${D?`The main chart follows every trading day from ${D.lab[0]} to ${D.lab[D.lab.length-1]}; the other figures use real monthly returns with dividends.`:'All figures use real month-end returns with dividends.'} Your portfolio is analysed with today's weights and strategy.`;}document.title=`${c.year} ${c.name} · Frontier Lab`;$('cpVT').textContent=`Leverage in ${c.short}`;
+  {const nv=$('cpNav'),on=nv.querySelector('.on');if(on)nv.scrollLeft=on.offsetLeft-nv.offsetLeft-nv.clientWidth/2+on.clientWidth/2;}$('cpTitle').innerHTML=c.title;{const D=c.daily?crDaily(c.daily):null;$('cpSub').innerHTML=`${c.sub} ${D?`The main chart follows every trading day from ${D.lab[0]} to ${D.lab[D.lab.length-1]}; the other figures use real monthly returns with dividends.`:'All figures use real month-end returns with dividends.'} Your portfolio is analysed with today's weights and strategy.`;}document.title=`${c.year} ${c.name} · MengualMar Portfolio Simulation`;$('cpVT').textContent=`Leverage in ${c.short}`;
   $('cpBase').setAttribute('aria-pressed',!CR.usd);$('cpUsd').setAttribute('aria-pressed',CR.usd);$('cpBase').textContent=`Your currency (${S.cur==='usd'?'USD':'EUR'})`;
   const iU=A.findIndex(a=>a.id==='UST'),iG=A.findIndex(a=>a.id==='GOLD');const goldOk=C.trades(H0.R[iG]);
   const spx=an(H0.mkt),ust=an(H0.R[iU]),gold=goldOk?an(H0.R[iG]):null,you=port2(pw(S.w)),ms=port2(O.tangency.w);
@@ -1059,7 +1082,7 @@ function renderCrisis(){if(!M)return;const c=crCfg(),C=crBuild(c),{H0,ix,dates,d
    const T2=D.iso.length-1;let p2=0;const ePk=D.iso.findIndex(d=>d.slice(0,7)>c.pkTo);const pkEnd=ePk<0?T2:ePk;for(let q=0;q<pkEnd;q++)if(dS.v[q]>dS.v[p2])p2=q;let t2=p2;const eTr=D.iso.findIndex(d=>d.slice(0,7)>c.trTo);for(let q=p2;q<=(eTr<0?T2:eTr-1);q++)if(dS.v[q]<dS.v[t2])t2=q;
    const at=d=>{const q=D.iso.findIndex(x=>x>=d);return q<0?-1:q;};
    const ev=c.events.map(([m,t0,d,day],q)=>({i:day<D.iso[0]||day>D.iso[T2]?-1:at(day),t:t0,d,n:q+1})).filter(e=>e.i>0&&e.i<T2);
-   const sets=[{n:'S&P 500',c:'--spx',v:dS.v,w:2},{n:'US Treasuries',c:'--c-bond',v:dU.v,w:1.5},...(H0.R[iG][b0+1]!=null?[{n:'Gold',c:'--c-cmdty',v:dG.v,w:1.5}]:[]),{n:'Max Sharpe',c:'--accent',v:dM.v,w:1.6},{n:'Yours',c:'--you',v:dY.v,w:2.4}].map(x=>({...x,v:Array.from(x.v),dd:crDD(x.v)}));
+   const sets=[{n:'S&P 500',c:'--spx',v:dS.v,w:2},{n:'US Treasuries',c:'--c-bond',v:dU.v,w:1.5},...(H0.R[iG][b0+1]!=null?[{n:'Gold',c:'--c-cmdty',v:dG.v,w:1.5}]:[]),{n:'Max Sharpe',c:'--accent',v:dM.v,w:1.6},{n:YN(),c:'--you',v:dY.v,w:2.4}].map(x=>({...x,v:Array.from(x.v),dd:crDD(x.v)}));
    const long=D.iso.length>300;const qm=W=>long?(W<560?['01','07']:['01','04','07','10']):(W<560?['01','03','05','07','09','11']:null);
    const xt=W=>{const q=[],keep=qm(W);D.iso.forEach((d,k2)=>{if(k2&&d.slice(5,7)!==D.iso[k2-1].slice(5,7)&&(!keep||keep.includes(d.slice(5,7))))q.push(k2);});return q;};
    const xf=k2=>{const d=D.iso[k2];return `${MON[+d.slice(5,7)-1]} ${d.slice(2,4)}`;};
@@ -1080,7 +1103,7 @@ function renderCrisis(){if(!M)return;const c=crCfg(),C=crBuild(c),{H0,ix,dates,d
   else{const m0=ix(c.main[0]),m1=ix(c.main[1]),L=m1-m0;const md=[c.main[0],...mo.slice(m0+1,m1+1)];
    const g=ser=>{if(ser[m0+1]==null)return null;let v=1;const out=[1];for(let t=m0+1;t<=m1;t++){v*=1+Math.max(-1,ser[t]==null?0:ser[t]);out.push(v);}return out;};
    const gS=g(H0.mkt);const p2=Math.max(0,ix(c.win[0])-1-m0),t2=Math.min(L,ix(c.win[1])-m0);
-   const raw=[['S&P 500','--spx',gS,2.2],['US Treasuries','--c-bond',g(H0.R[iU]),1.6],['Gold','--c-cmdty',g(H0.R[iG]),1.6],['Max Sharpe','--accent',g(C.pser(O.tangency.w).fs),1.8],['Yours','--you',g(C.pser(pw(S.w)).fs),3]];
+   const raw=[['S&P 500','--spx',gS,2.2],['US Treasuries','--c-bond',g(H0.R[iU]),1.6],['Gold','--c-cmdty',g(H0.R[iG]),1.6],['Max Sharpe','--accent',g(C.pser(O.tangency.w).fs),1.8],[YN(),'--you',g(C.pser(pw(S.w)).fs),3]];
    const sets=raw.filter(r=>r[2]).map(([n,cl,v,w])=>({n,c:cl,v,w,dd:crDD(v)}));
    const ev=c.events.map(([m,t0,d],q)=>({i:ix(m)-m0-.5,t:t0,d,n:q+1})).filter(e=>e.i>0&&e.i<L);
    const xt=W=>{const q=[];md.forEach((d,i)=>{const mm=d.slice(5,7);if(i&&(L<=40?(W<560?['01','07']:['01','04','07','10']).includes(mm):mm==='01'))q.push(i);});return q;};
@@ -1131,7 +1154,7 @@ function renderCrisis(){if(!M)return;const c=crCfg(),C=crBuild(c),{H0,ix,dates,d
   // 5. stress lab
   {if(CR.osM!==M){const capA=M._capA;CR.os=optimizeP({mu:M.mu,S:M.S,hi:capA,lo:Float64Array.from(capA,x=>-x),sb:.3,fee:S.ls.fee,L:maxEig(M.S),ls:true},S.rf).tangency.w;CR.osM=M;}
    const i6040=H0.mkt.map((m,t)=>.6*m+.4*H0.R[iU][t]);
-   const L=[['Yours','--you',port2(pw(S.w)),3],['Max Sharpe','--accent',ms],['Min variance','--minv',port2(O.minvar.w)],[loTag('Risk parity'),'--c-bond',port2(RP)],['Equal weight','--c-def',port2(A.map(()=>1/N))]];
+   const L=[[YN(),'--you',port2(pw(S.w)),3],['Max Sharpe','--accent',ms],['Min variance','--minv',port2(O.minvar.w)],[loTag('Risk parity'),'--c-bond',port2(RP)],['Equal weight','--c-def',port2(A.map(()=>1/N))]];
    if(!SHON())L.push(['Max Sharpe 130/30','--c-crypto',port2(CR.os)]);L.push(['60/40 S&P 500 / Treasuries','--c-fin',an(i6040)],['S&P 500','--spx',spx,2.2],['US Treasuries only','--c-semi',ust]);
    crLines($('cpLab'),'cpl',dates,L.map(([n,cl,q,w])=>({n,c:cl,v:q.v,w})),{band:[pk,tr],yf:v=>sp(v-1,0),ylab:`Change since ${fmtM(c.lab[0])}`,lab:v=>sp(v-1,1),zero:1,ar:.38,minH:320,dl:i=>fmtM(dates[i]),
      xt:W=>{const q=[];dates.forEach((d,i)=>{const mm=d.slice(5,7);if(i&&(T<=40?(W<560?['01','07']:['01','04','07','10']).includes(mm):mm==='01'))q.push(i);});return q;},xf:i=>T<=40?`${MON[+dates[i].slice(5,7)-1]} ${dates[i].slice(2,4)}`:dates[i].slice(0,4)});
@@ -1140,7 +1163,7 @@ function renderCrisis(){if(!M)return;const c=crCfg(),C=crBuild(c),{H0,ix,dates,d
    const rows=L.map(([n,cl,q])=>({n,c:cl,q}));const best=f=>Math.max(...rows.map(r=>f(r.q))),worst=f=>Math.min(...rows.map(r=>f(r.q)));
    const td=(v,f,hiGood,txt)=>{const b=hiGood?best(f):worst(f),w=hiGood?worst(f):best(f);const x=f(v);return `<td class="${Math.abs(x-b)<1e-9?'b':Math.abs(x-w)<1e-9?'w':''}">${txt}</td>`;};
    $('cpLTable').innerHTML=`<thead><tr><th>Portfolio</th><th>Crash window</th><th>Worst fall (own peak → trough)</th><th>Worst month</th><th>${eur(cap)} at its low</th><th>Back to its high</th><th>Value of ${eur(cap)} by ${fmtM(c.lab[1])}</th><th>Trading then</th></tr></thead><tbody>`+
-     rows.map(r=>{const q=r.q;return `<tr class="${r.n==='Yours'?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.n}</td>${td(q,x=>x.crash,1,sp(q.crash,0))}${td(q,x=>-x.dd,1,pct(-q.dd,0))}${td(q,x=>x.worst,1,`${sp(q.worst,0)}<small>${fmtM(q.worstM)}</small>`)}
+     rows.map(r=>{const q=r.q;return `<tr class="${r.n===YN()?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.n}</td>${td(q,x=>x.crash,1,sp(q.crash,0))}${td(q,x=>-x.dd,1,pct(-q.dd,0))}${td(q,x=>x.worst,1,`${sp(q.worst,0)}<small>${fmtM(q.worstM)}</small>`)}
        ${td(q,x=>1-x.dd,1,eur(cap*(1-q.dd)))}${td(q,x=>x.rec==null?-1e9:-(x.rec-x.P),1,q.ruin>=0?'<span class="down">wiped out</span>':q.dd<.005?'no fall':q.rec!=null?`${fmtM(dv(q.rec))}<small>${q.rec-q.P} months</small>`:'not yet')}${td(q,x=>x.end,1,eur(cap*q.end))}<td>${q.cov<.999?pct(q.cov,0)+'*':'100%'}</td></tr>`;}).join('')+'</tbody>';
    $('cpLNote').innerHTML=`Each portfolio is held with today's weights from ${fmtM(c.lab[0])} and rebalanced every month, with your strategy's financing and short fees. * Assets that did not trade yet are left out and the remaining weights scaled up, so these rows show only the part that existed. Hindsight warning: today's optimized portfolios were estimated on data that includes these years. "Back to its high" counts months from the portfolio's own pre-crash peak.`;
    CR.lab=rows;}
@@ -1172,7 +1195,7 @@ function renderCrisis(){if(!M)return;const c=crCfg(),C=crBuild(c),{H0,ix,dates,d
   $('cpFoot').innerHTML=`Data: Yahoo Finance monthly total returns (dividends reinvested), ${cur}; Treasuries are the 7–10 year US Treasury fund (VFITX/IEF), gold the front-month future before December 2004 and the GLD ETF after. Monthly data understates intra-month swings. Your portfolio, max Sharpe, min variance and risk parity use today's weights, estimated with data that includes these years, so they benefit from hindsight. Event dates: Federal Reserve, NBER, central banks and contemporary reporting.`;}
 const crBySlug=s=>CRISES.find(c=>c.slug===s);
 function openCrisis(id,push=true){if(!M)return;if(id)CR.id=id;CR.on=true;$('cpage').hidden=false;document.body.classList.add('noscroll');$('cpage').scrollTop=0;if(push){try{history.replaceState(null,'',location.pathname+location.search+'#crisis-'+crCfg().slug);}catch(_){}}renderCrisis();$('cpBack').focus();}
-function closeCrisis(){CR.on=false;document.title='Frontier Lab';$('cpage').hidden=true;document.body.classList.remove('noscroll');try{history.replaceState(null,'',location.pathname+location.search);}catch(_){}}
+function closeCrisis(){CR.on=false;document.title='MengualMar Portfolio Simulation';$('cpage').hidden=true;document.body.classList.remove('noscroll');try{history.replaceState(null,'',location.pathname+location.search);}catch(_){}}
 $('crisisBtn').onclick=()=>openCrisis();$('cpBack').onclick=closeCrisis;
 $('cpBase').onclick=()=>{CR.usd=false;renderCrisis();};$('cpUsd').onclick=()=>{CR.usd=true;renderCrisis();};
 document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#crisis-"]');if(a){e.preventDefault();const c=crBySlug(a.getAttribute('href').slice(8));if(c){openCrisis(c.id);}}});
@@ -1181,32 +1204,36 @@ let crRz;window.addEventListener('resize',()=>{if(!CR.on)return;clearTimeout(crR
 /* ---------- my portfolios: saved, named portfolios with fixed weights ---------- */
 /* Each saved portfolio keeps its weights by asset id, its strategy (shorts, leverage, financing), the date it was saved,
    the last month of data at that moment and the model's expected return and risk then. Performance is recomputed from
-   the data every time, so when the data is updated the months after the save date show how it really did. */
-const SV={on:false,id:null,usd:false,range:'full',others:false,confirm:null,rename:false};
+   the data every time, so when the data is updated the months after the save date show how it really did.
+   The "Current portfolio" tab is the lab's live portfolio: it updates with every change and can be edited here before saving. */
+const SV={on:false,id:null,usd:false,range:'full',others:false,confirm:null,rename:false,log:false,last:null};
 const SVKEY='fl-saved-portfolios-v1';
-let SVOK=true;
+let SVOK=true,SVCACHE=null;
 function svLoad(){try{const x=JSON.parse(localStorage.getItem(SVKEY)||'[]');return Array.isArray(x)?x.filter(p=>p&&p.id&&p.w):[];}catch(_){SVOK=false;return [];}}
-function svStore(list){try{localStorage.setItem(SVKEY,JSON.stringify(list));SVOK=true;return true;}catch(_){SVOK=false;return false;}}
-const svList=()=>svLoad();
-const svGet=id=>svList().find(p=>p.id===id);
+function svCache(){return SVCACHE||(SVCACHE=svLoad());}
+function svStore(list){SVCACHE=JSON.parse(JSON.stringify(list));try{localStorage.setItem(SVKEY,JSON.stringify(list));SVOK=true;return true;}catch(_){SVOK=false;return false;}}
+const svList=()=>JSON.parse(JSON.stringify(svCache()));
+const svGet=id=>id==='__cur'?svCurrent():svList().find(p=>p.id===id);
 const DATA_END=()=>HF0.months[HF0.months.length-1];
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function svToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function svDate(iso){const [y,m,d]=iso.split('-');return `${+d} ${MON[+m-1]} ${y}`;}
-function svSave(name){const w=pw(S.w),y=port(S.w),list=svList();const W={};A.forEach((a,i)=>{if(Math.abs(w[i])>1e-6)W[a.id]=+w[i].toFixed(6);});
-  const p={id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name.trim().slice(0,60)||`Portfolio ${list.length+1}`,created:svToday(),dataEnd:DATA_END(),w:W,
+function svWmap(){const w=pw(S.w),W={};A.forEach((a,i)=>{if(Math.abs(w[i])>1e-6)W[a.id]=+w[i].toFixed(6);});return W;}
+// the lab's live portfolio, shaped like a saved one
+function svCurrent(){const y=port(S.w),n=YN();return {id:'__cur',live:true,name:n==='Yours'?'Current portfolio':n,created:svToday(),dataEnd:DATA_END(),w:svWmap(),ls:{...S.ls},exp:{ret:y.ret,vol:y.vol,sharpe:y.sharpe}};}
+function svSave(name){const y=port(S.w),list=svList();
+  const p={id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name.trim().slice(0,60)||`Portfolio ${list.length+1}`,created:svToday(),dataEnd:DATA_END(),w:svWmap(),
     ls:{...S.ls},cur:S.cur,exp:{ret:y.ret,vol:y.vol,sharpe:y.sharpe,cur:S.cur,win:S.win}};
-  list.push(p);if(!svStore(list))return null;return p;}
+  list.push(p);if(!svStore(list))return null;CURNAME={id:p.id,name:p.name};updYN();return p;}
 function svWeights(p){return Float64Array.from(A.map(a=>p.w[a.id]||0));}
 const svMissing=p=>Object.keys(p.w).filter(id=>!A.some(a=>a.id===id));
 function svStratLabel(ls){const on=ls.short||ls.lev;if(!on)return 'Long only';return (ls.short?`${Math.round(100+ls.sb*100)}/${Math.round(ls.sb*100)} long/short`:'Long')+(ls.lev?` · up to ${ls.L}×`:'');}
-// full monthly history of a saved portfolio (in the chosen currency), with its own financing terms
+// full monthly history of a portfolio (in the chosen currency), with its own financing terms
 function svSeries(p,src){const w=svWeights(p),base=portListed(src.R,w);const fs=finSeries(base,w,src.rfm,{rf:S.rf,spread:p.ls.spread,fee:p.ls.fee});
   const first=Math.max(1,base.coverage.findIndex(c=>c>0)),half=base.coverage.findIndex(c=>c>=.5);let full=base.coverage.findIndex(c=>c>=.999);if(full<0)full=first;
   return {fs,cov:base.coverage,full:Math.max(1,full),first,max:Math.max(1,half<0?first:half)};}
 const SVR={'saved':'Since saved','1':'1Y','3':'3Y','5':'5Y','10':'10Y','20':'20Y','full':'All holdings','max':'Max'};
 // periods: 'full' starts when every holding trades; 'max' when at least half of the weight does; 1Y…20Y count back from the last month (never before 'max')
-function svRange(Q,last,key,p){const mo=crSrc2().months;if(key==='saved'){const k=mo.indexOf(p.dataEnd);return k<0?null:k+1;}if(key==='full')return Q.full;if(key==='max')return Q.max;return Math.max(Q.max,last-12*(+key)+1);}
+function svRange(Q,last,key,p){const mo=crSrc2().months;if(key==='saved'){if(p.live)return null;const k=mo.indexOf(p.dataEnd);return k<0?null:k+1;}if(key==='full')return Q.full;if(key==='max')return Q.max;return Math.max(Q.max,last-12*(+key)+1);}
 const crSrc2=()=>SV.usd?HF0:HF;
 function svStats(s,rf){const g=growth(s),n=s.length;let pk=0,P=0,Tr=0,dd=0;g.v.forEach((v,t)=>{if(v>g.v[pk])pk=t;const d=1-v/g.v[pk];if(d>dd){dd=d;P=pk;Tr=t;}});
   let rec=null;if(dd>0)for(let t=Tr;t<g.v.length;t++)if(g.v[t]>=g.v[P]){rec=t-Tr;break;}const rfa=rf.reduce((a,b)=>a+b,0)/Math.max(1,n)*12;
@@ -1214,117 +1241,207 @@ function svStats(s,rf){const g=growth(s),n=s.length;let pk=0,P=0,Tr=0,dd=0;g.v.f
 function openSaved(id,push=true){if(!M)return;if(CR.on)closeCrisis();if(AP!=null)closeAsset();SV.on=true;if(id)SV.id=id;$('ppage').hidden=false;document.body.classList.add('noscroll');$('ppage').scrollTop=0;
   if(push){try{history.replaceState(null,'',location.pathname+location.search+'#portfolios');}catch(_){}}renderSaved();}
 function closeSaved(){SV.on=false;$('ppage').hidden=true;document.body.classList.remove('noscroll');try{history.replaceState(null,'',location.pathname+location.search);}catch(_){}}
+const SVC=['--you','--c-tech','--c-crypto','--c-fin','--accent','--c-cmdty','--c-bond','--c-def'];
+const svXt=(dates,W)=>{const T=dates.length-1,q=[];const step=T>240?5:T>120?2:1;dates.forEach((d,i)=>{const mm=d.slice(5,7);if(!i)return;if(T<=36?(W<560?['01','07']:['01','04','07','10']).includes(mm):mm==='01'&&(+d.slice(0,4))%step===0)q.push(i);});return q;};
+const svXf=dates=>i=>dates.length-1<=36?`${MON[+dates[i].slice(5,7)-1]} ${dates[i].slice(2,4)}`:dates[i].slice(0,4);
 function renderSaved(){if(!M||!SV.on)return;const list=svList();const src=crSrc2(),mo=src.months,last=mo.length-1,cur=SV.usd?'US dollars':CURL[S.cur];const cap=Math.max(1,+$('mcStart').value||10000);
   $('ppUsd').setAttribute('aria-pressed',SV.usd);$('ppBase').setAttribute('aria-pressed',!SV.usd);$('ppBase').textContent=`Your currency (${S.cur==='usd'?'USD':'EUR'})`;
+  const curP=svCurrent(),curSaved=list.some(svMatch);
   // save form: what the lab holds right now
   {const w=pw(S.w),y=port(S.w);const top=A.map((a,i)=>({a,x:w[i]})).filter(r=>Math.abs(r.x)>.0005).sort((p,q)=>Math.abs(q.x)-Math.abs(p.x));
-   $('ppNow').innerHTML=`<b>${top.length} assets</b> · ${stLabel()} · expected ${pct(y.ret)} a year, volatility ${pct(y.vol)} · `+top.slice(0,6).map(r=>`${esc(r.a.name)} ${pct(r.x,0)}`).join(', ')+(top.length>6?', …':'');
+   $('ppNow').innerHTML=(curSaved?`<b>Already saved as “${esc(YN())}”.</b> Change the weights (here in the Current portfolio tab or in the lab) to save a new one. `:'')+`<b>${top.length} assets</b> · ${stLabel()} · expected ${pct(y.ret)} a year, volatility ${pct(y.vol)} · `+top.slice(0,6).map(r=>`${esc(r.a.name)} ${pct(r.x,0)}`).join(', ')+(top.length>6?', …':'');
    if(!$('ppName').value)$('ppName').placeholder=`e.g. AI tilt ${svDate(svToday())}`;
    $('ppWarn').hidden=SVOK;}
-  $('ppTabs').innerHTML=list.map(p=>`<a href="#" data-sv="${p.id}" class="${SV.id===p.id?'on':''}"><b>${esc(p.name)}</b><span>saved ${svDate(p.created)}</span></a>`).join('')+
-    (list.length>1?`<a href="#" data-sv="__cmp" class="${SV.id==='__cmp'?'on':''}"><b>Compare all</b><span>${list.length} portfolios</span></a>`:'');
-  if(!list.length){$('ppOne').hidden=true;$('ppCmp').hidden=true;$('ppEmpty').hidden=false;$('ppRangeBar').hidden=true;return;}
-  $('ppEmpty').hidden=true;$('ppRangeBar').hidden=false;
-  if(!SV.id||(SV.id!=='__cmp'&&!svGet(SV.id))||(SV.id==='__cmp'&&list.length<2))SV.id=list[list.length-1].id;
-  $('ppRange').innerHTML=Object.entries(SVR).map(([k,l])=>`<button data-rg="${k}" aria-pressed="${SV.range===k}">${l}</button>`).join('');
-  const xtM=(dates,W)=>{const T=dates.length-1,q=[];const step=T>240?5:T>120?2:1;dates.forEach((d,i)=>{const mm=d.slice(5,7);if(!i)return;if(T<=36?(W<560?['01','07']:['01','04','07','10']).includes(mm):mm==='01'&&(+d.slice(0,4))%step===0)q.push(i);});return q;};
-  const xfM=dates=>i=>dates.length-1<=36?`${MON[+dates[i].slice(5,7)-1]} ${dates[i].slice(2,4)}`:dates[i].slice(0,4);
+  if(!SV.id||(SV.id!=='__cur'&&SV.id!=='__cmp'&&!list.some(p=>p.id===SV.id))||(SV.id==='__cmp'&&!list.length))SV.id='__cur';
+  // tabs: the live portfolio first, then every saved one (with a remove button), then Compare
+  $('ppTabs').innerHTML=`<div class="ptab live${SV.id==='__cur'?' on':''}"><a href="#" data-sv="__cur"><b>● ${esc(curSaved?YN():'Current portfolio')}</b><span>${curSaved?'live · saved':'live · not saved yet'}</span></a></div>`+
+    list.map(p=>SV.confirm===p.id?`<div class="ptab confirm"><span><b>Remove “${esc(p.name)}”?</b><span>this cannot be undone</span></span><button data-delok="${p.id}" class="danger">Remove</button><button data-delno="1" class="ghost">Keep</button></div>`:
+      `<div class="ptab${SV.id===p.id?' on':''}"><a href="#" data-sv="${p.id}"><b>${esc(p.name)}</b><span>saved ${svDate(p.created)}</span></a><button class="tabx" data-del="${p.id}" title="Remove ${esc(p.name)}" aria-label="Remove ${esc(p.name)}">×</button></div>`).join('')+
+    (list.length?`<div class="ptab${SV.id==='__cmp'?' on':''}"><a href="#" data-sv="__cmp"><b>Compare all</b><span>${list.length+(curSaved?0:1)} portfolio${list.length+(curSaved?0:1)===1?'':'s'}</span></a></div>`:'');
+  $('ppEmpty').hidden=!!list.length||SV.id!=='__cur';$('ppRangeBar').hidden=false;
+  $('ppRange').innerHTML=Object.entries(SVR).map(([k,l])=>`<button data-rg="${k}" aria-pressed="${SV.range===k}" ${k==='saved'&&SV.id==='__cur'?'disabled':''}>${l}</button>`).join('');
   const money=v=>{const x=v*cap;return x>=1e6?'€'+(x/1e6).toFixed(1)+'M':x>=1e4?'€'+Math.round(x/1e3)+'k':eur(x);};
-  if(SV.id==='__cmp'){renderSvCmp(list,src,mo,last,cur,cap,xtM,xfM,money);return;}
+  if(SV.id==='__cmp'){renderSvCmp(curSaved?list:[curP,...list],src,mo,last,cur,cap,money);return;}
   $('ppOne').hidden=false;$('ppCmp').hidden=true;
-  const p=svGet(SV.id),Q=svSeries(p,src),miss=svMissing(p);
-  let s=svRange(Q,last,SV.range,p);const noSince=SV.range==='saved'&&(s==null||s>last);if(noSince||s==null)s=Q.full;
+  const isCur=SV.id==='__cur',p=isCur?curP:list.find(q=>q.id===SV.id),Q=svSeries(p,src),miss=svMissing(p);
+  let rk=SV.range;if(isCur&&rk==='saved')rk='full';
+  let s=svRange(Q,last,rk,p);const noSince=rk==='saved'&&(s==null||s>last);if(noSince||s==null)s=Q.full;
   const r=Q.fs.slice(s,last+1),mk=src.mkt.slice(s,last+1),rf=src.rfm.slice(s,last+1),dates=[mo[s-1]||mo[0],...mo.slice(s,last+1)];
   const st=svStats(r,rf),sm=svStats(mk,rf);const yrs=(r.length/12);
-  const k0=mo.indexOf(p.dataEnd),after=k0>=0?Q.fs.slice(k0+1,last+1):[];const gA=after.length?growth(after):null;
+  const k0=isCur?-1:mo.indexOf(p.dataEnd),after=k0>=0?Q.fs.slice(k0+1,last+1):[];const gA=after.length?growth(after):null;
   // header
-  $('ppName2').innerHTML=SV.rename?`<input id="ppRenameIn" value="${esc(p.name)}" maxlength="60" aria-label="New name"> <button id="ppRenameOk">Save name</button>`:esc(p.name);
-  $('ppMeta').innerHTML=`<span class="chip">Saved <b>${svDate(p.created)}</b></span><span class="chip">Data then up to <b>${fmtM(p.dataEnd)}</b></span><span class="chip">Strategy <b>${svStratLabel(p.ls)}</b></span><span class="chip">${Object.keys(p.w).length} assets</span><span class="chip">Currency <b>${cur}</b></span>`+
+  $('ppName2').innerHTML=SV.rename&&!isCur?`<input id="ppRenameIn" value="${esc(p.name)}" maxlength="60" aria-label="New name"> <button id="ppRenameOk">Save name</button>`:esc(p.name);
+  $('ppMeta').innerHTML=(isCur?`<span class="chip" style="color:var(--you);border-color:var(--you)">Live from the lab${curSaved?' · matches a saved portfolio':' · <b>not saved yet</b>'}</span>`:`<span class="chip">Saved <b>${svDate(p.created)}</b></span><span class="chip">Data then up to <b>${fmtM(p.dataEnd)}</b></span>`)+
+    `<span class="chip">Strategy <b>${svStratLabel(p.ls)}</b></span><span class="chip">${Object.keys(p.w).length} assets</span><span class="chip">Currency <b>${cur}</b></span>`+
     (miss.length?`<span class="chip" style="color:var(--bad);border-color:var(--bad)">No longer in the lab: <b>${miss.map(esc).join(', ')}</b> (${pct(miss.reduce((a,id)=>a+p.w[id],0),0)}, held as cash)</span>`:'');
-  $('ppActions').innerHTML=`<button id="ppLoad">Load into the lab</button><button id="ppRename" class="ghost">Rename</button><button id="ppDup" class="ghost">Duplicate</button>`+
-    (SV.confirm===p.id?`<button id="ppDelOk" class="danger">Confirm delete</button><button id="ppDelNo" class="ghost">Keep it</button>`:`<button id="ppDel" class="ghost">Delete</button>`);
+  $('ppActions').innerHTML=(isCur?`<button id="ppSaveCur" class="primary">★ Save this portfolio…</button>`:`<button id="ppLoad">Load into the lab</button><button id="ppRename" class="ghost">Rename</button><button id="ppDup" class="ghost">Duplicate</button><button id="ppDel" class="ghost">Remove</button>`)+
+    `<button id="ppPdf" class="ghost" title="Download a PDF investment report of this portfolio">⇩ PDF report</button>`;
   // KPIs
   const k=(l,v,sub,cl)=>`<div><span class="l">${l}</span><span class="v ${cl||''}">${v}</span><span class="s">${sub||''}</span></div>`;
   const f=t=>fmtM(dates[t]);
-  $('ppKpi').innerHTML=k('Period',`${yrs.toFixed(1)} years`,`${f(0)} → ${f(r.length)}${Q.cov[s]<.999?' · partial':''}`)+k('Total return',sp(st.g.v[r.length]-1,0),`S&amp;P 500 ${sp(sm.g.v[r.length]-1,0)}`,st.g.v[r.length]>=sm.g.v[r.length]?'up':'down')+
-    k('Annual return (CAGR)',pct(st.g.cagr),`S&amp;P 500 ${pct(sm.g.cagr)}`,st.g.cagr>=sm.g.cagr?'up':'down')+k('Volatility',pct(st.g.vol),`S&amp;P 500 ${pct(sm.g.vol)}`)+
-    k('Sharpe',st.sharpe.toFixed(2),`S&amp;P 500 ${sm.sharpe.toFixed(2)}`)+k('Max drawdown',pct(-st.dd,0),st.dd>0?`${f(st.P)} → ${f(st.Tr)}${st.rec!=null?` · back in ${st.rec} mo`:' · not yet back'}`:'no fall','down')+
-    k(`${eur(cap)} invested`,eur(cap*st.g.v[r.length]),`at the start of the period`)+k('Worst / best month',`${sp(st.worst,0)} / ${sp(st.best,0)}`,`${fmtM(mo[s+st.wm])} / ${fmtM(mo[s+st.bm])}`)+
-    k('Months up',pct(st.pos,0),`S&amp;P 500 ${pct(sm.pos,0)}`)+k('Expected when saved',pct(p.exp.ret),`volatility ${pct(p.exp.vol)} · Sharpe ${p.exp.sharpe.toFixed(2)}`)+
-    k('Since saved',gA?sp(gA.v[after.length]-1,1):'—',gA?`${after.length} months after ${fmtM(p.dataEnd)}`:'tracking starts with the next data update',gA?(gA.v[after.length]>=1?'up':'down'):'')+
-    k('Assets trading',pct(Q.cov[s],0),Q.cov[s]<.999?'at the start: young assets left out, the rest scaled up':'all holdings had data for the whole period');
-  $('ppSince').hidden=!(SV.range==='saved'&&noSince)&&!(Q.cov[s]<.999);
-  if(!(SV.range==='saved'&&noSince)&&Q.cov[s]<.999){$('ppSince').innerHTML=`<b>Part of this portfolio was not trading yet at the start.</b> In ${fmtM(mo[s])} only ${pct(Q.cov[s],0)} of the weight had data; the missing assets' weights are spread over the rest until each one starts trading (all holdings trade from ${fmtM(mo[Q.full])}). Choose “All holdings” for the period where the portfolio is complete.`;}else
+  const K=[['Period',`${yrs.toFixed(1)} years`,`${f(0)} → ${f(r.length)}${Q.cov[s]<.999?' · partial':''}`],['Total return',sp(st.g.v[r.length]-1,0),`S&P 500 ${sp(sm.g.v[r.length]-1,0)}`,st.g.v[r.length]>=sm.g.v[r.length]?'up':'down'],
+    ['Annual return (CAGR)',pct(st.g.cagr),`S&P 500 ${pct(sm.g.cagr)}`,st.g.cagr>=sm.g.cagr?'up':'down'],['Volatility',pct(st.g.vol),`S&P 500 ${pct(sm.g.vol)}`],
+    ['Sharpe',st.sharpe.toFixed(2),`S&P 500 ${sm.sharpe.toFixed(2)}`],['Max drawdown',pct(-st.dd,0),st.dd>0?`${f(st.P)} → ${f(st.Tr)}${st.rec!=null?` · back in ${st.rec} mo`:' · not yet back'}`:'no fall','down'],
+    [`${eur(cap)} invested`,eur(cap*st.g.v[r.length]),`at the start of the period`],['Worst / best month',`${sp(st.worst,0)} / ${sp(st.best,0)}`,`${fmtM(mo[s+st.wm])} / ${fmtM(mo[s+st.bm])}`],
+    ['Months up',pct(st.pos,0),`S&P 500 ${pct(sm.pos,0)}`],[isCur?'Expected (model, now)':'Expected when saved',pct(p.exp.ret),`volatility ${pct(p.exp.vol)} · Sharpe ${p.exp.sharpe.toFixed(2)}`],
+    ['Since saved',gA?sp(gA.v[after.length]-1,1):'—',isCur?'not saved yet':gA?`${after.length} months after ${fmtM(p.dataEnd)}`:'tracking starts with the next data update',gA?(gA.v[after.length]>=1?'up':'down'):''],
+    ['Assets trading',pct(Q.cov[s],0),Q.cov[s]<.999?'at the start: young assets left out, the rest scaled up':'all holdings had data for the whole period']];
+  $('ppKpi').innerHTML=K.map(x=>k(x[0],x[1],esc(x[2]).replace(/&amp;/g,'&amp;'),x[3])).join('');
+  $('ppSince').hidden=!(rk==='saved'&&noSince)&&!(Q.cov[s]<.999);
+  if(!(rk==='saved'&&noSince)&&Q.cov[s]<.999){$('ppSince').innerHTML=`<b>Part of this portfolio was not trading yet at the start.</b> In ${fmtM(mo[s])} only ${pct(Q.cov[s],0)} of the weight had data; the missing assets' weights are spread over the rest until each one starts trading (all holdings trade from ${fmtM(mo[Q.full])}). Choose “All holdings” for the period where the portfolio is complete.`;}else
   $('ppSince').innerHTML=`<b>No data after the save date yet.</b> This portfolio was saved with data up to ${fmtM(p.dataEnd)}; its real track record starts as soon as the lab's prices are updated past that month. The chart shows the full history in the meantime.`;
   // main chart
-  const others=SV.others?list.filter(o=>o.id!==p.id).map((o,j)=>{const q=svSeries(o,src);const ss=q.fs.slice(s,last+1);if(ss.some(x=>x==null)||q.cov[s]<.5)return null;return {n:o.name,c:SVC[1+j%(SVC.length-1)],v:growth(ss).v,w:1.4};}).filter(Boolean):[];
+  const others=SV.others?list.filter(o=>o.id!==p.id&&!(isCur&&svMatch(o))).map((o,j)=>{const q=svSeries(o,src);const ss=q.fs.slice(s,last+1);if(ss.some(x=>x==null)||q.cov[s]<.5)return null;return {n:o.name,c:SVC[1+j%(SVC.length-1)],v:growth(ss).v,w:1.4};}).filter(Boolean):[];
   const sets=[{n:'S&P 500',c:'--spx',v:sm.g.v,w:1.8},...others,{n:p.name,c:'--you',v:st.g.v,w:3}];
-  const kSave=dates.indexOf(p.dataEnd);const ev=kSave>0&&kSave<dates.length-1?[{i:kSave,t:'Saved',d:`${svDate(p.created)} (data up to ${fmtM(p.dataEnd)}); after this line the record is out-of-sample`,n:'S'}]:[];
-  $('ppGK').textContent=`Value of ${eur(cap)} invested in ${fmtM(dates[0])}, ${SV.log?'log scale, ':''}${cur}, rebalanced monthly${mo.indexOf(p.dataEnd)>=s?' · before the save date this is a backtest with hindsight':''}`;
-  crLines($('ppGrowth'),'ppg',dates,sets,{events:ev.length?ev:null,log:SV.log,yf:v=>money(SV.log?Math.exp(v):v),ylab:'Value',lab:v=>`${money(v)} (${sp(v-1,1)})`,zero:1,ar:.42,minH:340,xt:W=>xtM(dates,W),xf:xfM(dates),dl:i=>fmtM(dates[i]),hitStep:Math.max(1,Math.floor(dates.length/240))});
-  $('ppGLeg').innerHTML=sets.slice().reverse().map(x=>`<span><i style="background:${x.c.startsWith('--')?`var(${x.c})`:x.c}"></i>${esc(x.n)}</span>`).join('')+(ev.length?'<span><i style="background:var(--muted);height:9px;width:2px"></i>Saved</span>':'');
-  crLines($('ppDD'),'ppd',dates,sets.map(x=>({...x,v:crDD(x.v)})),{yf:v=>pct(v,0),ylab:'Drawdown',lab:v=>pct(v,1),ar:.16,minH:160,xt:W=>xtM(dates,W),xf:xfM(dates),dl:i=>fmtM(dates[i]),hitStep:Math.max(1,Math.floor(dates.length/240))});
-  // allocation
-  {const w=svWeights(p);const rows=A.map((a,i)=>({a,i,x:w[i]})).filter(q=>Math.abs(q.x)>1e-5).sort((x,y)=>y.x-x.x);const ex=exposure(w);const mx=Math.max(...rows.map(q=>Math.abs(q.x)));
-   const per=i=>{const rr=src.R[i].slice(s,last+1);if(rr.some(x=>x==null))return null;return growth(rr).cagr;};
-   const byC={};rows.forEach(q=>{byC[q.a.cls]=(byC[q.a.cls]||0)+q.x;});
-   $('ppClass').innerHTML=Object.entries(byC).filter(([,x])=>x>0).sort((x,y)=>y[1]-x[1]).map(([c,x])=>`<span style="flex:${x};background:var(${CLS[c][1]})" title="${CLS[c][0]} ${pct(x,1)}"></span>`).join('');
+  const kSave=isCur?-1:dates.indexOf(p.dataEnd);const ev=kSave>0&&kSave<dates.length-1?[{i:kSave,t:'Saved',d:`${svDate(p.created)} (data up to ${fmtM(p.dataEnd)}); after this line the record is out-of-sample`,n:'S'}]:[];
+  const gk=`Value of ${eur(cap)} invested in ${fmtM(dates[0])}, ${SV.log?'log scale, ':''}${cur}, rebalanced monthly${isCur||mo.indexOf(p.dataEnd)>=s?' · a backtest with hindsight'+(isCur?'':' before the save date'):''}`;
+  $('ppGK').textContent=gk;
+  const gOpt={events:ev.length?ev:null,log:SV.log,yf:v=>money(SV.log?Math.exp(v):v),ylab:'Value',lab:v=>`${money(v)} (${sp(v-1,1)})`,zero:1,ar:.42,minH:340,xt:W=>svXt(dates,W),xf:svXf(dates),dl:i=>fmtM(dates[i]),hitStep:Math.max(1,Math.floor(dates.length/240))};
+  const dOpt={yf:v=>pct(v,0),ylab:'Drawdown',lab:v=>pct(v,1),ar:.16,minH:160,xt:W=>svXt(dates,W),xf:svXf(dates),dl:i=>fmtM(dates[i]),hitStep:Math.max(1,Math.floor(dates.length/240))};
+  crLines($('ppGrowth'),'ppg',dates,sets,gOpt);
+  $('ppGLeg').innerHTML=sets.slice().reverse().map(x=>`<span><i style="background:var(${x.c})"></i>${esc(x.n)}</span>`).join('')+(ev.length?'<span><i style="background:var(--muted);height:9px;width:2px"></i>Saved</span>':'');
+  crLines($('ppDD'),'ppd',dates,sets.map(x=>({...x,v:crDD(x.v)})),dOpt);
+  // allocation (editable for the live portfolio)
+  const w=svWeights(p),ex=exposure(w);const rows=A.map((a,i)=>({a,i,x:w[i]})).filter(q=>Math.abs(q.x)>1e-5).sort((x,y)=>y.x-x.x);const mx=Math.max(1e-9,...rows.map(q=>Math.abs(q.x)));
+  const per=i=>{const rr=src.R[i].slice(s,last+1);if(rr.some(x=>x==null))return null;return growth(rr).cagr;};
+  const byC={};rows.forEach(q=>{byC[q.a.cls]=(byC[q.a.cls]||0)+q.x;});
+  {$('ppClass').innerHTML=Object.entries(byC).filter(([,x])=>x>0).sort((x,y)=>y[1]-x[1]).map(([c,x])=>`<span style="flex:${x};background:var(${CLS[c][1]})" title="${CLS[c][0]} ${pct(x,1)}"></span>`).join('');
    $('ppClassLeg').innerHTML=Object.entries(byC).sort((x,y)=>y[1]-x[1]).map(([c,x])=>`<span><i class="dot" style="background:var(${CLS[c][1]})"></i>${CLS[c][0]} <b>${pct(x,1)}</b></span>`).join('');
-   $('ppAlloc').innerHTML=rows.map(q=>{const g=per(q.i);return `<div class="wrow"><span class="wn"><span class="dot" style="background:var(${CLS[q.a.cls][1]})"></span>${esc(q.a.name)}</span><span class="wb"><i style="width:${(Math.abs(q.x)/mx*100).toFixed(1)}%;background:var(${q.x<0?'--bad':CLS[q.a.cls][1]})"></i></span><b class="${q.x<0?'down':''}">${pct(q.x,1)}</b><span class="wg">${g==null?'—':sp(g,1)+'/yr'}</span></div>`;}).join('')+
-     (Math.abs(1-ex.net)>.001?`<div class="wrow"><span class="wn">${ex.net>1?'Borrowed (leverage)':'Cash'}</span><span class="wb"></span><b class="${ex.net>1?'down':''}">${pct(1-ex.net,1)}</b><span class="wg"></span></div>`:'');
+   const raw=i=>(S.w[i]*100).toFixed(1).replace(/\.0$/,'');
+   $('ppAlloc').innerHTML=rows.map(q=>{const g=per(q.i);return `<div class="wrow${isCur?' ed':''}"><span class="wn"><span class="dot" style="background:var(${CLS[q.a.cls][1]})"></span>${esc(q.a.name)}</span><span class="wb"><i style="width:${(Math.abs(q.x)/mx*100).toFixed(1)}%;background:var(${q.x<0?'--bad':CLS[q.a.cls][1]})"></i></span>`+
+       (isCur?`<input type="number" step="0.5" data-wi="${q.i}" value="${raw(q.i)}" aria-label="${esc(q.a.name)} weight %"><button class="wx" data-wx="${q.i}" title="Remove ${esc(q.a.name)}" aria-label="Remove ${esc(q.a.name)}">×</button>`:'')+
+       `<b class="${q.x<0?'down':''}">${pct(q.x,1)}</b><span class="wg">${g==null?'—':sp(g,1)+'/yr'}</span></div>`;}).join('')+
+     (Math.abs(1-ex.net)>.001?`<div class="wrow${isCur?' ed':''}"><span class="wn">${ex.net>1?'Borrowed (leverage)':'Cash'}</span><span class="wb"></span>${isCur?'<span></span><span></span>':''}<b class="${ex.net>1?'down':''}">${pct(1-ex.net,1)}</b><span class="wg"></span></div>`:'');
+   const sum=S.w.reduce((a,b)=>a+b,0);
+   $('ppEdit').hidden=!isCur;
+   if(isCur){$('ppAdd').innerHTML='<option value="">+ Add an asset…</option>'+ORDER.filter(i=>Math.abs(S.w[i])<1e-6).map(i=>`<option value="${i}">${esc(A[i].name)} · ${esc(CLS[A[i].cls][0])}</option>`).join('');
+     $('ppSum').innerHTML=LSON()?`Weights are shares of your capital; net ${pct(ex.net,1)}.`:`You typed <b>${pct(sum,1)}</b>${Math.abs(sum-1)>.0005?'; long-only weights are scaled to 100% (the bars and % show the result)':''}.`;}
    $('ppAllocK').textContent=`${rows.length} assets · gross ${pct(ex.gross,0)} · net ${pct(ex.net,0)}`;
-   $('ppAllocN').innerHTML=`Fixed weights, rebalanced back to them every month. The right column is each asset's annual return over the period shown (${fmtM(dates[0])} → ${fmtM(dates[dates.length-1])}); — means it was not trading for all of it.`;}
+   $('ppAllocN').innerHTML=(isCur?'Edit the weights here or in the lab: this tab, the charts and the lab update together. ':'')+`Fixed weights, rebalanced back to them every month. The right column is each asset's annual return over the period shown (${fmtM(dates[0])} → ${fmtM(dates[dates.length-1])}); — means it was not trading for all of it.`;}
   // calendar years
-  {const yr={};for(let t=s;t<=last;t++){const y=mo[t].slice(0,4);(yr[y]=yr[y]||{p:1,m:1,n:0});yr[y].p*=1+Math.max(-1,Q.fs[t]);yr[y].m*=1+src.mkt[t];yr[y].n++;}
-   const ys=Object.keys(yr);const cell=v=>{const t=Math.min(1,Math.abs(v)/.35);return `<td style="background:${v<0?`color-mix(in srgb, var(--bad) ${Math.round(t*45)}%, transparent)`:`color-mix(in srgb, var(--good) ${Math.round(t*45)}%, transparent)`}">${sp(v,1)}</td>`;};
+  const yr={};for(let t=s;t<=last;t++){const y=mo[t].slice(0,4);(yr[y]=yr[y]||{p:1,m:1,n:0});yr[y].p*=1+Math.max(-1,Q.fs[t]);yr[y].m*=1+src.mkt[t];yr[y].n++;}
+  {const ys=Object.keys(yr);const cell=v=>{const t=Math.min(1,Math.abs(v)/.35);return `<td style="background:${v<0?`color-mix(in srgb, var(--bad) ${Math.round(t*45)}%, transparent)`:`color-mix(in srgb, var(--good) ${Math.round(t*45)}%, transparent)`}">${sp(v,1)}</td>`;};
    $('ppYears').innerHTML=`<thead><tr><th>Year</th><th>${esc(p.name)}</th><th>S&amp;P 500</th><th>Difference</th></tr></thead><tbody>`+ys.slice().reverse().map(y=>{const a=yr[y].p-1,b=yr[y].m-1;return `<tr><td class="n">${y}${yr[y].n<12?` <small>${yr[y].n} mo</small>`:''}</td>${cell(a)}${cell(b)}<td class="${a>=b?'up':'down'}">${sp(a-b,1)}</td></tr>`;}).join('')+'</tbody>';}
-  $('ppFoot').innerHTML=`Performance uses real monthly total returns (dividends reinvested) in ${cur}, the saved weights rebalanced every month, and the saved strategy's financing (borrowing at the risk-free rate + ${pct(p.ls.spread,1)}, short fee ${pct(p.ls.fee,1)}). History before the save date is a backtest: the weights were chosen knowing that history. Only the months after ${fmtM(p.dataEnd)} are a real, out-of-sample record. Saved portfolios live in this browser; use Export to keep a copy or move them to another device.`;}
-const SVC=['--you','--c-tech','--c-crypto','--c-fin','--accent','--c-cmdty','--c-bond','--c-def'];
-function renderSvCmp(list,src,mo,last,cur,cap,xtM,xfM,money){$('ppOne').hidden=true;$('ppCmp').hidden=false;$('ppSince').hidden=true;
+  // crisis windows (same months as the stress tests)
+  const crises=SCEN.map(([n,a,b])=>{const ia=mo.indexOf(a),ib=mo.indexOf(b);let g=1,m=1,c=1;for(let t=ia;t<=ib;t++){g*=1+Math.max(-1,Q.fs[t]||0);m*=1+src.mkt[t];c=Math.min(c,Q.cov[t]);}return {n,a,b,p:g-1,m:m-1,c};});
+  SV.last={p,isCur,cur,cap,dates,sets,gOpt,dOpt,K,st,sm,rows:rows.map(q=>({name:q.a.name,cls:CLS[q.a.cls][0],x:q.x,g:per(q.i)})),ex,byC,yr,crises,s,mo,Q,gk};
+  $('ppFoot').innerHTML=`Performance uses real monthly total returns (dividends reinvested) in ${cur}, the ${isCur?'current':'saved'} weights rebalanced every month, and the ${isCur?'current':'saved'} strategy's financing (borrowing at the risk-free rate + ${pct(p.ls.spread,1)}, short fee ${pct(p.ls.fee,1)}). ${isCur?'The whole history is a backtest: the weights were chosen knowing it.':`History before the save date is a backtest: the weights were chosen knowing that history. Only the months after ${fmtM(p.dataEnd)} are a real, out-of-sample record.`} Saved portfolios live in this browser; use Export to keep a copy or move them to another device.`;}
+function renderSvCmp(list,src,mo,last,cur,cap,money){$('ppOne').hidden=true;$('ppCmp').hidden=false;$('ppSince').hidden=true;
   const Qs=list.map(p=>({p,Q:svSeries(p,src)}));const full=Math.max(...Qs.map(x=>x.Q.full)),cmax=Math.max(...Qs.map(x=>x.Q.max));
-  let s=SV.range==='saved'?Math.max(full,...list.map(p=>{const k=mo.indexOf(p.dataEnd);return k<0?full:k+1;})):SV.range==='full'?full:SV.range==='max'?cmax:Math.max(cmax,last-12*(+SV.range)+1);if(s>last)s=full;
+  const sv=list.filter(p=>!p.live);
+  let s=SV.range==='saved'?Math.max(full,...sv.map(p=>{const k=mo.indexOf(p.dataEnd);return k<0?full:k+1;})):SV.range==='full'?full:SV.range==='max'?cmax:Math.max(cmax,last-12*(+SV.range)+1);if(s>last)s=full;
   const dates=[mo[s-1]||mo[0],...mo.slice(s,last+1)],rf=src.rfm.slice(s,last+1);
-  const rows=Qs.map(({p,Q},j)=>{const r=Q.fs.slice(s,last+1);const st=svStats(r,rf);const k0=mo.indexOf(p.dataEnd),after=k0>=0?Q.fs.slice(k0+1,last+1):[];return {p,st,c:SVC[j%SVC.length],after:after.length?growth(after).v[after.length]-1:null,na:after.length};});
+  const rows=Qs.map(({p,Q},j)=>{const r=Q.fs.slice(s,last+1);const st=svStats(r,rf);const k0=p.live?-1:mo.indexOf(p.dataEnd),after=k0>=0?Q.fs.slice(k0+1,last+1):[];return {p,st,c:SVC[j%SVC.length],after:after.length?growth(after).v[after.length]-1:null,na:after.length};});
   const sm=svStats(src.mkt.slice(s,last+1),rf);
-  const sets=[{n:'S&P 500',c:'--spx',v:sm.g.v,w:1.8},...rows.map(r=>({n:r.p.name,c:r.c,v:r.st.g.v,w:2.4}))];
+  const sets=[{n:'S&P 500',c:'--spx',v:sm.g.v,w:1.8},...rows.map(r=>({n:r.p.live?r.p.name+' (live)':r.p.name,c:r.c,v:r.st.g.v,w:r.p.live?3:2.4,dash:r.p.live?[6,4]:null}))];
   $('ppCK').textContent=`Value of ${eur(cap)} invested in ${fmtM(dates[0])}, ${cur}; ${s<full?'before '+fmtM(mo[full])+' some holdings were not trading yet and the others are scaled up':'every holding of every portfolio was trading'}`;
-  crLines($('ppCGrowth'),'ppcg',dates,sets,{log:SV.log,yf:v=>money(SV.log?Math.exp(v):v),ylab:'Value',lab:v=>`${money(v)} (${sp(v-1,1)})`,zero:1,ar:.42,minH:340,xt:W=>xtM(dates,W),xf:xfM(dates),dl:i=>fmtM(dates[i]),hitStep:Math.max(1,Math.floor(dates.length/240))});
+  crLines($('ppCGrowth'),'ppcg',dates,sets,{log:SV.log,yf:v=>money(SV.log?Math.exp(v):v),ylab:'Value',lab:v=>`${money(v)} (${sp(v-1,1)})`,zero:1,ar:.42,minH:340,xt:W=>svXt(dates,W),xf:svXf(dates),dl:i=>fmtM(dates[i]),hitStep:Math.max(1,Math.floor(dates.length/240))});
   $('ppCLeg').innerHTML=sets.map(x=>`<span><i style="background:var(${x.c})"></i>${esc(x.n)}</span>`).join('');
   const all=[...rows,{p:{name:'S&P 500',created:null,exp:null},st:sm,c:'--spx',after:null,spx:true}];
   const best=f=>Math.max(...rows.map(f)),worst=f=>Math.min(...rows.map(f));const td=(r,f,hi,txt)=>{if(r.spx)return `<td>${txt}</td>`;const x=f(r),b=hi?best(f):worst(f),w=hi?worst(f):best(f);return `<td class="${rows.length>1&&Math.abs(x-b)<1e-12?'b':rows.length>1&&Math.abs(x-w)<1e-12?'w':''}">${txt}</td>`;};
   $('ppCTable').innerHTML=`<thead><tr><th>Portfolio</th><th>Saved</th><th>Total return</th><th>CAGR</th><th>Volatility</th><th>Sharpe</th><th>Max drawdown</th><th>Worst month</th><th>${eur(cap)} becomes</th><th>Expected when saved</th><th>Since saved</th></tr></thead><tbody>`+
-    all.map(r=>{const st=r.st,n=st.g.v.length-1;return `<tr class="${r.spx?'':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.spx?'S&amp;P 500':`<a href="#" data-sv="${r.p.id}">${esc(r.p.name)}</a>`}</td><td>${r.p.created?svDate(r.p.created):'—'}</td>${td(r,q=>q.st.g.v[n],1,sp(st.g.v[n]-1,0))}${td(r,q=>q.st.g.cagr,1,pct(st.g.cagr))}${td(r,q=>-q.st.g.vol,1,pct(st.g.vol))}${td(r,q=>q.st.sharpe,1,st.sharpe.toFixed(2))}${td(r,q=>-q.st.dd,1,pct(-st.dd,0))}${td(r,q=>q.st.worst,1,sp(st.worst,0))}${td(r,q=>q.st.g.v[n],1,eur(cap*st.g.v[n]))}<td>${r.p.exp?`${pct(r.p.exp.ret)}<small>vol ${pct(r.p.exp.vol)}</small>`:'—'}</td><td>${r.spx?'—':r.after==null?'<small>no data yet</small>':sp(r.after,1)+`<small>${r.na} mo</small>`}</td></tr>`;}).join('')+'</tbody>';
-  // weights side by side
+    all.map(r=>{const st=r.st,n=st.g.v.length-1;return `<tr class="${r.p.live?'you':''}"><td class="n"><span class="dot" style="background:var(${r.c})"></span>${r.spx?'S&amp;P 500':`<a href="#" data-sv="${r.p.id}">${esc(r.p.name)}${r.p.live?' (live)':''}</a>`}</td><td>${r.p.live?'not saved':r.p.created?svDate(r.p.created):'—'}</td>${td(r,q=>q.st.g.v[n],1,sp(st.g.v[n]-1,0))}${td(r,q=>q.st.g.cagr,1,pct(st.g.cagr))}${td(r,q=>-q.st.g.vol,1,pct(st.g.vol))}${td(r,q=>q.st.sharpe,1,st.sharpe.toFixed(2))}${td(r,q=>-q.st.dd,1,pct(-st.dd,0))}${td(r,q=>q.st.worst,1,sp(st.worst,0))}${td(r,q=>q.st.g.v[n],1,eur(cap*st.g.v[n]))}<td>${r.p.exp?`${pct(r.p.exp.ret)}<small>vol ${pct(r.p.exp.vol)}</small>`:'—'}</td><td>${r.spx?'—':r.p.live?'<small>—</small>':r.after==null?'<small>no data yet</small>':sp(r.after,1)+`<small>${r.na} mo</small>`}</td></tr>`;}).join('')+'</tbody>';
   const ids=A.map((a,i)=>i).filter(i=>list.some(p=>Math.abs(p.w[A[i].id]||0)>1e-5)).sort((x,y)=>list.reduce((a,p)=>a+(p.w[A[y].id]||0),0)-list.reduce((a,p)=>a+(p.w[A[x].id]||0),0));
-  $('ppCW').innerHTML=`<thead><tr><th>Asset</th>${rows.map(r=>`<th><span class="dot" style="background:var(${r.c})"></span>${esc(r.p.name)}</th>`).join('')}</tr></thead><tbody>`+
+  $('ppCW').innerHTML=`<thead><tr><th>Asset</th>${rows.map(r=>`<th><span class="dot" style="background:var(${r.c})"></span>${esc(r.p.name)}${r.p.live?' (live)':''}</th>`).join('')}</tr></thead><tbody>`+
     ids.map(i=>`<tr><td class="n"><span class="dot" style="background:var(${CLS[A[i].cls][1]})"></span>${esc(A[i].name)}</td>${rows.map(r=>{const x=r.p.w[A[i].id]||0;return `<td style="${x?`background:color-mix(in srgb, var(--accent) ${Math.round(Math.min(1,Math.abs(x)/.2)*35)}%, transparent)`:''}">${x?pct(x,1):'·'}</td>`;}).join('')}</tr>`).join('')+'</tbody>';
-  $('ppFoot').innerHTML=`All portfolios are compared over the same months, ${fmtM(dates[0])} → ${fmtM(dates[dates.length-1])}. Monthly total returns in ${cur}, each portfolio rebalanced monthly with its own strategy. Best and worst values per column are highlighted.`;}
+  $('ppFoot').innerHTML=`All portfolios are compared over the same months, ${fmtM(dates[0])} → ${fmtM(dates[dates.length-1])}. Monthly total returns in ${cur}, each portfolio rebalanced monthly with its own strategy.${list.some(p=>p.live)?' The dashed line is the lab\'s current, unsaved portfolio.':''} Best and worst values per column are highlighted.`;}
+/* ---------- PDF investment report ---------- */
+let JSPDF=null;
+function loadJsPdf(){if(JSPDF)return Promise.resolve(JSPDF);if(window.jspdf)return Promise.resolve(JSPDF=window.jspdf.jsPDF);
+  return new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';sc.onload=()=>window.jspdf?ok(JSPDF=window.jspdf.jsPDF):no(new Error('jsPDF missing'));sc.onerror=()=>no(new Error('Could not load the PDF library (check the internet connection).'));document.head.appendChild(sc);});}
+// standard PDF fonts only cover Latin-1 (+ €, en/em dash, curly quotes, bullet, ellipsis): map the rest
+const pdfTxt=s=>String(s).replace(/−/g,'-').replace(/→/g,'->').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/σ/g,'vol').replace(/β/g,'beta').replace(/α/g,'alpha').replace(/[★●⇩]/g,'').replace(/&amp;/g,'&').replace(/<[^>]+>/g,'')
+  .replace(/[^\x00-\xff€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]/g,'?');
+function svChartImg(sets,dates,opt,w,h){const box=document.createElement('div');box.style.cssText=`position:absolute;left:-10000px;top:0;width:${w}px`;box.className='chart';const cv=document.createElement('canvas');cv.setAttribute('height',h);box.appendChild(cv);document.body.appendChild(box);
+  crLines(cv,'pdftmp',dates,sets,{...opt,ar:h/w,minH:h});const wc=document.createElement('canvas');wc.width=cv.width;wc.height=cv.height;const cx=wc.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,wc.width,wc.height);cx.drawImage(cv,0,0);const url=wc.toDataURL('image/jpeg',.88);const r={url,w:cv.width,h:cv.height};box.remove();delete HITS.pdftmp;return r;}
+async function svPdf(){const L0=SV.last;if(!L0)return;const btn=$('ppPdf');const lbl=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='Preparing PDF…';}
+  try{const jsPDF=await loadJsPdf();
+   // draw the charts in the light theme, whatever the screen uses
+   const root=document.documentElement,prev=root.getAttribute('data-theme');root.setAttribute('data-theme','light');
+   const sets=L0.sets.map(x=>({...x}));const g1=svChartImg(sets,L0.dates,L0.gOpt,1000,430),g2=svChartImg(sets.map(x=>({...x,v:crDD(x.v)})),L0.dates,L0.dOpt,1000,190);
+   const colOf=v=>getComputedStyle(root).getPropertyValue(v).trim();const legend=sets.map(x=>({n:x.n,c:colOf(x.c)}));
+   if(prev==null)root.removeAttribute('data-theme');else root.setAttribute('data-theme',prev);
+   const doc=new jsPDF({unit:'mm',format:'a4'});const PW=210,PH=297,MG=14,CW=PW-2*MG;let y=0;const p=L0.p;
+   const TEAL=[10,138,122],ORANGE=[217,130,43],INK=[25,32,40],MUTED=[110,120,130],LINE=[220,225,230],GOOD=[16,140,80],BAD=[200,50,50];
+   const T=(t,x,yy,o={})=>{doc.setFont('helvetica',o.b?'bold':'normal');doc.setFontSize(o.s||9);doc.setTextColor(...(o.c||INK));doc.text(pdfTxt(t),x,yy,o.a?{align:o.a}:undefined);};
+   const wrap=(t,x,yy,w,o={})=>{doc.setFont('helvetica',o.b?'bold':'normal');doc.setFontSize(o.s||8.5);doc.setTextColor(...(o.c||MUTED));const ls=doc.splitTextToSize(pdfTxt(t),w);doc.text(ls,x,yy);return yy+ls.length*(o.s||8.5)*.42;};
+   const page=()=>{doc.addPage();y=MG+4;};const need=h=>{if(y+h>PH-16)page();};
+   const H=t=>{need(12);T(t,MG,y,{b:1,s:12.5});doc.setDrawColor(...TEAL);doc.setLineWidth(.6);doc.line(MG,y+1.8,MG+18,y+1.8);y+=8;};
+   const table=(head,rows,cols,o={})=>{const rh=o.rh||6;const draw=()=>{doc.setFillColor(242,245,247);doc.rect(MG,y-4.2,CW,rh,'F');let x=MG;head.forEach((h,j)=>{T(h,j?x+cols[j]-1.5:x+1.5,y,{b:1,s:7.5,c:MUTED,a:j?'right':undefined});x+=cols[j];});y+=rh;};
+     need(rh*2.5);draw();rows.forEach((r,i)=>{if(y+rh>PH-16){page();draw();}if(i%2){doc.setFillColor(250,251,252);doc.rect(MG,y-4.2,CW,rh,'F');}let x=MG;r.forEach((c,j)=>{const v=typeof c==='object'&&c?c:{t:c};T(v.t,j?x+cols[j]-1.5:x+1.5,y,{s:8,b:v.b,c:v.c,a:j?'right':undefined});x+=cols[j];});y+=rh;});y+=3;};
+   const signC=v=>v>=0?GOOD:BAD;
+   // cover band
+   doc.setFillColor(...TEAL);doc.rect(0,0,PW,30,'F');T('MengualMar Portfolio Simulation',MG,11,{b:1,s:10,c:[255,255,255]});T('Investment report',MG,22,{b:1,s:20,c:[255,255,255]});
+   T(`Generated ${svDate(svToday())}`,PW-MG,11,{s:8.5,c:[220,245,240],a:'right'});T(`Monthly data to ${fmtM(L0.mo[L0.mo.length-1])}`,PW-MG,16,{s:8.5,c:[220,245,240],a:'right'});
+   y=42;T(p.name,MG,y,{b:1,s:17,c:ORANGE});y+=6.5;
+   const meta=[L0.isCur?'Live portfolio from the lab (not saved)':`Saved ${svDate(p.created)} with data up to ${fmtM(p.dataEnd)}`,`Strategy: ${svStratLabel(p.ls)}`,`${L0.rows.length} assets`,`Currency: ${L0.cur}`,`Period: ${fmtM(L0.dates[0])} - ${fmtM(L0.dates[L0.dates.length-1])}`];
+   y=wrap(meta.join('   ·   '),MG,y,CW,{s:8.5})+3;
+   // key figures grid
+   {const K=L0.K,cols=4,cw=CW/cols,ch=15;for(let i=0;i<K.length;i++){const cx=MG+(i%cols)*cw,cy=y+Math.floor(i/cols)*ch;doc.setDrawColor(...LINE);doc.setLineWidth(.2);doc.rect(cx,cy,cw,ch);
+      T(K[i][0].toUpperCase(),cx+2.5,cy+4.3,{s:6.3,c:MUTED});T(K[i][1],cx+2.5,cy+10,{b:1,s:12,c:K[i][3]==='up'?GOOD:K[i][3]==='down'?BAD:INK});T(String(K[i][2]).slice(0,52),cx+2.5,cy+13.4,{s:5.8,c:MUTED});}
+    y+=Math.ceil(K.length/cols)*ch+7;}
+   H('Performance');y=wrap(L0.gk,MG,y-2,CW,{s:7.5})+1;
+   const ih=CW*g1.h/g1.w;need(ih+8);doc.addImage(g1.url,'JPEG',MG,y,CW,ih);y+=ih+2;
+   {let x=MG;legend.slice().reverse().forEach(l=>{doc.setFillColor(...hexRgb(l.c));doc.rect(x,y-2.2,5,1.6,'F');T(l.n,x+6.5,y,{s:7.5});x+=10+doc.getTextWidth(pdfTxt(l.n));});y+=5;}
+   const ih2=CW*g2.h/g2.w;need(ih2+6);T('Drawdown: distance below the previous high',MG,y,{b:1,s:8,c:MUTED});y+=2;doc.addImage(g2.url,'JPEG',MG,y,CW,ih2);y+=ih2+4;
+   // allocation
+   page();H('Allocation');
+   {const tot=Object.values(L0.byC).filter(x=>x>0).reduce((a,b)=>a+b,0);let x=MG;Object.entries(L0.byC).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>{const w=CW*v/tot;doc.setFillColor(...hexRgb(colOf(CLS[c][1])));doc.rect(x,y,w,4,'F');x+=w;});y+=8;
+     let lx=MG,ly=y;Object.entries(L0.byC).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>{const t=`${CLS[c][0]} ${pct(v,1)}`;const tw=doc.getTextWidth(pdfTxt(t))+9;if(lx+tw>PW-MG){lx=MG;ly+=5;}doc.setFillColor(...hexRgb(colOf(CLS[c][1])));doc.circle(lx+1.4,ly-1,1.3,'F');T(t,lx+4,ly,{s:7.5});lx+=tw;});y=ly+7;}
+   table(['Asset','Asset class','Weight','Return / year*'],L0.rows.map(r=>[r.name,r.cls,{t:pct(r.x,1),b:1,c:r.x<0?BAD:INK},r.g==null?'-':{t:sp(r.g,1),c:signC(r.g)}]).concat(Math.abs(1-L0.ex.net)>.001?[[L0.ex.net>1?'Borrowed (leverage)':'Cash','',{t:pct(1-L0.ex.net,1),b:1},'']]:[]),[64,58,28,32]);
+   y=wrap(`* Annual return of each asset over ${fmtM(L0.dates[0])} - ${fmtM(L0.dates[L0.dates.length-1])}; - means it was not trading for all of it. Gross exposure ${pct(L0.ex.gross,0)}, net ${pct(L0.ex.net,0)}. Weights are fixed and rebalanced back every month.`,MG,y,CW,{s:7.5})+4;
+   // calendar years
+   H('Calendar-year returns');
+   table(['Year',p.name.slice(0,40),'S&P 500','Difference'],Object.keys(L0.yr).reverse().map(yy=>{const a=L0.yr[yy].p-1,b=L0.yr[yy].m-1;return [`${yy}${L0.yr[yy].n<12?` (${L0.yr[yy].n} mo)`:''}`,{t:sp(a,1),c:signC(a),b:1},{t:sp(b,1),c:signC(b)},{t:sp(a-b,1),c:signC(a-b)}];}),[40,52,45,45]);
+   // crises
+   H('Through past crises');
+   table(['Crisis','Months',p.name.slice(0,34),'S&P 500'],L0.crises.map(c=>[c.n,`${fmtM(c.a)} - ${fmtM(c.b)}`,{t:c.c>0?sp(c.p,1)+(c.c<.8?' *':''):'-',c:c.c>0?signC(c.p):MUTED,b:1},{t:sp(c.m,1),c:signC(c.m)}]),[62,50,35,35]);
+   y=wrap('Same months as the stress tests in the lab. * less than 80% of the portfolio was trading then; the rest is scaled up.',MG,y,CW,{s:7.2})+4;
+   // notes
+   H('Method and limits');
+   y=wrap(`Returns are real monthly total returns from Yahoo Finance (dividends reinvested) in ${L0.cur}; the portfolio is rebalanced to its weights every month, with ${svStratLabel(p.ls)==='Long only'?'no borrowing':'borrowing at the risk-free rate + '+pct(p.ls.spread,1)+' and a '+pct(p.ls.fee,1)+' short fee'}. Expected return and volatility come from the lab's model (Black-Litterman with Ledoit-Wolf shrinkage) ${L0.isCur?'today':'on the day the portfolio was saved'}. `+
+     (L0.isCur?'The whole history shown is a backtest: the weights were chosen knowing it, so it flatters the portfolio.':`History before ${fmtM(p.dataEnd)} is a backtest with hindsight; only the months after it are a real, out-of-sample record.`)+' Past returns do not predict future returns. This report is a simulation for study purposes, not investment advice.',MG,y,CW,{s:8,c:INK})+2;
+   const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setDrawColor(...LINE);doc.setLineWidth(.2);doc.line(MG,PH-11,PW-MG,PH-11);T(`MengualMar Portfolio Simulation · ${p.name}`,MG,PH-7,{s:7,c:MUTED});T(`Page ${i} of ${n} · not investment advice`,PW-MG,PH-7,{s:7,c:MUTED,a:'right'});}
+   const fn=`${p.name.replace(/[\\/:*?"<>|]+/g,'').trim()||'portfolio'} - investment report ${svToday()}.pdf`;doc.save(fn);if($('ppMsg'))$('ppMsg').textContent=`Report downloaded: ${fn}`;}
+  catch(err){if($('ppMsg'))$('ppMsg').textContent='Could not create the PDF: '+err.message;}
+  finally{if(btn){btn.disabled=false;btn.textContent=lbl;}}}
+function hexRgb(c){c=c.trim();if(c.startsWith('#')){const h=c.length===4?c.slice(1).split('').map(x=>x+x).join(''):c.slice(1,7);return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16));}const m=c.match(/\d+(\.\d+)?/g);return m?m.slice(0,3).map(Number):[120,120,120];}
+/* ---------- events ---------- */
 function svAction(e){const t=e.target.closest('button,a[data-sv],[data-rg]');if(!t)return;
   if(t.dataset.sv){e.preventDefault();SV.id=t.dataset.sv;SV.confirm=null;SV.rename=false;renderSaved();return;}
   if(t.dataset.rg){SV.range=t.dataset.rg;renderSaved();return;}
+  if(t.dataset.del){SV.confirm=t.dataset.del;renderSaved();return;}
+  if(t.dataset.delno){SV.confirm=null;renderSaved();return;}
+  if(t.dataset.delok){const id=t.dataset.delok;svStore(svList().filter(q=>q.id!==id));if(CURNAME&&CURNAME.id===id)CURNAME=null;SV.confirm=null;if(SV.id===id)SV.id='__cur';$('ppMsg').textContent='Portfolio removed.';updYN();renderSaved();return;}
+  if(t.dataset.wx!=null){S.w[+t.dataset.wx]=0;allocList();onWeights();renderSaved();return;}
   const id=t.id,p=svGet(SV.id);
   if(id==='ppSaveBtn'){const n=$('ppName').value||$('ppName').placeholder.replace(/^e\.g\. /,'');const q=svSave(n);if(q){SV.id=q.id;SV.range='full';$('ppName').value='';$('ppMsg').textContent=`Saved “${q.name}”.`;}else $('ppMsg').textContent='Could not save: this browser blocks storage. Use Export instead.';renderSaved();return;}
-  if(id==='ppLoad'&&p){const w=svWeights(p);closeSaved();setStrat({...p.ls},()=>w);return;}
+  if(id==='ppSaveCur'){$('ppName').focus();$('ppName').scrollIntoView({block:'center'});return;}
+  if(id==='ppLoad'&&p){const w=svWeights(p);CURNAME={id:p.id,name:p.name};closeSaved();setStrat({...p.ls},()=>w);return;}
   if(id==='ppRename'){SV.rename=true;renderSaved();setTimeout(()=>{const x=$('ppRenameIn');if(x){x.focus();x.select();}},0);return;}
-  if(id==='ppRenameOk'&&p){const v=$('ppRenameIn').value.trim().slice(0,60);if(v){const L=svList();L.find(q=>q.id===p.id).name=v;svStore(L);}SV.rename=false;renderSaved();return;}
+  if(id==='ppRenameOk'&&p){const v=$('ppRenameIn').value.trim().slice(0,60);if(v){const L=svList();L.find(q=>q.id===p.id).name=v;svStore(L);if(CURNAME&&CURNAME.id===p.id)CURNAME.name=v;}SV.rename=false;updYN();renderSaved();return;}
   if(id==='ppDup'&&p){const L=svList();const q={...JSON.parse(JSON.stringify(p)),id:'p'+Date.now().toString(36),name:(p.name+' (copy)').slice(0,60)};L.push(q);svStore(L);SV.id=q.id;renderSaved();return;}
-  if(id==='ppDel'){SV.confirm=SV.id;renderSaved();return;}
-  if(id==='ppDelNo'){SV.confirm=null;renderSaved();return;}
-  if(id==='ppDelOk'&&p){svStore(svList().filter(q=>q.id!==p.id));SV.confirm=null;SV.id=null;renderSaved();return;}
+  if(id==='ppDel'&&p){SV.confirm=p.id;renderSaved();$('ppTabs').scrollIntoView({block:'center'});return;}
+  if(id==='ppPdf'){svPdf();return;}
+  if(id==='ppNorm'){if(!LSON()){S.w=norm(Float64Array.from(S.w,x=>Math.max(0,x)));allocList();onWeights();renderSaved();}return;}
   if(id==='ppUsd'){SV.usd=true;renderSaved();return;}if(id==='ppBase'){SV.usd=false;renderSaved();return;}
   if(id==='ppLog'){SV.log=!SV.log;t.setAttribute('aria-pressed',SV.log);renderSaved();return;}
   if(id==='ppOthers'){SV.others=!SV.others;t.setAttribute('aria-pressed',SV.others);renderSaved();return;}
-  if(id==='ppExport'){const blob=new Blob([JSON.stringify({app:'Frontier Lab',version:1,exported:svToday(),portfolios:svList()},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`frontier-lab-portfolios-${svToday()}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);return;}
+  if(id==='ppExport'){const blob=new Blob([JSON.stringify({app:'MengualMar Portfolio Simulation',version:1,exported:svToday(),portfolios:svList()},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`mengualmar-portfolios-${svToday()}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);return;}
   if(id==='ppImportBtn'){$('ppImport').click();return;}
   if(id==='ppBack'){closeSaved();return;}}
 $('ppage').addEventListener('click',svAction);
-$('ppage').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='ppName'){e.preventDefault();$('ppSaveBtn').click();}if(e.key==='Enter'&&e.target.id==='ppRenameIn'){e.preventDefault();$('ppRenameOk').click();}});
+// editing the live portfolio's weights: applied when the field is left or Enter is pressed, so typing is not interrupted
+$('ppage').addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.wi!=null){const i=+t.dataset.wi;const v=Math.max(wMin(),Math.min(wMax(),+t.value||0));S.w[i]=v/100;allocList();onWeights();renderSaved();}
+  if(t.id==='ppAdd'&&t.value!==''){const i=+t.value;S.w[i]=.05;allocList();onWeights();renderSaved();}});
+$('ppage').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='ppName'){e.preventDefault();$('ppSaveBtn').click();}if(e.key==='Enter'&&e.target.id==='ppRenameIn'){e.preventDefault();$('ppRenameOk').click();}if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.wi!=null){e.preventDefault();e.target.blur();}});
 $('ppImport').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());const inc=(Array.isArray(j)?j:j.portfolios||[]).filter(p=>p&&p.id&&p.w&&p.name);const L=svList();let n=0;
   for(const p of inc){const q={ls:{short:false,sb:.3,fee:.005,lev:false,L:2,spread:.015,mm:.25},exp:{ret:0,vol:0,sharpe:0},dataEnd:DATA_END(),created:svToday(),...p};if(L.some(x=>x.id===q.id))continue;L.push(q);n++;}
-  svStore(L);$('ppMsg').textContent=n?`Imported ${n} portfolio${n===1?'':'s'}.`:'Nothing new: those portfolios are already here.';renderSaved();}catch(_){$('ppMsg').textContent='That file is not a Frontier Lab export.';}e.target.value='';});
-$('savedBtn').onclick=()=>openSaved();$('pSave').onclick=()=>{openSaved();setTimeout(()=>$('ppName').focus(),50);};
-document.addEventListener('keydown',e=>{if(SV.on&&e.key==='Escape'&&e.target.tagName!=='INPUT')closeSaved();});
+  svStore(L);$('ppMsg').textContent=n?`Imported ${n} portfolio${n===1?'':'s'}.`:'Nothing new: those portfolios are already here.';updYN();renderSaved();}catch(_){$('ppMsg').textContent='That file is not a MengualMar Portfolio Simulation export.';}e.target.value='';});
+$('savedBtn').onclick=()=>openSaved();$('pSave').onclick=()=>{openSaved('__cur');setTimeout(()=>$('ppName').focus(),50);};
+document.addEventListener('keydown',e=>{if(SV.on&&e.key==='Escape'&&!['INPUT','SELECT'].includes(e.target.tagName))closeSaved();});
 let svRz;window.addEventListener('resize',()=>{if(!SV.on)return;clearTimeout(svRz);svRz=setTimeout(renderSaved,200);});
+
 /* ---------- wiring ---------- */
 document.addEventListener('click',e=>{const t=e.target.closest('[data-asset]');if(t){e.preventDefault();openAsset(t.dataset.asset);}});
 document.addEventListener('keydown',e=>{const t=e.target.closest&&e.target.closest('.asset-link[data-asset]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openAsset(t.dataset.asset);}
@@ -1335,8 +1452,8 @@ window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id=
 
 const visible=p=>!document.querySelector(`[data-pane="${p}"]`).hidden;
 const DRAW={assets:drawAssets,cmp:drawCompare,frontier:drawFrontier,down:drawDown,rb:drawRB,stress:drawStress,bt:drawBT,capm:drawSML,corr:drawCorr,model:modelUI};
-function drawVisible(){if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
-let mcT,tsT;function onWeights(){updAlloc();hero();clearTimeout(mcT);mcT=setTimeout(drawVisible,(visible('mc')||visible('cmp'))?150:30);clearTimeout(tsT);tsT=setTimeout(()=>trSync(S.w),150);}
+function drawVisible(){updYN();if(visible('mc'))runMC();else hero();for(const k in DRAW)if(visible(k))DRAW[k]();}
+let mcT,tsT,svT;function onWeights(){updAlloc();hero();updYN();if(SV.on){clearTimeout(svT);svT=setTimeout(renderSaved,120);}clearTimeout(mcT);mcT=setTimeout(drawVisible,(visible('mc')||visible('cmp'))?150:30);clearTimeout(tsT);tsT=setTimeout(()=>trSync(S.w),150);}
 let fullT;function full(){clearTimeout(fullT);$('hero').classList.add('busy');fullT=setTimeout(()=>{PC.clear();window._mc=null;rebuild();if(AFTER){S.w=Float64Array.from(AFTER());AFTER=null;}trSetup();trSync(S.w);allocList();modelUI();drawVisible();$('hero').classList.remove('busy');if(AP!=null)renderAsset();else if(CR.on)renderCrisis();else if(SV.on)renderSaved();else{const id=location.hash.slice(1);if(id==='portfolios')openSaved(null,false);else if(id.startsWith('crisis-')&&crBySlug(id.slice(7)))openCrisis(crBySlug(id.slice(7)).id,false);else if(id&&A.some(x=>x.id===id))openAsset(id,false);}},20);}
 $('alloc').addEventListener('input',e=>{const i=+e.target.dataset.i;if(isNaN(i))return;const v=Math.max(wMin(),Math.min(wMax(),+e.target.value||0));S.w[i]=v/100;if(e.target.type==='range')$('n'+i).value=v.toFixed(1);else $('r'+i).value=Math.min(rSpan(),Math.max(rMin(),v));e.target.closest('.ar').classList.toggle('short',v<0);onWeights();});
 const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();trSync(S.w);};
