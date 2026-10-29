@@ -35,8 +35,7 @@ Sources and splices (all returns are monthly, in USD, dividends reinvested):
   September 2001 (EADS), and American Water Works listed in April 2008.
 - GE: Yahoo records the GE HealthCare (Jan 2023) and GE Vernova (Apr 2024)
   spin-offs as split factors, so the adjusted close assumes the spun-off
-  shares were sold and reinvested in GE. Occidental's California Resources
-  spin-off (Dec 2014) is handled the same way by Yahoo.
+  shares were sold and reinvested in GE.
 - Unilever (UL, the NYSE ADR): Yahoo records the 8-for-9 share consolidation
   of 9 Dec 2025 but not the Magnum Ice Cream demerger (1 MICC per 5 Unilever
   shares, ex 8 Dec 2025), so December 2025 adds back the spun-off value
@@ -54,7 +53,7 @@ US = {
     "NVDA": "NVDA", "AMZN": "AMZN", "GOOGL": "GOOGL", "MSFT": "MSFT", "META": "META", "AAPL": "AAPL",
     "VRT": "VRT", "VST": "VST", "ETN": "ETN", "ANET": "ANET", "MU": "MU", "TSM": "TSM", "AMAT": "AMAT",
     "CAT": "CAT", "GE": "GE", "AWK": "AWK", "NOC": "NOC", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "LMT": "LMT", "NUE": "NUE",
-    "TM": "TM", "PFE": "PFE", "UNH": "UNH", "JNJ": "JNJ", "UL": "UL", "OXY": "OXY", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
+    "TM": "TM", "PFE": "PFE", "UNH": "UNH", "JNJ": "JNJ", "UL": "UL", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
 }
 LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local units per USD)
     "XIAOMI": ("1810.HK", "DEXHKUS", True), "SAMSUNG": ("005930.KS", "DEXKOUS", True),
@@ -64,7 +63,7 @@ LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local 
 }
 ORDER = ["NVDA", "AMZN", "GOOGL", "MSFT", "META", "AAPL", "VRT", "VST", "ETN", "ANET", "MU", "TSM", "XIAOMI",
          "AMAT", "SAMSUNG", "CAT", "GE", "AIR", "AVGO", "CRWD", "JPM", "GS", "LMT", "NOC", "NUE", "TM", "PFE", "UNH", "JNJ", "UL", "ITX", "ASML",
-         "SKHYNIX", "GOLD", "COPX", "ENERGY", "OXY", "REP", "BTC", "UST", "FER", "IBE", "AWK", "COST", "SPY"]
+         "SKHYNIX", "GOLD", "COPX", "ENERGY", "REP", "BTC", "UST", "FER", "IBE", "AWK", "COST", "SPY"]
 
 
 def daily(ticker: str, adjusted: bool = True) -> pd.DataFrame:
