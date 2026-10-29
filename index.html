@@ -61,7 +61,7 @@ h3{margin:0;font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;color
 .main{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
 @media (max-width:1000px){.main{grid-template-columns:1fr}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
-aside.panel{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:hidden}
+aside.panel{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
 @media (max-width:1000px){aside.panel{position:static;max-height:none}}
 .presets{display:flex;flex-wrap:wrap;gap:6px}
 button{font-family:var(--body);font-weight:600;font-size:.78rem;border-radius:7px;padding:7px 11px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
@@ -76,7 +76,7 @@ button.ghost{background:none}
 .mixleg em{font-style:normal;font-family:var(--mono);color:var(--muted)}
 .sumbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--mono);font-size:.75rem;padding:7px 10px;border-radius:8px;background:var(--you-soft);color:var(--you)}
 .sumbar button{padding:3px 8px;font-size:.7rem}
-.alloc{overflow-y:auto;margin-inline:-16px;padding-inline:16px;display:flex;flex-direction:column;gap:2px;flex:1;min-height:0}
+.alloc{overflow-y:auto;margin-inline:-16px;padding-inline:16px;display:flex;flex-direction:column;gap:2px;flex:1 0 auto;min-height:min(340px,55vh);max-height:min(340px,55vh)}
 @media (max-width:1000px){.alloc{max-height:none;overflow:visible}}
 .grp{font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600;padding:10px 0 4px;display:flex;justify-content:space-between}
 .ar{display:grid;grid-template-columns:minmax(0,1fr) 64px;grid-template-rows:auto auto;column-gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
