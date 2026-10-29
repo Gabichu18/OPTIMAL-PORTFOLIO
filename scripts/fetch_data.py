@@ -2,7 +2,7 @@
 
 Usage:
     pip install yfinance pandas
-    python scripts/fetch_data.py
+    python scripts/fetch_data.py [output file]   (default: data/monthly_returns_bp.txt)
     python scripts/build.py
 
 Output format (one line per series, returns in basis points):
@@ -45,6 +45,7 @@ Sources and splices (all returns are monthly, in USD, dividends reinvested):
 - Repsol (REP.MC, EUR) is converted to USD like Ferrovial; Yahoo's history
   starts in January 2000.
 """
+import sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -146,7 +147,7 @@ def main() -> None:
     ibor = fred("IR3TIB01EZM156N").combine_first(fred("ECBDFR")).reindex(P.index).ffill()
     rfe = (ibor.shift(1) / 12 / 100).loc[R.index]
     lines.append("RFEUR|0|" + ",".join("" if pd.isna(x) else str(int(round(x * 1e4))) for x in rfe.values))
-    out = Path(__file__).resolve().parent.parent / "data/monthly_returns_bp.txt"
+    out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent / "data/monthly_returns_bp.txt"
     out.write_text("\n".join(lines) + "\n")
     print(f"Wrote {out} ({months[0]} to {months[-1]}, {len(months)} months)")
 

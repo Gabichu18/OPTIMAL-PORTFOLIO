@@ -38,7 +38,8 @@ src/app.template.html         page markup, UI logic and charts
 src/style.css                 styles (dark and light themes)
 src/engine.js                 all the maths: estimation, Black-Litterman, Ledoit-Wolf, optimizers, risk stats, Monte Carlo, walk-forward
 data/monthly_returns_bp.txt   monthly USD total returns in basis points
-scripts/fetch_data.py         refresh the data from Yahoo Finance
+scripts/fetch_data.py         download the full data set from Yahoo Finance and FRED
+scripts/update_data.py        weekly update: refresh only the latest months, with sanity checks
 scripts/build.py              rebuild index.html from src/ and data/
 ```
 
@@ -83,3 +84,8 @@ python scripts/build.py
 - Maillard, S., Roncalli, T. & Teïletche, J. (2010). The Properties of Equally Weighted Risk Contribution Portfolios. *Journal of Portfolio Management*.
 - Stambaugh, R. (1997). Analyzing Investments Whose Histories Differ in Length. *Journal of Financial Economics*.
 - DeMiguel, V., Garlappi, L. & Uppal, R. (2009). Optimal Versus Naive Diversification. *Review of Financial Studies*.
+
+## Weekly data update
+
+`.github/workflows/update-data.yml` runs every Saturday at 06:00 UTC (and on demand from the Actions tab, "Weekly data update" → "Run workflow"). It downloads the latest prices, replaces the current month-to-date and any new month in `data/monthly_returns_bp.txt`, rebuilds `index.html`, commits and republishes the site. The older history, which was checked by hand, is never overwritten. If the download looks wrong (a missing series, no recent prices, a monthly move beyond 75%, or recent history that disagrees with the checked data), nothing is committed and the run shows as failed. The crisis daily data and the market caps used by the cap-weighted portfolio are not part of the weekly update.
+

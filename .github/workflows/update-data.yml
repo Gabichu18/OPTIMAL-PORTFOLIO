@@ -1,0 +1,46 @@
+name: Weekly data update
+
+on:
+  schedule:
+    - cron: "0 6 * * 6"   # every Saturday 06:00 UTC, after Friday's close
+  workflow_dispatch:       # "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install yfinance pandas numpy
+
+      - name: Fetch prices and roll the data forward
+        run: python scripts/update_data.py
+
+      - name: Rebuild the app
+        run: python scripts/build.py
+
+      - name: Commit and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then echo "No new data this week."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Weekly data update ($(date -u +%Y-%m-%d))"
+          git push
+          # commits pushed by this workflow do not start a Pages build on their own
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" >/dev/null || echo "Pages build request failed; it will publish on the next push."
