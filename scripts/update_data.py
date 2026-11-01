@@ -70,6 +70,10 @@ def main() -> None:
         fetch(fresh)
     o_start, o_n, old = parse(DATA)
     n_start, n_n, new = parse(fresh)
+    # a month the stock market has not opened in yet (e.g. a weekend on the 1st, when only Bitcoin has traded)
+    while n_n > 1 and "SPY" in new and (len(new["SPY"]) < n_n or new["SPY"][n_n - 1] is None):
+        n_n -= 1
+        new = {k: v[:n_n] for k, v in new.items()}
     o_last, n_last = month_add(o_start, o_n - 1), month_add(n_start, n_n - 1)
 
     problems = []

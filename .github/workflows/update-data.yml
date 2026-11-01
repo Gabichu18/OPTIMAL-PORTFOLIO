@@ -6,7 +6,7 @@ on:
   workflow_dispatch:       # "Run workflow" button in the Actions tab
   push:                    # an asset added to or changed in the download list is fetched right away
     branches: [main]
-    paths: [scripts/fetch_data.py]
+    paths: [scripts/fetch_data.py, scripts/update_data.py]
 
 permissions:
   contents: write
