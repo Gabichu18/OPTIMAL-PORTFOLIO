@@ -8,6 +8,8 @@ The full history in data/monthly_returns_bp.txt has been checked by hand
 (splices, bad prints, corporate actions), so a fresh download only replaces
 the most recent months: the last month already in the file (usually a month
 still in progress) and any month after it. Everything older is kept as is.
+An asset that is in fetch_data.py but not yet in the data file is added with
+its full downloaded history.
 The script refuses to write anything if the download looks wrong (missing
 series, no recent data, implausible returns), so a bad week leaves the
 published data untouched.
@@ -87,7 +89,23 @@ def main() -> None:
     shift = (int(o_start[:4]) * 12 + int(o_start[5:])) - (int(n_start[:4]) * 12 + int(n_start[5:]))
     n_total = o_n - 1 + (n_n - (cut + shift))
     merged = {}
-    for sid, v in old.items():
+    added = []
+    for sid in new:
+        if sid in old:
+            continue
+        # an asset added to fetch_data.py: its whole history comes from the download
+        full = [new[sid][j + shift] if 0 <= j + shift < len(new[sid]) else None for j in range(n_total)]
+        if sum(x is not None for x in full) < 24:
+            problems.append(f"new series {sid}: fewer than 24 months of data")
+        for j, x in enumerate(full):
+            if x is not None and abs(x / SCALE.get(sid, 1e4)) > MAX_ABS.get(sid, DEFAULT_MAX):
+                problems.append(f"new series {sid} {month_add(o_start, j)}: {x / SCALE.get(sid, 1e4):+.0%} looks wrong")
+        added.append(sid)
+    for sid in new:
+        if sid not in old:
+            merged[sid] = [new[sid][j + shift] if 0 <= j + shift < len(new[sid]) else None for j in range(n_total)]
+            continue
+        v = old[sid]
         tail = new[sid][cut + shift:]
         merged[sid] = v[:cut] + tail
         for k, x in enumerate(tail):
@@ -108,7 +126,8 @@ def main() -> None:
         sys.exit("Not updating:\n- " + "\n- ".join(problems))
 
     write(DATA, o_start, n_total, merged)
-    print(f"Updated {DATA.name}: {o_last} refreshed, now {o_start} to {n_last} ({n_total} months)")
+    print(f"Updated {DATA.name}: {o_last} refreshed, now {o_start} to {n_last} ({n_total} months)"
+          + (f"; added {', '.join(added)}" if added else ""))
 
 
 if __name__ == "__main__":

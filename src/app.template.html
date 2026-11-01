@@ -197,7 +197,7 @@ button.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
   </div>
 </header>
 
-<section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating 43 assets on 30 years of data…</div></div></section>
+<section class="hero" id="hero" aria-label="Your portfolio summary"><div class="hk" style="grid-column:1/-1"><div class="lbl">Estimating the model on 30 years of data…</div></div></section>
 
 <section class="panel strat" id="strat" aria-label="Strategy: short selling and leverage">
   <div class="sthead">
@@ -1532,7 +1532,7 @@ const setW=w=>{S.w=Float64Array.from(w);allocList();drawVisible();trSync(S.w);};
 $('pTan').onclick=()=>setW(O.tangency.w);$('pMin').onclick=()=>setW(O.minvar.w);$('pSor').onclick=()=>setW(D.tangency.w);$('pMdd').onclick=()=>setW(D.minvar.w);$('pRP').onclick=()=>setW(RP);
 $('pEq').onclick=()=>setW(A.map(()=>1/N));$('pCap').onclick=()=>setW(capW());$('pClr').onclick=()=>setW(A.map(()=>0));$('normBtn').onclick=()=>{if(!LSON()){setW(norm(S.w));return;}const n=exposure(S.w).net;if(n>.01)setW(scaleW(S.w,1/n));};
 // market caps, USD bn, Yahoo Finance 9 Oct 2026 (HKD/KRW/EUR converted at that day's FX)
-const CAPS={NVDA:5536.4,AMZN:2830.7,GOOGL:4300.8,MSFT:3973.2,META:1830.8,AAPL:4913.0,VRT:93.5,VST:54.2,ETN:166.8,ANET:273.4,MU:1162.1,TSM:2351.1,XIAOMI:85.2,AMAT:402.4,SAMSUNG:1283.9,CAT:368.0,GE:325.2,AIR:172.0,AVGO:1725.9,CRWD:281.6,JPM:885.1,GS:260.7,LMT:117.6,NOC:68.5,NUE:56.8,TM:219.4,PFE:161.2,UNH:343.3,JNJ:625.4,UL:134.1,REP:35.6,ITX:188.0,ASML:683.8,SKHYNIX:892.0,BTC:1658.9,FER:36.0,IBE:159.1,AWK:25.1,COST:419.6};
+const CAPS={NVDA:5536.4,AMZN:2830.7,GOOGL:4300.8,MSFT:3973.2,META:1830.8,AAPL:4913.0,VRT:93.5,VST:54.2,ETN:166.8,ANET:273.4,MU:1162.1,TSM:2351.1,XIAOMI:85.2,AMAT:402.4,SAMSUNG:1283.9,CAT:368.0,GE:325.2,AIR:172.0,AVGO:1725.9,CRWD:281.6,JPM:885.1,GS:260.7,BX:147.3,LMT:117.6,NOC:68.5,NUE:56.8,TM:219.4,PFE:161.2,UNH:343.3,JNJ:625.4,UL:134.1,REP:35.6,ITX:188.0,ASML:683.8,SKHYNIX:892.0,BTC:1658.9,FER:36.0,IBE:159.1,AWK:25.1,COST:419.6};
 function capW(){const w=Float64Array.from(A.map((a,i)=>S.active[i]?(CAPS[a.id]||0):0));return norm(w);}
 const PINFO={
  pCap:['Cap-weighted','Each stock (and Bitcoin) weighted by its market value, like the S&P 500 or MSCI World. Gold, copper miners, the energy ETF and Treasuries get zero.','The market portfolio of CAPM. Zero estimation, low turnover, what index funds hold.','Concentrated in the largest companies (Nvidia, Apple, Alphabet, Microsoft). Buys more of whatever has already risen.'],

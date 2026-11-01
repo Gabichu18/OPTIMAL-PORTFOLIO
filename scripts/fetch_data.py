@@ -42,6 +42,8 @@ Sources and splices (all returns are monthly, in USD, dividends reinvested):
   of 9 Dec 2025 but not the Magnum Ice Cream demerger (1 MICC per 5 Unilever
   shares, ex 8 Dec 2025), so December 2025 adds back the spun-off value
   ($14.92 x 0.225 per share against a $62.27 close).
+- Blackstone (BX) listed in June 2007; it was a partnership until July 2019 and
+  Yahoo's adjusted close includes its distributions.
 - Repsol (REP.MC, EUR) is converted to USD like Ferrovial; Yahoo's history
   starts in January 2000.
 """
@@ -55,7 +57,7 @@ START, END = "1996-08-01", None  # END=None: up to today
 US = {
     "NVDA": "NVDA", "AMZN": "AMZN", "GOOGL": "GOOGL", "MSFT": "MSFT", "META": "META", "AAPL": "AAPL",
     "VRT": "VRT", "VST": "VST", "ETN": "ETN", "ANET": "ANET", "MU": "MU", "TSM": "TSM", "AMAT": "AMAT",
-    "CAT": "CAT", "GE": "GE", "AWK": "AWK", "NOC": "NOC", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "LMT": "LMT", "NUE": "NUE",
+    "CAT": "CAT", "GE": "GE", "AWK": "AWK", "NOC": "NOC", "AVGO": "AVGO", "CRWD": "CRWD", "JPM": "JPM", "GS": "GS", "BX": "BX", "LMT": "LMT", "NUE": "NUE",
     "TM": "TM", "PFE": "PFE", "UNH": "UNH", "JNJ": "JNJ", "UL": "UL", "ASML": "ASML", "GOLD": "GC=F", "BTC": "BTC-USD", "COST": "COST", "SPY": "SPY",
 }
 LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local units per USD)
@@ -65,7 +67,7 @@ LOCAL = {  # id -> (Yahoo ticker, FRED FX series, True if FX is quoted as local 
     "REP": ("REP.MC", "DEXUSEU", False),
 }
 ORDER = ["NVDA", "AMZN", "GOOGL", "MSFT", "META", "AAPL", "VRT", "VST", "ETN", "ANET", "MU", "TSM", "XIAOMI",
-         "AMAT", "SAMSUNG", "CAT", "GE", "AIR", "AVGO", "CRWD", "JPM", "GS", "LMT", "NOC", "NUE", "TM", "PFE", "UNH", "JNJ", "UL", "ITX", "ASML",
+         "AMAT", "SAMSUNG", "CAT", "GE", "AIR", "AVGO", "CRWD", "JPM", "GS", "BX", "LMT", "NOC", "NUE", "TM", "PFE", "UNH", "JNJ", "UL", "ITX", "ASML",
          "SKHYNIX", "GOLD", "COPX", "ENERGY", "REP", "BTC", "UST", "FER", "IBE", "AWK", "COST", "SPY"]
 
 

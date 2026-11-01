@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "0 6 * * 6"   # every Saturday 06:00 UTC, after Friday's close
   workflow_dispatch:       # "Run workflow" button in the Actions tab
+  push:                    # an asset added to or changed in the download list is fetched right away
+    branches: [main]
+    paths: [scripts/fetch_data.py]
 
 permissions:
   contents: write
