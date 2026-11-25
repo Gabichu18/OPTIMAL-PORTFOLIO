@@ -1284,10 +1284,10 @@ function renderSaved(){if(!M||!SV.on)return;const list=svList();const src=crSrc2
   const k0=isCur?-1:mo.indexOf(p.dataEnd),after=k0>=0?Q.fs.slice(k0+1,last+1):[];const gA=after.length?growth(after):null;
   // header
   $('ppName2').innerHTML=SV.rename&&!isCur?`<input id="ppRenameIn" value="${esc(p.name)}" maxlength="60" aria-label="New name"> <button id="ppRenameOk">Save name</button>`:esc(p.name);
-  $('ppMeta').innerHTML=(isCur?`<span class="chip" style="color:var(--you);border-color:var(--you)">Live from the lab${curSaved?' · matches a saved portfolio':' · <b>not saved yet</b>'}</span>`:`<span class="chip">Saved <b>${svDate(p.created)}</b></span><span class="chip">Data then up to <b>${fmtM(p.dataEnd)}</b></span>`)+
+  $('ppMeta').innerHTML=(isCur?`<span class="chip" style="color:var(--you);border-color:var(--you)">Live from the lab${curSaved?' · matches a saved portfolio':' · <b>not saved yet</b>'}</span>`:(svMatch(p)?`<span class="chip" style="color:var(--you);border-color:var(--you)">● Active in the lab</span>`:CURNAME&&CURNAME.id===p.id?`<span class="chip" style="color:var(--you);border-color:var(--you)">● In the lab, with edits (see Current portfolio)</span>`:'')+`<span class="chip">Saved <b>${svDate(p.created)}</b></span><span class="chip">Data then up to <b>${fmtM(p.dataEnd)}</b></span>`)+
     `<span class="chip">Strategy <b>${svStratLabel(p.ls)}</b></span><span class="chip">${Object.keys(p.w).length} assets</span><span class="chip">Currency <b>${cur}</b></span>`+
     (miss.length?`<span class="chip" style="color:var(--bad);border-color:var(--bad)">No longer in the lab: <b>${miss.map(esc).join(', ')}</b> (${pct(miss.reduce((a,id)=>a+p.w[id],0),0)}, held as cash)</span>`:'');
-  $('ppActions').innerHTML=(isCur?`<button id="ppSaveCur" class="primary">★ Save this portfolio…</button>`:`<button id="ppLoad">Load into the lab</button><button id="ppRename" class="ghost">Rename</button><button id="ppDup" class="ghost">Duplicate</button><button id="ppDel" class="ghost">Remove</button>`)+
+  $('ppActions').innerHTML=(isCur?`<button id="ppSaveCur" class="primary">★ Save this portfolio…</button>`:`<button id="ppLoad" class="primary">Open in the lab →</button><button id="ppEditW">Edit weights</button><button id="ppRename" class="ghost">Rename</button><button id="ppDup" class="ghost">Duplicate</button><button id="ppDel" class="ghost">Remove</button>`)+
     `<button id="ppPdf" class="ghost" title="Download a PDF investment report of this portfolio">⇩ PDF report</button>`;
   // KPIs
   const k=(l,v,sub,cl)=>`<div><span class="l">${l}</span><span class="v ${cl||''}">${v}</span><span class="s">${sub||''}</span></div>`;
@@ -1474,9 +1474,17 @@ function syUI(){const b=$('ppSyncBtn');if(!b)return;const st=!SY.token?'off':SY.
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&SY.token&&Date.now()-(SY.last||0)>15e3)sync();});
 window.addEventListener('focus',()=>{if(SY.token&&Date.now()-(SY.last||0)>15e3)sync();});
 if(SY.token)setTimeout(sync,2500);
+/* ---------- selecting a saved portfolio makes it the lab's portfolio ---------- */
+// every other page (frontier, Monte Carlo, stress tests, backtest, crisis pages...) then analyses it, and its weights can be edited
+function svActivate(p){if(!p||p.live)return;if(svMatch(p)){CURNAME={id:p.id,name:p.name};updYN();return;}
+  const L=svList();if(!L.some(svMatch))SV.undo={w:Float64Array.from(S.w),ls:{...S.ls}};else SV.undo=null;
+  CURNAME={id:p.id,name:p.name};const w=svWeights(p);
+  if(lsKey(p.ls)===lsKey(S.ls)){S.w=Float64Array.from(w);if(!LSON())S.w=pw(S.w);allocList();onWeights();}else setStrat({...p.ls},()=>w);
+  $('ppMsg').innerHTML=`<b>“${esc(p.name)}” is now the lab's portfolio</b>: every page analyses it and you can change its weights.`+(SV.undo?` <button data-undo="1" class="ghost">Undo</button> <small>(brings back your unsaved portfolio)</small>`:'');}
 /* ---------- events ---------- */
 function svAction(e){const t=e.target.closest('button,a[data-sv],[data-rg]');if(!t)return;
-  if(t.dataset.sv){e.preventDefault();SV.id=t.dataset.sv;SV.confirm=null;SV.rename=false;renderSaved();return;}
+  if(t.dataset.sv){e.preventDefault();SV.id=t.dataset.sv;SV.confirm=null;SV.rename=false;const q=svList().find(x=>x.id===SV.id);if(q)svActivate(q);renderSaved();return;}
+  if(t.dataset.undo!=null){const u=SV.undo;SV.undo=null;if(u){CURNAME=null;if(lsKey(u.ls)===lsKey(S.ls)){S.w=Float64Array.from(u.w);allocList();onWeights();}else setStrat({...u.ls},()=>u.w);$('ppMsg').textContent='Your previous portfolio is back in the lab.';}renderSaved();return;}
   if(t.dataset.rg){SV.range=t.dataset.rg;renderSaved();return;}
   if(t.dataset.del){SV.confirm=t.dataset.del;renderSaved();return;}
   if(t.dataset.delno){SV.confirm=null;renderSaved();return;}
@@ -1485,7 +1493,8 @@ function svAction(e){const t=e.target.closest('button,a[data-sv],[data-rg]');if(
   const id=t.id,p=svGet(SV.id);
   if(id==='ppSaveBtn'){const n=$('ppName').value||$('ppName').placeholder.replace(/^e\.g\. /,'');const q=svSave(n);if(q){SV.id=q.id;SV.range='full';$('ppName').value='';$('ppMsg').textContent=`Saved “${q.name}”.`;}else $('ppMsg').textContent='Could not save: this browser blocks storage. Use Export instead.';renderSaved();return;}
   if(id==='ppSaveCur'){$('ppName').focus();$('ppName').scrollIntoView({block:'center'});return;}
-  if(id==='ppLoad'&&p){const w=svWeights(p);CURNAME={id:p.id,name:p.name};closeSaved();setStrat({...p.ls},()=>w);return;}
+  if(id==='ppLoad'&&p){svActivate(p);closeSaved();return;}
+  if(id==='ppEditW'&&p){svActivate(p);SV.id='__cur';renderSaved();setTimeout(()=>{const x=$('ppAlloc').querySelector('input');if(x){x.scrollIntoView({block:'center'});x.focus();}},60);return;}
   if(id==='ppRename'){SV.rename=true;renderSaved();setTimeout(()=>{const x=$('ppRenameIn');if(x){x.focus();x.select();}},0);return;}
   if(id==='ppRenameOk'&&p){const v=$('ppRenameIn').value.trim().slice(0,60);if(v){const L=svList();L.find(q=>q.id===p.id).name=v;svStore(L);if(CURNAME&&CURNAME.id===p.id)CURNAME.name=v;}SV.rename=false;updYN();renderSaved();return;}
   if(id==='ppDup'&&p){const L=svList();const q={...JSON.parse(JSON.stringify(p)),id:'p'+Date.now().toString(36),name:(p.name+' (copy)').slice(0,60)};L.push(q);svStore(L);SV.id=q.id;renderSaved();return;}
